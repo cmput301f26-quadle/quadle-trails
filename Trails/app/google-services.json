@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "378183705368",
+    "project_id": "quadle-trails",
+    "storage_bucket": "quadle-trails.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:378183705368:android:4b69901b29afb4e90d746d",
+        "android_client_info": {
+          "package_name": "com.example.quadletrails"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMfKClvS2f-8YXSymVq_yEugt8917-eGY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
