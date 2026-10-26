@@ -5,6 +5,19 @@ package com.example.trails.data.model
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 
+/**
+ * A user's profile, identified by their device.
+ *
+ * @property deviceId Device id; also the Firestore document id.
+ * @property name Display name.
+ * @property email Contact email.
+ * @property phone Optional contact phone number.
+ * @property profileImageUrl URL of the profile photo, or null if none.
+ * @property roles Roles the user holds.
+ * @property activeMode Role the UI is currently acting as.
+ * @property notificationsOptOut True if the user has opted out of notifications.
+ * @property createdAt When the profile was created.
+ */
 data class User(
     @DocumentId val deviceId: String = "",
     val name: String = "",

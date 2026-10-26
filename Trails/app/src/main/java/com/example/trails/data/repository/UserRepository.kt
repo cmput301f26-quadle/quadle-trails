@@ -1,5 +1,7 @@
 // Read/write access to user profiles.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 // FIRESTORE IMPLEMENTATION: Aarav (aarav-kapoor-cs)
 package com.example.trails.data.repository
 

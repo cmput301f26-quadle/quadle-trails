@@ -1,5 +1,7 @@
 // Read/write access to ratings, which live under campsites/{id}/ratings.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 // FIRESTORE IMPLEMENTATION: Zainab (zsaghir)
 package com.example.trails.data.repository
 

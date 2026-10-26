@@ -1,5 +1,7 @@
 // Read/write access to lotteries.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Skanda (skandarajeev) — Lottery Setup
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 // FIRESTORE IMPLEMENTATION: Skanda (skandarajeev)
 package com.example.trails.data.repository
 

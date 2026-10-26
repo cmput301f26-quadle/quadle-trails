@@ -2,4 +2,12 @@
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
 package com.example.trails.data.model
 
-enum class Role { ENTRANT, OWNER, ADMIN }
+/** A role a user can hold in the app. */
+enum class Role {
+    /** Browses campsites and joins lotteries. */
+    ENTRANT,
+    /** Lists campsites and runs lotteries. */
+    OWNER,
+    /** Moderates campsites, profiles and policy. */
+    ADMIN
+}

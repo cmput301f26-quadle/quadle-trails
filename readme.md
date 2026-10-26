@@ -5,6 +5,15 @@ Created by Team QUADLE for CMPUT 301 (Fall 2026).
 Our project documentation, including the **Product Backlog**, **UI Mockups**, **Object-Oriented Analysis**, and **Meeting Logs**, is hosted entirely in our GitHub Wiki.
 
 **[Click here to view the Trails Wiki](https://github.com/cmput301f26-quadle/quadle-trails/wiki)**
+
+## How to run
+
+1. Open the `Trails/` folder (not the repo root) in Android Studio.
+2. Let Gradle sync finish.
+3. Run the `app` configuration on an emulator or device running API 24 or higher.
+
+The application id is `com.example.quadletrails` so it matches the Firebase project in `google-services.json`. The Kotlin package is `com.example.trails`.
+
 ## Who owns what
 
 Paths are relative to `Trails/app/src/main/java/com/example/trails/`.

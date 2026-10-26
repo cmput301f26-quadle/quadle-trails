@@ -1,5 +1,7 @@
 // Sample Alberta campsites in Banff, Jasper and Hinton-Grande Cache.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Ibrahim (ibr2309) — Campsite Management
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Campsite
@@ -56,11 +58,14 @@ object TestCampsites {
             latitude = 53.4710,
             longitude = -117.8070,
             maxOccupancy = 8,
-            pricePerNight = 30.0,
-            tags = listOf("Lakefront", "Boat launch", "Pet friendly"),
+            pricePerNight = 65.0,
+            tags = listOf("Lakefront", "Boat launch", "Pet friendly", "Outdoor cookhouse", "Tennis court"),
             rules = "Pets on leash at all times. Pack out all garbage.",
             cancellationPolicy = "Full refund up to 14 days before arrival.",
-            availability = listOf(DateRange(daysFromNow(45), daysFromNow(90)))
+            // Each Fri-Sun weekend in May 2027.
+            availability = listOf(7, 14, 21, 28).map { fri ->
+                DateRange(dateOf(2027, 5, fri), dateOf(2027, 5, fri + 2))
+            }
         )
     )
 }

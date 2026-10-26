@@ -1,5 +1,7 @@
 // Read/write access to campsite listings.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Ibrahim (ibr2309) — Campsite Management
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 // FIRESTORE IMPLEMENTATION: Ibrahim (ibr2309)
 package com.example.trails.data.repository
 

@@ -1,5 +1,7 @@
 // Sample campsite ratings, matching the rating averages in TestCampsites.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// Extend with the methods your stories need, and write the Firestore
+//  implementation. Others: open a small PR and tag the owner.
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Rating
