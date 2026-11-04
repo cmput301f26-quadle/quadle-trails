@@ -21,7 +21,9 @@ class CampsiteTest {
             latitude = 53.4,
             longitude = -117.6,
             maxOccupancy = 8,
-            pricePerNight = 65.0
+            pricePerNight = 65.0,
+            rules = "Quiet hours 10pm-7am. No generators.",
+            cancellationPolicy = "Free cancellation up to 7 days before arrival."
         )
     }
 
@@ -38,6 +40,21 @@ class CampsiteTest {
     @Test
     fun validate_blankLocation_locationNameError() {
         assertEquals(setOf("locationName"), campsite.copy(locationName = "").validate().keys)
+    }
+
+    @Test
+    fun validate_blankDescription_descriptionError() {
+        assertEquals(setOf("description"), campsite.copy(description = "").validate().keys)
+    }
+
+    @Test
+    fun validate_blankRules_rulesError() {
+        assertEquals(setOf("rules"), campsite.copy(rules = " ").validate().keys)
+    }
+
+    @Test
+    fun validate_blankCancellationPolicy_cancellationPolicyError() {
+        assertEquals(setOf("cancellationPolicy"), campsite.copy(cancellationPolicy = "").validate().keys)
     }
 
     @Test

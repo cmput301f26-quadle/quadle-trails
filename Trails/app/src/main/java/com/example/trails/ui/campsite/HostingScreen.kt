@@ -5,6 +5,7 @@
 //  is shared UI and not built yet.
 package com.example.trails.ui.campsite
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -48,11 +49,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.example.trails.R
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Campsite
@@ -60,7 +64,10 @@ import com.example.trails.ui.lottery.MyLotteriesScreen
 import com.example.trails.ui.theme.TrailsTheme
 
 /** The two sections of the Hosting home, as in Figma F01. */
-enum class HostingTab(val label: String) { CAMPSITES("Campsites"), LOTTERIES("Lotteries") }
+enum class HostingTab(@StringRes val label: Int) {
+    CAMPSITES(R.string.campsite_tab_campsites),
+    LOTTERIES(R.string.campsite_tab_lotteries)
+}
 
 /** Connects [HostingViewModel] to navigation and renders [HostingContent]. */
 @Composable
@@ -120,7 +127,7 @@ fun HostingContent(
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                         .height(48.dp)
                         .testTag(HostingTags.ADD_BUTTON)
-                ) { Text("Add a campsite") }
+                ) { Text(stringResource(R.string.campsite_add)) }
             }
         }
     ) { padding ->
@@ -153,8 +160,8 @@ private fun HostingHeader() {
     ) {
         Avatar()
         Spacer(Modifier.width(12.dp))
-        Text("Hosting", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-        RolePill("Owner")
+        Text(stringResource(R.string.campsite_hosting_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        RolePill(stringResource(R.string.campsite_role_owner))
     }
 }
 
@@ -235,7 +242,7 @@ private fun HostingTabs(selected: HostingTab, onSelect: (HostingTab) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    tab.label,
+                    stringResource(tab.label),
                     style = MaterialTheme.typography.titleSmall,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant
@@ -260,7 +267,7 @@ private fun CampsitesTab(
         OutlinedTextField(
             value = state.query,
             onValueChange = onQueryChange,
-            placeholder = { Text("Search campsites") },
+            placeholder = { Text(stringResource(R.string.campsite_search_hint)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -273,22 +280,22 @@ private fun CampsitesTab(
                 .padding(vertical = 12.dp)
         ) {
             Text(
-                pluralCampsites(state.totalCount),
+                pluralStringResource(R.plurals.campsite_count, state.totalCount, state.totalCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
             )
             Text(
-                "${state.inLotteryCount} in a lottery",
+                stringResource(R.string.campsite_in_lottery_count, state.inLotteryCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         when {
             state.totalCount == 0 ->
-                Message("You haven't registered a campsite yet.", HostingTags.EMPTY_MESSAGE)
+                Message(stringResource(R.string.campsite_none_registered), HostingTags.EMPTY_MESSAGE)
             state.items.isEmpty() ->
-                Message("No campsites match \"${state.query.trim()}\".", HostingTags.NO_MATCH)
+                Message(stringResource(R.string.campsite_no_match, state.query.trim()), HostingTags.NO_MATCH)
             else -> LazyColumn(
                 modifier = Modifier.testTag(HostingTags.LIST),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -322,7 +329,7 @@ private fun CampsiteCard(item: HostingItem, onClick: () -> Unit) {
             ) {
                 Text(c.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "${c.locationName} · Up to ${c.maxOccupancy} guests",
+                    stringResource(R.string.campsite_location_guests, c.locationName, c.maxOccupancy),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -358,7 +365,8 @@ private fun LotteryChip(lotteryName: String?) {
     val inLottery = lotteryName != null
     val colour = if (inLottery) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     Text(
-        if (inLottery) "In lottery · $lotteryName" else "Not in a lottery",
+        if (inLottery) stringResource(R.string.campsite_in_lottery, lotteryName!!)
+        else stringResource(R.string.campsite_not_in_lottery),
         style = MaterialTheme.typography.labelSmall,
         color = colour,
         modifier = Modifier
@@ -374,9 +382,6 @@ private fun Message(text: String, tag: String) {
         Text(text, modifier = Modifier.testTag(tag))
     }
 }
-
-/** Returns "1 campsite" or "N campsites". */
-internal fun pluralCampsites(n: Int): String = if (n == 1) "1 campsite" else "$n campsites"
 
 /** Test tags used by UI tests to find elements on this screen. */
 object HostingTags {

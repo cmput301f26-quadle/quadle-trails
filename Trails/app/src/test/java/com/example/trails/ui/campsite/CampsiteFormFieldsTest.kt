@@ -1,0 +1,142 @@
+// Unit tests for the campsite form logic (US 02.01.01, 02.01.02 tags, 02.01.03).
+// OWNER: Ibrahim (ibr2309) — Campsite Management
+package com.example.trails.ui.campsite
+
+import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.DateRange
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+class CampsiteFormFieldsTest {
+
+    private lateinit var fields: CampsiteFormFields
+
+    @Before
+    fun setUp() {
+        fields = CampsiteFormFields(
+            name = "  Grande Cache Ridge ",
+            locationName = "Hinton - Grande Cache, AB",
+            description = "Quiet ridge-top site with an outdoor cookhouse and tennis court.",
+            maxOccupancy = "8",
+            pricePerNight = "65",
+            tags = listOf("Lakeside", "Cookhouse"),
+            rules = "Quiet hours 10pm-7am. No generators.",
+            cancellationPolicy = "Free cancellation up to 7 days before arrival."
+        )
+    }
+
+    private fun valid(result: CampsiteFormResult): Campsite {
+        assertTrue("expected Valid but was $result", result is CampsiteFormResult.Valid)
+        return (result as CampsiteFormResult.Valid).campsite
+    }
+
+    private fun errors(result: CampsiteFormResult): Map<String, String> {
+        assertTrue("expected Invalid but was $result", result is CampsiteFormResult.Invalid)
+        return (result as CampsiteFormResult.Invalid).errors
+    }
+
+    @Test
+    fun toCampsite_validNewCampsite_parsedAndTrimmed() {
+        val c = valid(fields.toCampsite(base = null, ownerId = "owner-01"))
+        assertEquals("", c.id)
+        assertEquals("owner-01", c.ownerId)
+        assertEquals("Grande Cache Ridge", c.name)
+        assertEquals(8, c.maxOccupancy)
+        assertEquals(65.0, c.pricePerNight, 0.0)
+        assertEquals(listOf("Lakeside", "Cookhouse"), c.tags)
+    }
+
+    @Test
+    fun toCampsite_priceWithDollarSign_parsed() {
+        val c = valid(fields.copy(pricePerNight = "$42.50").toCampsite(null, "owner-01"))
+        assertEquals(42.5, c.pricePerNight, 0.0)
+    }
+
+    @Test
+    fun toCampsite_blankOccupancy_requiredError() {
+        val e = errors(fields.copy(maxOccupancy = "").toCampsite(null, "owner-01"))
+        assertEquals("Max occupancy is required", e["maxOccupancy"])
+    }
+
+    @Test
+    fun toCampsite_nonNumericOccupancy_wholeNumberError() {
+        val e = errors(fields.copy(maxOccupancy = "eight").toCampsite(null, "owner-01"))
+        assertEquals("Enter a whole number, e.g. 8", e["maxOccupancy"])
+    }
+
+    @Test
+    fun toCampsite_zeroOccupancy_modelError() {
+        val e = errors(fields.copy(maxOccupancy = "0").toCampsite(null, "owner-01"))
+        assertEquals(setOf("maxOccupancy"), e.keys)
+    }
+
+    @Test
+    fun toCampsite_badPrice_priceError() {
+        val e = errors(fields.copy(pricePerNight = "cheap").toCampsite(null, "owner-01"))
+        assertEquals(setOf("pricePerNight"), e.keys)
+    }
+
+    @Test
+    fun toCampsite_blankRequiredText_allReported() {
+        val e = errors(CampsiteFormFields(maxOccupancy = "4", pricePerNight = "30").toCampsite(null, "owner-01"))
+        assertEquals(setOf("name", "locationName", "description", "rules", "cancellationPolicy"), e.keys)
+    }
+
+    @Test
+    fun toCampsite_editing_keepsFieldsTheFormDoesNotShow() {
+        val existing = Campsite(
+            id = "campsite-hinton", ownerId = "owner-01", name = "Old name",
+            locationName = "Hinton, AB", latitude = 53.89, longitude = -118.01,
+            maxOccupancy = 6, pricePerNight = 50.0, imageUrl = "https://example.com/ridge.jpg",
+            availability = listOf(DateRange()), ratingAverage = 4.6, ratingCount = 23,
+            activeLotteryId = "lottery-may"
+        )
+        val c = valid(fields.toCampsite(base = existing, ownerId = "someone-else"))
+        assertEquals("campsite-hinton", c.id)
+        assertEquals("owner-01", c.ownerId)
+        assertEquals(53.89, c.latitude, 0.0)
+        assertEquals("https://example.com/ridge.jpg", c.imageUrl)
+        assertEquals(1, c.availability.size)
+        assertEquals(4.6, c.ratingAverage, 0.0)
+        assertEquals("lottery-may", c.activeLotteryId)
+        assertEquals("Grande Cache Ridge", c.name)
+    }
+
+    @Test
+    fun from_existingCampsite_prefillsForm() {
+        val c = Campsite(name = "Two Jack Lakeside", locationName = "Banff, AB", maxOccupancy = 4, pricePerNight = 38.0)
+        val f = CampsiteFormFields.from(c)
+        assertEquals("Two Jack Lakeside", f.name)
+        assertEquals("4", f.maxOccupancy)
+        assertEquals("38", f.pricePerNight)
+    }
+
+    @Test
+    fun formatPrice_wholeAndFractional() {
+        assertEquals("65", CampsiteFormFields.formatPrice(65.0))
+        assertEquals("42.50", CampsiteFormFields.formatPrice(42.5))
+    }
+
+    @Test
+    fun addTag_trimsAndAppends() {
+        assertEquals(listOf("Lakeside", "Tennis"), addTag(listOf("Lakeside"), "  Tennis "))
+    }
+
+    @Test
+    fun addTag_duplicateIgnoringCase_ignored() {
+        assertEquals(listOf("Lakeside"), addTag(listOf("Lakeside"), "lakeside"))
+    }
+
+    @Test
+    fun addTag_blank_ignored() {
+        assertEquals(listOf("Lakeside"), addTag(listOf("Lakeside"), "   "))
+    }
+
+    @Test
+    fun changedFrom_reportsOnlyEditedFields() {
+        val edited = fields.copy(name = "New", pricePerNight = "70")
+        assertEquals(setOf("name", "pricePerNight"), edited.changedFrom(fields))
+    }
+}

@@ -53,8 +53,11 @@ data class Campsite(
     fun validate(): Map<String, String> = buildMap {
         if (name.isBlank()) put("name", "Name is required")
         if (locationName.isBlank()) put("locationName", "Location is required")
+        if (description.isBlank()) put("description", "Describe the campsite and its amenities")
         if (maxOccupancy < 1) put("maxOccupancy", "Must sleep at least 1 person")
         if (pricePerNight < 0) put("pricePerNight", "Price can't be negative")
+        if (rules.isBlank()) put("rules", "Rules are required")
+        if (cancellationPolicy.isBlank()) put("cancellationPolicy", "Cancellation policy is required")
         if (latitude !in -90.0..90.0 || longitude !in -180.0..180.0) put("location", "Invalid map pin")
     }
 }

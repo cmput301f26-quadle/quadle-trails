@@ -86,10 +86,4 @@ class BuildHostingStateTest {
         assertEquals(0, s.totalCount)
         assertEquals(0, s.inLotteryCount)
     }
-
-    @Test
-    fun pluralCampsites_singularAndPlural() {
-        assertEquals("1 campsite", pluralCampsites(1))
-        assertEquals("3 campsites", pluralCampsites(3))
-    }
 }
