@@ -1,58 +1,49 @@
+// App-wide Material theme matching the dark-green Figma mockups.
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// Outstanding issues: the design is dark-only, so there is no light scheme.
 package com.example.trails.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+/**
+ * Figma colours mapped onto Material roles. Screens should read colours from
+ * MaterialTheme.colorScheme rather than using these values directly.
+ */
+private val TrailsColorScheme = darkColorScheme(
+    primary = TrailGreen,
+    onPrimary = Night,
+    primaryContainer = Forest,
+    onPrimaryContainer = Color.White,
+    secondary = TrailGreen,
+    onSecondary = Night,
+    background = Night,
+    onBackground = Color.White,
+    surface = Night,
+    onSurface = Color.White,
+    surfaceVariant = Forest,
+    onSurfaceVariant = Mist,
+    surfaceContainer = NightSurface,
+    surfaceContainerLow = Forest,
+    surfaceContainerHigh = NightSurface,
+    outline = TrailGreen,
+    outlineVariant = Moss,
+    error = Ember,
+    onError = Night
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
-
+/**
+ * Wraps app content in the Trails theme. Always dark, and dynamic (wallpaper) colour
+ * is off, so every device looks like the mockups.
+ *
+ * @param content the UI to theme.
+ */
 @Composable
-fun TrailsTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
+fun TrailsTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = TrailsColorScheme,
         typography = Typography,
         content = content
     )
