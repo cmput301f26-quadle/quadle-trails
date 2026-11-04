@@ -65,4 +65,16 @@ class FakeCampsiteRepositoryTest {
     fun observeByOwner_noSites_emptyList() = runBlocking {
         assertTrue(repo.observeByOwner("owner-device-01").first().isEmpty())
     }
+
+    @Test
+    fun observeById_afterEdit_emitsLatest() = runBlocking {
+        val id = repo.save(hinton)
+        repo.save(repo.getById(id)!!.copy(pricePerNight = 70.0))
+        assertEquals(70.0, repo.observeById(id).first()!!.pricePerNight, 0.0)
+    }
+
+    @Test
+    fun observeById_unknownId_emitsNull() = runBlocking {
+        assertNull(repo.observeById("does-not-exist").first())
+    }
 }

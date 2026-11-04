@@ -72,7 +72,7 @@ fun CampsiteFormScreen(
         if (state.isEditing) {
             navController.popBackStack()
         } else {
-            navController.navigate(CampsiteRoutes.ownerCampsite(id)) {
+            navController.navigate(CampsiteRoutes.ownerCampsite(id, published = true)) {
                 popUpTo(CampsiteRoutes.CAMPSITE_FORM) { inclusive = true }
             }
         }
@@ -148,7 +148,7 @@ fun CampsiteFormContent(
 
 /** Back arrow and title. */
 @Composable
-private fun FormHeader(title: String, onBack: () -> Unit) {
+internal fun FormHeader(title: String, onBack: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()

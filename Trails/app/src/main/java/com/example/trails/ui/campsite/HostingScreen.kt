@@ -365,7 +365,7 @@ private fun LotteryChip(lotteryName: String?) {
     val inLottery = lotteryName != null
     val colour = if (inLottery) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     Text(
-        if (inLottery) stringResource(R.string.campsite_in_lottery, lotteryName!!)
+        if (lotteryName != null) stringResource(R.string.campsite_in_lottery, lotteryName)
         else stringResource(R.string.campsite_not_in_lottery),
         style = MaterialTheme.typography.labelSmall,
         color = colour,

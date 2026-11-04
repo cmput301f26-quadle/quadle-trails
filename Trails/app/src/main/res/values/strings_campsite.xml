@@ -45,4 +45,32 @@
     <string name="campsite_form_rules_hint">Quiet hours, fire bans, pets…</string>
     <string name="campsite_form_cancellation_label">Cancellation policy *</string>
     <string name="campsite_form_cancellation_hint">e.g. Free cancellation up to 7 days before arrival</string>
+
+    <!-- Owner campsite page (US 02.01.04) -->
+    <string name="campsite_details_title">Campsite Details</string>
+    <string name="campsite_status_published">Published</string>
+    <string name="campsite_no_active_lottery">No active lottery</string>
+    <string name="campsite_price">$%1$s</string>
+    <string name="campsite_stat_max_guests">Max guests</string>
+    <string name="campsite_stat_per_night">Per night</string>
+    <string name="campsite_stat_rating">★ %1$s</string>
+    <plurals name="campsite_rating_count">
+        <item quantity="one">%1$d rating</item>
+        <item quantity="other">%1$d ratings</item>
+    </plurals>
+    <string name="campsite_no_ratings">No ratings yet</string>
+    <string name="campsite_section_description">Description &amp; amenities</string>
+    <string name="campsite_section_availability">Availability</string>
+    <string name="campsite_no_availability">No dates added yet</string>
+    <string name="campsite_section_location">Location</string>
+    <string name="campsite_no_map_pin">No map pin yet</string>
+    <string name="campsite_section_tags">Tags</string>
+    <string name="campsite_no_tags">No tags</string>
+    <string name="campsite_section_rules">Rules</string>
+    <string name="campsite_section_cancellation">Cancellation policy</string>
+    <string name="campsite_edit">Edit Campsite</string>
+    <string name="campsite_create_lottery">Create Lottery</string>
+    <string name="campsite_published_title">Campsite published</string>
+    <string name="campsite_published_body">%1$s is now live for entrants.</string>
+    <string name="campsite_view">View Campsite</string>
 </resources>
