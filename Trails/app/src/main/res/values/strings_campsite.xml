@@ -1,4 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OWNER: Ibrahim (ibr2309) — Campsite Management — strings for ui/campsite. -->
 <resources>
+    <!-- Hosting home (US 02.03.01) -->
+    <string name="campsite_hosting_title">Hosting</string>
+    <string name="campsite_role_owner">Owner</string>
+    <string name="campsite_tab_campsites">Campsites</string>
+    <string name="campsite_tab_lotteries">Lotteries</string>
+    <string name="campsite_search_hint">Search campsites</string>
+    <plurals name="campsite_count">
+        <item quantity="one">%1$d campsite</item>
+        <item quantity="other">%1$d campsites</item>
+    </plurals>
+    <string name="campsite_in_lottery_count">%1$d in a lottery</string>
+    <string name="campsite_none_registered">You haven\'t registered a campsite yet.</string>
+    <string name="campsite_no_match">No campsites match \"%1$s\".</string>
+    <string name="campsite_location_guests">%1$s · Up to %2$d guests</string>
+    <string name="campsite_in_lottery">In lottery · %1$s</string>
+    <string name="campsite_not_in_lottery">Not in a lottery</string>
+    <string name="campsite_add">Add a campsite</string>
+
+    <!-- Register / Edit form (US 02.01.01, 02.01.02, 02.01.03) -->
+    <string name="campsite_form_register_title">Register Campsite</string>
+    <string name="campsite_form_edit_title">Edit Campsite</string>
+    <string name="campsite_form_publish">Publish Campsite</string>
+    <string name="campsite_form_save_changes">Save changes</string>
+    <string name="campsite_form_saving">Saving…</string>
+    <string name="campsite_form_not_found">This campsite no longer exists.</string>
+    <string name="campsite_form_save_failed">Couldn\'t save. Check your connection and try again.</string>
+    <string name="campsite_form_name_label">Campsite name *</string>
+    <string name="campsite_form_name_hint">e.g. Grande Cache Ridge</string>
+    <string name="campsite_form_location_label">Location *</string>
+    <string name="campsite_form_location_hint">City or park, e.g. Hinton, AB</string>
+    <string name="campsite_form_description_label">Description &amp; amenities *</string>
+    <string name="campsite_form_description_hint">Describe amenities (cookhouse, fire pits…)</string>
+    <string name="campsite_form_occupancy_label">Max occupancy *</string>
+    <string name="campsite_form_occupancy_hint">e.g. 8</string>
+    <string name="campsite_form_price_label">Price per night *</string>
+    <string name="campsite_form_price_hint">e.g. $65</string>
+    <string name="campsite_form_tags_label">Tags</string>
+    <string name="campsite_form_add_tag">+ Add tag</string>
+    <string name="campsite_form_tag_hint">e.g. Lakeside</string>
+    <string name="campsite_form_tag_confirm">Add</string>
+    <string name="campsite_form_rules_label">Rules *</string>
+    <string name="campsite_form_rules_hint">Quiet hours, fire bans, pets…</string>
+    <string name="campsite_form_cancellation_label">Cancellation policy *</string>
+    <string name="campsite_form_cancellation_hint">e.g. Free cancellation up to 7 days before arrival</string>
 </resources>
