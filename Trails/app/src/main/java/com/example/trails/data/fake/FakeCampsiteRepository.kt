@@ -25,6 +25,9 @@ class FakeCampsiteRepository(initial: List<Campsite> = TestCampsites.all) : Camp
     override fun observeByOwner(ownerId: String): Flow<List<Campsite>> =
         campsites.map { list -> list.filter { it.ownerId == ownerId } }
 
+    override fun observeById(id: String): Flow<Campsite?> =
+        campsites.map { list -> list.find { it.id == id } }
+
     override suspend fun getById(id: String): Campsite? =
         campsites.value.find { it.id == id }
 

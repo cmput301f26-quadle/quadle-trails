@@ -31,6 +31,17 @@ class FirestoreCampsiteRepository(
     override fun observeByOwner(ownerId: String): Flow<List<Campsite>> =
         observe(campsites.whereEqualTo("ownerId", ownerId))
 
+    override fun observeById(id: String): Flow<Campsite?> = callbackFlow {
+        val registration = campsites.document(id).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            trySend(snapshot?.toObject(Campsite::class.java))
+        }
+        awaitClose { registration.remove() }
+    }
+
     override suspend fun getById(id: String): Campsite? =
         campsites.document(id).get().await().toObject(Campsite::class.java)
 

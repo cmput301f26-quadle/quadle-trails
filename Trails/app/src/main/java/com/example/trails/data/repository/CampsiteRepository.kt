@@ -16,6 +16,9 @@ interface CampsiteRepository {
     /** Emits the campsites owned by [ownerId], and again on every change (US 02.03.01). */
     fun observeByOwner(ownerId: String): Flow<List<Campsite>>
 
+    /** Emits the campsite with [id] (null if it doesn't exist), and again on every change (US 02.01.04). */
+    fun observeById(id: String): Flow<Campsite?>
+
     /** Returns the campsite with [id], or null if it does not exist (US 02.01.04). */
     suspend fun getById(id: String): Campsite?
 
