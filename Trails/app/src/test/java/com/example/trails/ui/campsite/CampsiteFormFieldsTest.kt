@@ -93,7 +93,7 @@ class CampsiteFormFieldsTest {
             availability = listOf(DateRange()), ratingAverage = 4.6, ratingCount = 23,
             activeLotteryId = "lottery-may"
         )
-        val c = valid(fields.toCampsite(base = existing, ownerId = "someone-else"))
+        val c = valid(fields.copy(imageUrl = existing.imageUrl).toCampsite(base = existing, ownerId = "someone-else"))
         assertEquals("campsite-hinton", c.id)
         assertEquals("owner-01", c.ownerId)
         assertEquals(53.89, c.latitude, 0.0)
@@ -102,6 +102,32 @@ class CampsiteFormFieldsTest {
         assertEquals(4.6, c.ratingAverage, 0.0)
         assertEquals("lottery-may", c.activeLotteryId)
         assertEquals("Grande Cache Ridge", c.name)
+    }
+
+    @Test
+    fun toCampsite_pickedPhoto_carriedThrough() {
+        val c = valid(fields.copy(imageUrl = "content://media/picker/0/42").toCampsite(null, "owner-01"))
+        assertEquals("content://media/picker/0/42", c.imageUrl)
+    }
+
+    @Test
+    fun toCampsite_photoRemovedWhileEditing_null() {
+        val existing = Campsite(id = "c1", ownerId = "owner-01", imageUrl = "https://example.com/ridge.jpg")
+        val c = valid(fields.copy(imageUrl = null).toCampsite(existing, "owner-01"))
+        assertEquals(null, c.imageUrl)
+    }
+
+    @Test
+    fun from_existingPhoto_prefilled() {
+        val c = Campsite(imageUrl = "https://example.com/ridge.jpg")
+        assertEquals("https://example.com/ridge.jpg", CampsiteFormFields.from(c).imageUrl)
+    }
+
+    @Test
+    fun isLocalImage_contentAndFileTrue_httpsFalse() {
+        assertTrue(isLocalImage("content://media/picker/0/42"))
+        assertTrue(isLocalImage("file:///sdcard/ridge.jpg"))
+        assertTrue(!isLocalImage("https://firebasestorage.googleapis.com/ridge.jpg"))
     }
 
     @Test

@@ -1,7 +1,7 @@
 // Form logic for registering and editing a campsite (US 02.01.01, 02.01.02 tags, 02.01.03).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Plain Kotlin with no Android or coroutine types, so it is unit-tested directly.
-// Outstanding issues: photo, availability and map pin are not part of the form yet (US 02.01.02).
+// Outstanding issues: availability and map pin are not part of the form yet (US 02.01.02).
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.Campsite
@@ -18,6 +18,7 @@ import com.example.trails.data.model.Campsite
  * @property tags tags in the order added.
  * @property rules house rules.
  * @property cancellationPolicy refund and cancellation terms.
+ * @property imageUrl the promo photo: an uploaded URL, a just-picked local URI, or null for none.
  */
 data class CampsiteFormFields(
     val name: String = "",
@@ -27,7 +28,8 @@ data class CampsiteFormFields(
     val pricePerNight: String = "",
     val tags: List<String> = emptyList(),
     val rules: String = "",
-    val cancellationPolicy: String = ""
+    val cancellationPolicy: String = "",
+    val imageUrl: String? = null
 ) {
     companion object {
         /** Pre-fills the form from an existing campsite, for editing (US 02.01.03). */
@@ -39,7 +41,8 @@ data class CampsiteFormFields(
             pricePerNight = formatPrice(campsite.pricePerNight),
             tags = campsite.tags,
             rules = campsite.rules,
-            cancellationPolicy = campsite.cancellationPolicy
+            cancellationPolicy = campsite.cancellationPolicy,
+            imageUrl = campsite.imageUrl
         )
 
         /** "65" for whole dollars, "42.50" otherwise. */
@@ -60,7 +63,7 @@ sealed interface CampsiteFormResult {
 /**
  * Builds the campsite to save from the form.
  *
- * When editing, fields the form doesn't show (id, owner, photo, map pin, availability,
+ * When editing, fields the form doesn't show (id, owner, map pin, availability,
  * rating, active lottery) are kept from [base].
  *
  * @param base the campsite being edited, or null when registering a new one.
@@ -79,7 +82,8 @@ fun CampsiteFormFields.toCampsite(base: Campsite?, ownerId: String): CampsiteFor
         pricePerNight = price ?: 0.0,
         tags = tags,
         rules = rules.trim(),
-        cancellationPolicy = cancellationPolicy.trim()
+        cancellationPolicy = cancellationPolicy.trim(),
+        imageUrl = imageUrl
     )
 
     val errors = candidate.validate().toMutableMap()
@@ -93,6 +97,9 @@ fun CampsiteFormFields.toCampsite(base: Campsite?, ownerId: String): CampsiteFor
     }
     return if (errors.isEmpty()) CampsiteFormResult.Valid(candidate) else CampsiteFormResult.Invalid(errors)
 }
+
+/** True if [url] is a photo picked on this device that still needs uploading. */
+fun isLocalImage(url: String): Boolean = url.startsWith("content://") || url.startsWith("file://")
 
 /**
  * Adds a tag after trimming it. Blank tags and duplicates (ignoring case) are ignored.

@@ -78,7 +78,10 @@ class CampsiteFormViewModel(
         }
     }
 
-    /** Validates and, if valid, saves the campsite. Ignored while a save is in progress. */
+    /**
+     * Validates and, if valid, saves the campsite, uploading a newly picked photo first.
+     * Ignored while a save is in progress.
+     */
     fun onSave() {
         val current = _state.value
         if (current.isSaving || current.isLoading || current.notFound) return
@@ -88,7 +91,13 @@ class CampsiteFormViewModel(
                 _state.update { it.copy(isSaving = true, errors = emptyMap(), saveFailed = false) }
                 viewModelScope.launch {
                     try {
-                        val id = repository.save(result.campsite)
+                        val image = result.campsite.imageUrl
+                        val toSave = if (image != null && isLocalImage(image)) {
+                            result.campsite.copy(imageUrl = repository.uploadImage(image))
+                        } else {
+                            result.campsite
+                        }
+                        val id = repository.save(toSave)
                         _state.update { it.copy(isSaving = false, savedId = id) }
                     } catch (e: Exception) {
                         _state.update { it.copy(isSaving = false, saveFailed = true) }
