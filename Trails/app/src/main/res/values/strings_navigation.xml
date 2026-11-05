@@ -7,4 +7,17 @@
     <string name="nav_notifications">Notifications</string>
     <string name="nav_messages">Messages</string>
     <string name="nav_settings">Settings</string>
+
+    <!-- Notifications and Messages placeholders (ui/shell) -->
+    <string name="shell_coming_in_part_4">%1$s: Coming in Part 4</string>
+
+    <!-- Settings (ui/shell) -->
+    <string name="shell_settings_title">Settings</string>
+    <string name="shell_settings_profile">Profile</string>
+    <string name="shell_settings_policy">App policy &amp; guidelines</string>
+
+    <!-- Admin home (ui/admin, US 03.04.01, 03.05.01) -->
+    <string name="admin_home_title">Admin</string>
+    <string name="admin_home_campsites">Campsites</string>
+    <string name="admin_home_profiles">Profiles</string>
 </resources>

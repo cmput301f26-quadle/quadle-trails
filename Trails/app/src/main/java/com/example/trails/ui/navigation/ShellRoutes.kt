@@ -1,6 +1,6 @@
 // Routes for the app-shell screens every role reaches from the bottom bar.
 // OWNER: Zainab (zsaghir) — App shell
-// Outstanding issues: Notifications, Messages and Settings screens not built yet (routes only).
+// Outstanding issues: none; screens are registered in ui/shell/ShellNavigation.kt.
 package com.example.trails.ui.navigation
 
 /** Routes for the bottom-bar tabs that go to the same screen for every role. */

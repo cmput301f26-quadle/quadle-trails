@@ -1,6 +1,6 @@
 // Icon-only bottom navigation bar shown on every screen.
 // OWNER: Zainab (zsaghir) — App shell
-// Outstanding issues: not shown in the app yet (wired up in Step 3).
+// Outstanding issues: none; shown on every screen by TrailsApp.
 package com.example.trails.ui.navigation
 
 import androidx.annotation.DrawableRes
