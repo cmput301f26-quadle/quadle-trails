@@ -1,13 +1,11 @@
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
-// USER STORIES: 02.09.01
-// PURPOSE: Shows the waitlist entries for one lottery.
-// TODO: List entries from WaitlistRepository.observeForLottery(lotteryId).
+// shows waitlist entries for one lottery
+// owner: chitkarsh (chitkarshrathi) - waitlist
+// ai helped scaffold this thin wrapper screen
 package com.example.trails.ui.waitlist
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
-import com.example.trails.ui.common.PlaceholderScreen
 
 @Composable
 fun LotteryWaitlistScreen(
@@ -15,5 +13,9 @@ fun LotteryWaitlistScreen(
     lotteryId: String,
     modifier: Modifier = Modifier
 ) {
-    PlaceholderScreen(name = "Lottery Waitlist", modifier = modifier)
+    WaitlistEntrantsScreen(
+        lotteryId = lotteryId,
+        onBack = { navController.popBackStack() },
+        modifier = modifier
+    )
 }

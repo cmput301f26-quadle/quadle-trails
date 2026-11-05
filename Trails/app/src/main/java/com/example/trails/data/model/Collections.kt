@@ -10,6 +10,7 @@ package com.example.trails.data.model
  * @property RATINGS Subcollection of ratings under each campsite.
  * @property LOTTERIES Top-level collection of lotteries.
  * @property ENTRIES Subcollection of waitlist entries under each lottery.
+ * @property RESERVATIONS confirmed reservations collection
  */
 object Collections {
     const val USERS = "users"
@@ -17,4 +18,5 @@ object Collections {
     const val RATINGS = "ratings"   // under campsites/{id}
     const val LOTTERIES = "lotteries"
     const val ENTRIES = "entries"   // under lotteries/{id}
+    const val RESERVATIONS = "reservations" // added by chitkarsh on 11/05/2026
 }

@@ -1,7 +1,6 @@
-// Sample waitlist entries for the sample lottery.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
-// Extend with the methods your stories need, and write the Firestore
-//  implementation. Others: open a small PR and tag the owner.
+// sample waitlist entries for the sample lottery
+// owner: chitkarsh (chitkarshrathi) - waitlist
+// ai helped generate these sample seed entries
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.WaitlistEntry

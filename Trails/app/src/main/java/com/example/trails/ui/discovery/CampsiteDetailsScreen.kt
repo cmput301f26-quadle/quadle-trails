@@ -31,7 +31,7 @@ fun CampsiteDetailsScreen(
         Text(text = "Campsite Details", style = MaterialTheme.typography.headlineSmall)
 
         // Owned by Chitkarsh. Neaz: leave this call here, don't edit inside it.
-        JoinLotterySection(campsiteId)
+        JoinLotterySection(navController = navController, campsiteId = campsiteId)
 
         // Owned by Zainab. Neaz: leave this call here, don't edit inside it.
         RatingSection(campsiteId)
