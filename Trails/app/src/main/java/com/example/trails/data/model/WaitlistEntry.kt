@@ -1,21 +1,21 @@
-// A user's entry in a lottery waitlist, stored under lotteries/{id}/entries.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// a user's entry in a lottery waitlist stored under lotteries/{id}/entries
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 
 /**
- * A user's place on a lottery's waitlist.
+ * a user's place on a lottery waitlist
  *
- * @property userId Device id of the entrant; also the document id, so one entry per user per lottery.
- * @property userName Entrant's display name at the time they joined.
- * @property lotteryId Id of the lottery joined.
- * @property partySize Number of people in the entrant's party.
- * @property joinedAt When the entrant joined the waitlist.
- * @property status Where the entry stands in the lottery.
- * @property rulesAcceptedAt When the entrant agreed to the campsite rules.
- * @property rulesAccepted True if the entrant agreed to the campsite rules.
+ * @property userId device id of the entrant and document id
+ * @property userName entrant display name when joining
+ * @property lotteryId id of the lottery joined
+ * @property partySize number of people in the entrant's party
+ * @property joinedAt when the entrant joined the waitlist
+ * @property status current lottery status
+ * @property rulesAcceptedAt when rules were agreed to
+ * @property rulesAccepted true if rules were agreed to
  */
 data class WaitlistEntry(
     @DocumentId val userId: String = "",
@@ -27,12 +27,8 @@ data class WaitlistEntry(
     val rulesAcceptedAt: Timestamp? = null,
     val rulesAccepted: Boolean = rulesAcceptedAt != null
 ) {
-    /**
-     * Checks the fields when joining or updating an entry.
-     * Kept as a function rather than init checks because Firestore builds objects from defaults.
-     *
-     * @return error messages keyed by field name; empty if the entry is valid.
-     */
+    // checks required fields when joining or updating
+    // returns map of error messages
     fun validate(): Map<String, String> = buildMap {
         if (userId.isBlank()) put("userId", "User ID is required")
         if (lotteryId.isBlank()) put("lotteryId", "Lottery ID is required")

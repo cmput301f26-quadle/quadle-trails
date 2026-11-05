@@ -1,5 +1,5 @@
-// Unit tests for WaitlistEntry data model and validation.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// unit tests for waitlist entry data model and validation
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp

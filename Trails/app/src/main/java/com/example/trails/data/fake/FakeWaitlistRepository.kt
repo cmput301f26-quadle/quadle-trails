@@ -1,5 +1,5 @@
-// In-memory WaitlistRepository seeded from TestWaitlistEntries.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// in memory waitlist repository seeded from test entries
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.WaitlistEntry
@@ -20,7 +20,7 @@ class FakeWaitlistRepository(
 
     private val entries = MutableStateFlow(initial)
 
-    /** Optional exception to throw on repository operations, useful for testing error edge cases. */
+    // optional exception to test error edge cases
     var failure: Exception? = null
 
     private fun checkFailure() {
@@ -31,7 +31,7 @@ class FakeWaitlistRepository(
         checkFailure()
         return entries.map { list ->
             list.filter { it.lotteryId == lotteryId }
-                .sortedBy { it.joinedAt?.toDate() }
+                .sortedWith(compareBy(nullsLast()) { it.joinedAt?.toDate() })
         }
     }
 
@@ -50,7 +50,7 @@ class FakeWaitlistRepository(
     override suspend fun getEntriesForLottery(lotteryId: String): List<WaitlistEntry> {
         checkFailure()
         return entries.value.filter { it.lotteryId == lotteryId }
-            .sortedBy { it.joinedAt?.toDate() }
+            .sortedWith(compareBy(nullsLast()) { it.joinedAt?.toDate() })
     }
 
     override suspend fun getEntryCount(lotteryId: String): Int {
@@ -61,7 +61,7 @@ class FakeWaitlistRepository(
     override suspend fun save(entry: WaitlistEntry) {
         checkFailure()
         val errors = entry.validate()
-        require(errors.isEmpty()) { "Invalid waitlist entry: $errors" }
+        require(errors.isEmpty()) { "invalid waitlist entry: $errors" }
         entries.update { list ->
             list.filterNot { it.lotteryId == entry.lotteryId && it.userId == entry.userId } + entry
         }
@@ -83,16 +83,16 @@ class FakeWaitlistRepository(
         maxCapacity: Int?
     ): WaitlistEntry {
         checkFailure()
-        if (lotteryId.isBlank()) throw IllegalArgumentException("Lottery ID cannot be blank.")
-        if (userId.isBlank()) throw IllegalArgumentException("User ID cannot be blank.")
-        if (partySize < 1) throw IllegalArgumentException("Party size must be at least 1.")
-        if (!rulesAccepted) throw RulesNotAcceptedException("You must accept the campsite rules before joining the waitlist.")
+        if (lotteryId.isBlank()) throw IllegalArgumentException("lottery id cannot be blank")
+        if (userId.isBlank()) throw IllegalArgumentException("user id cannot be blank")
+        if (partySize < 1) throw IllegalArgumentException("party size must be at least 1")
+        if (!rulesAccepted) throw RulesNotAcceptedException("you must accept the campsite rules before joining the waitlist")
 
         val existing = getEntry(lotteryId, userId)
         if (existing == null && maxCapacity != null) {
             val currentCount = getEntryCount(lotteryId)
             if (currentCount >= maxCapacity) {
-                throw WaitlistFullException("The waitlist for this lottery has reached maximum capacity ($maxCapacity).")
+                throw WaitlistFullException("the waitlist for this lottery has reached maximum capacity ($maxCapacity)")
             }
         }
 

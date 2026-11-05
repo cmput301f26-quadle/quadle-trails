@@ -1,6 +1,5 @@
-// Comprehensive unit tests for WaitlistViewModel.
-// Tests loading, successful operations, full waitlists, missing data, and Firebase network exceptions.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// unit tests for waitlist view model
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeLotteryRepository
@@ -18,7 +17,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -64,9 +62,7 @@ class WaitlistViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // -------------------------------------------------------------------------
-    // 1. INITIAL STATE & LOADING
-    // -------------------------------------------------------------------------
+    // initial state and loading
 
     @Test
     fun initialState_userNotOnWaitlist_emitsNotWaitlisted() {
@@ -109,7 +105,7 @@ class WaitlistViewModelTest {
 
     @Test
     fun initialState_waitlistAtCapacity_emitsNotWaitlistedWithIsFullTrue() {
-        // Lottery capacity is 2, fill it with two other users
+        // lottery capacity is 2 so fill it with two other users
         val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, rulesAccepted = true)
         val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, rulesAccepted = true)
         val fullRepo = FakeWaitlistRepository(initial = listOf(e1, e2))
@@ -130,9 +126,7 @@ class WaitlistViewModelTest {
         assertEquals(2, notWaitlisted.entrantCount)
     }
 
-    // -------------------------------------------------------------------------
-    // 2. RULES AGREEMENT FLAG & VALIDATION
-    // -------------------------------------------------------------------------
+    // rules agreement flag and validation
 
     @Test
     fun onRulesAgreementChanged_updatesCheckboxState() {
@@ -155,7 +149,7 @@ class WaitlistViewModelTest {
     fun joinWaitlist_withoutRulesAccepted_emitsErrorState() {
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Attempt to join without agreeing to rules
+        // attempt to join without agreeing to rules
         viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2, rulesAccepted = false)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -165,9 +159,7 @@ class WaitlistViewModelTest {
         assertTrue(error.message.contains("rules", ignoreCase = true))
     }
 
-    // -------------------------------------------------------------------------
-    // 3. SUCCESSFUL DATABASE WRITES
-    // -------------------------------------------------------------------------
+    // successful database operations
 
     @Test
     fun joinWaitlist_withRulesAccepted_successful_transitionsToWaitlisted() {
@@ -178,7 +170,7 @@ class WaitlistViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue("Expected Waitlisted state but was $state", state is WaitlistUiState.Waitlisted)
+        assertTrue("expected waitlisted state but was $state", state is WaitlistUiState.Waitlisted)
         val waitlisted = state as WaitlistUiState.Waitlisted
         assertEquals(currentUserId, waitlisted.entry.userId)
         assertEquals(3, waitlisted.entry.partySize)
@@ -188,29 +180,27 @@ class WaitlistViewModelTest {
 
     @Test
     fun leaveWaitlist_successful_transitionsToNotWaitlisted() {
-        // Start as waitlisted
+        // start as waitlisted
         viewModel.onRulesAgreementChanged(true)
         viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.uiState.value is WaitlistUiState.Waitlisted)
 
-        // Leave waitlist
+        // leave waitlist
         viewModel.leaveWaitlist()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue("Expected NotWaitlisted state but was $state", state is WaitlistUiState.NotWaitlisted)
+        assertTrue("expected not waitlisted state but was $state", state is WaitlistUiState.NotWaitlisted)
         val notWaitlisted = state as WaitlistUiState.NotWaitlisted
         assertEquals(0, notWaitlisted.entrantCount)
     }
 
-    // -------------------------------------------------------------------------
-    // 4. FULL WAITLISTS EDGE CASES
-    // -------------------------------------------------------------------------
+    // full waitlists edge cases
 
     @Test
     fun joinWaitlist_whenWaitlistFull_emitsErrorState() {
-        // Pre-fill to capacity (2)
+        // pre fill to capacity 2
         val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, rulesAccepted = true)
         val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, rulesAccepted = true)
         val fullRepo = FakeWaitlistRepository(initial = listOf(e1, e2))
@@ -228,21 +218,19 @@ class WaitlistViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = vm.uiState.value
-        assertTrue("Expected Error state but was $state", state is WaitlistUiState.Error)
+        assertTrue("expected error state but was $state", state is WaitlistUiState.Error)
         val error = state as WaitlistUiState.Error
         assertTrue(error.isFull)
         assertTrue(error.message.contains("capacity", ignoreCase = true))
     }
 
-    // -------------------------------------------------------------------------
-    // 5. FIREBASE NETWORK EXCEPTIONS & FAILURE RECOVERY
-    // -------------------------------------------------------------------------
+    // firebase network exceptions and failure recovery
 
     @Test
     fun joinWaitlist_firebaseNetworkException_emitsErrorWithoutCrash() {
         testDispatcher.scheduler.advanceUntilIdle()
 
-        waitlistRepo.failure = IOException("Firebase network unavailable")
+        waitlistRepo.failure = IOException("firebase network unavailable")
         viewModel.onRulesAgreementChanged(true)
         viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -255,14 +243,14 @@ class WaitlistViewModelTest {
 
     @Test
     fun leaveWaitlist_firebaseNetworkException_emitsErrorWithoutCrash() {
-        // Start as waitlisted
+        // start as waitlisted
         viewModel.onRulesAgreementChanged(true)
         viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.uiState.value is WaitlistUiState.Waitlisted)
 
-        // Inject network failure
-        waitlistRepo.failure = IOException("Simulated network timeout")
+        // inject network failure
+        waitlistRepo.failure = IOException("simulated network timeout")
         viewModel.leaveWaitlist()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -274,12 +262,12 @@ class WaitlistViewModelTest {
     fun clearError_restoresValidState() {
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Trigger error
+        // trigger error
         viewModel.joinWaitlist(userName = "Chitkarsh", rulesAccepted = false)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.uiState.value is WaitlistUiState.Error)
 
-        // Clear error
+        // clear error
         viewModel.clearError()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -305,5 +293,28 @@ class WaitlistViewModelTest {
 
         assertEquals(2, vm.entrants.value.size)
         assertEquals(listOf("user-1", "user-2"), vm.entrants.value.map { it.userId })
+    }
+
+    @Test
+    fun entrants_emitsEntrantsStrictlySortedByJoinedAtAscending() {
+        val t1 = Timestamp(Date(100000))
+        val t2 = Timestamp(Date(200000))
+        val t3 = Timestamp(Date(300000))
+        val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, joinedAt = t1, rulesAccepted = true)
+        val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, joinedAt = t2, rulesAccepted = true)
+        val e3 = WaitlistEntry(userId = "user-3", lotteryId = lotteryId, joinedAt = t3, rulesAccepted = true)
+
+        // feed unsorted list
+        val repo = FakeWaitlistRepository(initial = listOf(e3, e1, e2))
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = repo,
+            lotteryRepository = lotteryRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, vm.entrants.value.size)
+        assertEquals(listOf("user-1", "user-2", "user-3"), vm.entrants.value.map { it.userId })
     }
 }

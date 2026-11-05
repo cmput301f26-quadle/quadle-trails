@@ -1,17 +1,13 @@
-// Domain exceptions for waitlist operations.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// domain exceptions for waitlist operations
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.repository
 
-/**
- * Thrown when attempting to join a waitlist that has reached maximum capacity.
- */
+// thrown when lottery waitlist reaches max capacity
 class WaitlistFullException(
     message: String = "The waitlist for this lottery has reached maximum capacity."
 ) : IllegalStateException(message)
 
-/**
- * Thrown when attempting to join a waitlist or confirm a reservation without accepting rules.
- */
+// thrown when entrant tries to join without agreeing to campsite rules
 class RulesNotAcceptedException(
     message: String = "You must review and accept the campsite rules before joining the waitlist."
 ) : IllegalArgumentException(message)

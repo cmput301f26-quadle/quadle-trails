@@ -11,8 +11,8 @@ composeBom = "2026.02.01"
 googleServices = "4.5.0"
 firebaseBom = "35.1.0"
 coroutinesPlayServices = "1.11.0"
-coroutinesTest = "1.11.0"
-mockito = "5.20.0"
+coroutinesTest = "1.11.0" # added by chitkarsh on 11/05/2026
+mockito = "5.20.0" # added by chitkarsh on 11/05/2026
 navigationCompose = "2.10.2"
 coil = "3.6.3"
 osmdroid = "6.1.20"
@@ -21,8 +21,8 @@ osmdroid = "6.1.20"
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
-mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" } # added by chitkarsh on 11/05/2026
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" } # added by chitkarsh on 11/05/2026
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

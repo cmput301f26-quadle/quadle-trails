@@ -1,5 +1,5 @@
-// Unit tests for FakeWaitlistRepository.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// unit tests for fake waitlist repository
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.WaitlistEntry
@@ -115,21 +115,21 @@ class FakeWaitlistRepositoryTest {
 
     @Test(expected = WaitlistFullException::class)
     fun joinWaitlist_atCapacity_throwsWaitlistFullException(): Unit = runBlocking {
-        // Fill up to capacity 2
+        // fill up to capacity 2
         repo.joinWaitlist(lotteryId, "user-1", "User 1", 2, true, maxCapacity = 2)
         repo.joinWaitlist(lotteryId, "user-2", "User 2", 2, true, maxCapacity = 2)
 
-        // Attempting to add 3rd user should fail
+        // attempting to add 3rd user should fail
         repo.joinWaitlist(lotteryId, "user-3", "User 3", 2, true, maxCapacity = 2)
     }
 
     @Test
     fun joinWaitlist_atCapacity_existingUserUpdatesSuccessfully(): Unit = runBlocking {
-        // Add 2 users for capacity 2
+        // add 2 users for capacity 2
         repo.joinWaitlist(lotteryId, "user-1", "User 1", 2, true, maxCapacity = 2)
         repo.joinWaitlist(lotteryId, "user-2", "User 2", 2, true, maxCapacity = 2)
 
-        // Existing user user-1 updating party size should succeed even at capacity
+        // existing user updating party size should succeed
         val updated = repo.joinWaitlist(lotteryId, "user-1", "User 1", 4, true, maxCapacity = 2)
         assertEquals(4, updated.partySize)
         assertEquals(2, repo.getEntryCount(lotteryId))
@@ -148,6 +148,20 @@ class FakeWaitlistRepositoryTest {
     }
 
     @Test
+    fun getEntriesForLottery_returnsSortedByJoinedAt(): Unit = runBlocking {
+        val t1 = Timestamp(Date(100000))
+        val t2 = Timestamp(Date(200000))
+        val t3 = Timestamp(Date(300000))
+
+        repo.save(WaitlistEntry(userId = "u3", lotteryId = lotteryId, joinedAt = t3, rulesAccepted = true))
+        repo.save(WaitlistEntry(userId = "u1", lotteryId = lotteryId, joinedAt = t1, rulesAccepted = true))
+        repo.save(WaitlistEntry(userId = "u2", lotteryId = lotteryId, joinedAt = t2, rulesAccepted = true))
+
+        val entries = repo.getEntriesForLottery(lotteryId)
+        assertEquals(listOf("u1", "u2", "u3"), entries.map { it.userId })
+    }
+
+    @Test
     fun observeEntry_emitsUserEntry(): Unit = runBlocking {
         assertNull(repo.observeEntry(lotteryId, userId).first())
 
@@ -159,7 +173,7 @@ class FakeWaitlistRepositoryTest {
 
     @Test(expected = IOException::class)
     fun failureInjected_throwsExceptionOnAllCalls(): Unit = runBlocking {
-        repo.failure = IOException("Simulated network outage")
+        repo.failure = IOException("simulated network outage")
         repo.getEntry(lotteryId, userId)
     }
 }

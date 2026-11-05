@@ -1,40 +1,33 @@
-// Read/write access to waitlist entries, which live under lotteries/{id}/entries.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
-// FIRESTORE IMPLEMENTATION: Chitkarsh (chitkarshrathi)
+// read and write access to waitlist entries under lotteries/{id}/entries
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.repository
 
 import com.example.trails.data.model.WaitlistEntry
 import kotlinx.coroutines.flow.Flow
 
 interface WaitlistRepository {
-    /** Observes all waitlist entries for the specified lottery in real time. */
+    // observes all entries for a lottery in real time
     fun observeForLottery(lotteryId: String): Flow<List<WaitlistEntry>>
 
-    /** Observes a specific user's waitlist entry for the given lottery in real time. */
+    // observes one user's entry for a lottery in real time
     fun observeEntry(lotteryId: String, userId: String): Flow<WaitlistEntry?>
 
-    /** Gets a single entry for a user in a lottery, or null if not found. */
+    // gets one entry for a user in a lottery
     suspend fun getEntry(lotteryId: String, userId: String): WaitlistEntry?
 
-    /** Gets all entries for a lottery at a point in time. */
+    // gets all entries for a lottery
     suspend fun getEntriesForLottery(lotteryId: String): List<WaitlistEntry>
 
-    /** Gets the count of entrants on the waitlist for a lottery. */
+    // counts entries for a lottery
     suspend fun getEntryCount(lotteryId: String): Int
 
-    /** Saves or updates a waitlist entry. */
+    // saves or updates an entry
     suspend fun save(entry: WaitlistEntry)
 
-    /** Removes a user from a lottery waitlist (US 01.02.02). */
+    // deletes an entry by lottery and user id
     suspend fun deleteEntry(lotteryId: String, userId: String)
 
-    /**
-     * Joins a waitlist, checking capacity and requiring rules agreement (US 01.02.01, 02.11.01).
-     *
-     * @throws WaitlistFullException if maxCapacity is reached and user is not already on waitlist.
-     * @throws RulesNotAcceptedException if rulesAccepted is false.
-     * @throws IllegalArgumentException if required fields are missing or invalid.
-     */
+    // joins waitlist and checks rules acceptance plus capacity limits
     suspend fun joinWaitlist(
         lotteryId: String,
         userId: String,
@@ -44,6 +37,6 @@ interface WaitlistRepository {
         maxCapacity: Int? = null
     ): WaitlistEntry
 
-    /** Leaves a lottery waitlist (US 01.02.02). */
+    // leaves a waitlist
     suspend fun leaveWaitlist(lotteryId: String, userId: String)
 }

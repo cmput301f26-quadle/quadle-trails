@@ -1,24 +1,24 @@
-// A confirmed campsite reservation resulting from a won lottery or direct booking.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// a confirmed campsite reservation from winning a lottery or direct booking
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 
 /**
- * A confirmed booking for a campsite, stored in the reservations collection (US 02.11.01).
+ * confirmed booking for a campsite stored in reservations collection
  *
- * @property id Firestore document id.
- * @property userId Device id of the entrant holding the reservation.
- * @property campsiteId Id of the campsite reserved.
- * @property lotteryId Id of the lottery won, or null if booked directly.
- * @property partySize Number of guests in the booking.
- * @property startDate Check-in date timestamp.
- * @property endDate Check-out date timestamp.
- * @property totalPrice Total booking price in dollars.
- * @property rulesAccepted True if the entrant agreed to the campsite rules.
- * @property rulesAcceptedAt When the entrant accepted the campsite rules.
- * @property createdAt When the reservation was confirmed.
+ * @property id firestore document id
+ * @property userId device id of entrant holding the reservation
+ * @property campsiteId id of campsite reserved
+ * @property lotteryId id of lottery won or null if booked directly
+ * @property partySize number of guests
+ * @property startDate check-in date timestamp
+ * @property endDate check-out date timestamp
+ * @property totalPrice total price in dollars
+ * @property rulesAccepted true if entrant agreed to campsite rules
+ * @property rulesAcceptedAt timestamp when entrant accepted rules
+ * @property createdAt timestamp when reservation was confirmed
  */
 data class Reservation(
     @DocumentId val id: String = "",
@@ -33,12 +33,8 @@ data class Reservation(
     val rulesAcceptedAt: Timestamp? = null,
     val createdAt: Timestamp? = null
 ) {
-    /**
-     * Checks the fields required to confirm a reservation.
-     * Kept as a function rather than init checks because Firestore builds objects from defaults.
-     *
-     * @return error messages keyed by field name; empty if the reservation can be saved.
-     */
+    // checks required fields to confirm reservation
+    // returns field error messages
     fun validate(): Map<String, String> = buildMap {
         if (userId.isBlank()) put("userId", "User ID is required")
         if (campsiteId.isBlank()) put("campsiteId", "Campsite ID is required")

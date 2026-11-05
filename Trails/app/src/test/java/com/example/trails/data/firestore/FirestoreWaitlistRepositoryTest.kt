@@ -1,6 +1,5 @@
-// Exhaustive unit tests for FirestoreWaitlistRepository.
-// Tests successful writes, full waitlists, missing data, and Firebase network exceptions.
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// unit tests for firestore waitlist repository
+// owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -61,9 +60,7 @@ class FirestoreWaitlistRepositoryTest {
         repo = FirestoreWaitlistRepository(db)
     }
 
-    // -------------------------------------------------------------------------
-    // 1. SUCCESSFUL DATABASE WRITES
-    // -------------------------------------------------------------------------
+    // successful database writes
 
     @Test
     fun save_validEntry_writesToFirestore(): Unit = runBlocking {
@@ -78,7 +75,7 @@ class FirestoreWaitlistRepositoryTest {
 
         repo.save(entry)
         verify(entryDoc).set(entry)
-        Unit
+        return@runBlocking
     }
 
     @Test
@@ -87,7 +84,7 @@ class FirestoreWaitlistRepositoryTest {
 
         repo.deleteEntry(lotteryId, userId)
         verify(entryDoc).delete()
-        Unit
+        return@runBlocking
     }
 
     @Test
@@ -96,17 +93,17 @@ class FirestoreWaitlistRepositoryTest {
 
         repo.leaveWaitlist(lotteryId, userId)
         verify(entryDoc).delete()
-        Unit
+        return@runBlocking
     }
 
     @Test
     fun joinWaitlist_validParams_savesEntryAndReturnsWithTimestamps(): Unit = runBlocking {
-        // Mock getEntry returning null (user not on waitlist yet)
+        // mock getEntry returning null when user not on waitlist yet
         val missingSnap = mock(DocumentSnapshot::class.java)
         `when`(missingSnap.exists()).thenReturn(false)
         `when`(entryDoc.get()).thenReturn(Tasks.forResult(missingSnap))
 
-        // Mock count query returning 1
+        // mock count query returning 1
         val countSnap = mock(QuerySnapshot::class.java)
         `when`(countSnap.size()).thenReturn(1)
         `when`(entriesCol.get()).thenReturn(Tasks.forResult(countSnap))
@@ -138,18 +135,16 @@ class FirestoreWaitlistRepositoryTest {
         assertEquals(3, saved.partySize)
     }
 
-    // -------------------------------------------------------------------------
-    // 2. FULL WAITLISTS (CAPACITY CHECKS)
-    // -------------------------------------------------------------------------
+    // full waitlists and capacity checks
 
     @Test
     fun joinWaitlist_waitlistAtCapacity_throwsWaitlistFullException(): Unit = runBlocking {
-        // User not currently on waitlist
+        // user not currently on waitlist
         val missingSnap = mock(DocumentSnapshot::class.java)
         `when`(missingSnap.exists()).thenReturn(false)
         `when`(entryDoc.get()).thenReturn(Tasks.forResult(missingSnap))
 
-        // Existing count is 5, max capacity is 5
+        // existing count is 5 max capacity is 5
         val countSnap = mock(QuerySnapshot::class.java)
         `when`(countSnap.size()).thenReturn(5)
         `when`(entriesCol.get()).thenReturn(Tasks.forResult(countSnap))
@@ -163,7 +158,7 @@ class FirestoreWaitlistRepositoryTest {
                 rulesAccepted = true,
                 maxCapacity = 5
             )
-            fail("Expected WaitlistFullException was not thrown")
+            fail("expected WaitlistFullException was not thrown")
         } catch (e: WaitlistFullException) {
             assertTrue(e.message?.contains("5") == true)
         }
@@ -171,7 +166,7 @@ class FirestoreWaitlistRepositoryTest {
 
     @Test
     fun joinWaitlist_waitlistAtCapacity_existingUser_updatesSuccessfully(): Unit = runBlocking {
-        // User IS already on the waitlist
+        // user is already on waitlist
         val existingEntry = WaitlistEntry(
             userId = userId,
             userName = "Chitkarsh",
@@ -187,7 +182,7 @@ class FirestoreWaitlistRepositoryTest {
         val captor = ArgumentCaptor.forClass(WaitlistEntry::class.java)
         `when`(entryDoc.set(captor.capture())).thenReturn(Tasks.forResult(null))
 
-        // Should succeed even if capacity is 1
+        // should succeed even if capacity is 1
         val result = repo.joinWaitlist(
             lotteryId = lotteryId,
             userId = userId,
@@ -200,9 +195,7 @@ class FirestoreWaitlistRepositoryTest {
         assertEquals(2, result.partySize)
     }
 
-    // -------------------------------------------------------------------------
-    // 3. MISSING DATA & VALIDATION
-    // -------------------------------------------------------------------------
+    // missing data and validation
 
     @Test
     fun getEntry_documentDoesNotExist_returnsNull(): Unit = runBlocking {
@@ -239,6 +232,24 @@ class FirestoreWaitlistRepositoryTest {
     }
 
     @Test
+    fun getEntriesForLottery_validLottery_returnsEntriesSortedByJoinedAt(): Unit = runBlocking {
+        val querySnap = mock(QuerySnapshot::class.java)
+        val t1 = Timestamp(Date(100000))
+        val t2 = Timestamp(Date(200000))
+        val t3 = Timestamp(Date(300000))
+        val e1 = WaitlistEntry(userId = "first", lotteryId = lotteryId, joinedAt = t1, rulesAccepted = true)
+        val e2 = WaitlistEntry(userId = "second", lotteryId = lotteryId, joinedAt = t2, rulesAccepted = true)
+        val e3 = WaitlistEntry(userId = "third", lotteryId = lotteryId, joinedAt = t3, rulesAccepted = true)
+
+        // return unsorted from query snapshot
+        `when`(querySnap.toObjects(WaitlistEntry::class.java)).thenReturn(listOf(e3, e1, e2))
+        `when`(entriesCol.get()).thenReturn(Tasks.forResult(querySnap))
+
+        val result = repo.getEntriesForLottery(lotteryId)
+        assertEquals(listOf("first", "second", "third"), result.map { it.userId })
+    }
+
+    @Test
     fun getEntryCount_blankLotteryId_returnsZero(): Unit = runBlocking {
         assertEquals(0, repo.getEntryCount(""))
     }
@@ -263,9 +274,7 @@ class FirestoreWaitlistRepositoryTest {
         repo.joinWaitlist(lotteryId, userId, "Chitkarsh", partySize = 0, rulesAccepted = true)
     }
 
-    // -------------------------------------------------------------------------
-    // 4. FIREBASE NETWORK EXCEPTIONS & FAILURE EDGE CASES
-    // -------------------------------------------------------------------------
+    // network exceptions and failure cases
 
     @Test(expected = FirebaseFirestoreException::class)
     fun save_networkFailure_throwsException(): Unit = runBlocking {
@@ -354,7 +363,7 @@ class FirestoreWaitlistRepositoryTest {
 
         try {
             repo.observeEntry(lotteryId, userId).first()
-            fail("Expected exception was not thrown")
+            fail("expected exception was not thrown")
         } catch (e: FirebaseFirestoreException) {
             assertEquals(FirebaseFirestoreException.Code.PERMISSION_DENIED, e.code)
         }
