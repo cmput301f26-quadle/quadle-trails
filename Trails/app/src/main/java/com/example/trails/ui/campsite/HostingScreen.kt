@@ -1,8 +1,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.03.01
 // PURPOSE: Owner's home screen listing the campsites they host (Figma F01 · My campsites).
-// Outstanding issues: the Owner pill is display-only (no role switching yet); bottom nav
-//  is shared UI and not built yet.
+// Outstanding issues: the Owner pill is display-only; mode switching (US 03.11.01) is Aarav's.
 package com.example.trails.ui.campsite
 
 import androidx.annotation.StringRes

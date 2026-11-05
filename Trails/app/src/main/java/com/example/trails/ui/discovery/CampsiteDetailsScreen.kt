@@ -43,6 +43,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.AppContainer
@@ -75,11 +76,12 @@ fun CampsiteDetailsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     CampsiteDetailsContent(
-        state = state,
-        campsiteId = campsiteId,
-        onBack = { navController.popBackStack() },
-        modifier = modifier
-    )
+    state = state,
+    campsiteId = campsiteId,
+    onBack = { navController.popBackStack() },
+    navController = navController,
+    modifier = modifier
+)
 }
 
 /**
@@ -115,6 +117,7 @@ fun CampsiteDetailsContent(
     state: CampsiteDetailsUiState,
     campsiteId: String,
     onBack: () -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -137,7 +140,7 @@ fun CampsiteDetailsContent(
                     )
                 }
             is CampsiteDetailsUiState.Loaded ->
-                DetailsBody(state.campsite, campsiteId, inner)
+                DetailsBody(state.campsite, campsiteId, navController, inner)
         }
     }
 }
@@ -166,7 +169,7 @@ private fun DetailsHeader(title: String, onBack: () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailsBody(campsite: Campsite, campsiteId: String, modifier: Modifier = Modifier) {
+private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: NavController, modifier: Modifier = Modifier) {
     Column(
         modifier
             .verticalScroll(rememberScrollState())
@@ -259,8 +262,8 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, modifier: Modifi
         Section(stringResource(R.string.discovery_section_cancellation)) { Body(campsite.cancellationPolicy) }
 
         Spacer(Modifier.height(24.dp))
-        // Owned by Chitkarsh. Leave this call as it is.
-        JoinLotterySection(campsiteId)
+        // Owned by Chitkarsh, Neaz: leave this call here, don't edit inside it.
+JoinLotterySection(navController = navController, campsiteId = campsiteId)
         Spacer(Modifier.height(16.dp))
         // Owned by Zainab. Leave this call as it is.
         RatingSection(campsiteId)
@@ -352,11 +355,12 @@ object CampsiteDetailsTags {
 private fun CampsiteDetailsPreview() {
     TrailsTheme {
         CampsiteDetailsContent(
-            state = CampsiteDetailsUiState.Loaded(
-                TestCampsites.all.first { it.id == TestCampsites.BANFF_ID }
-            ),
-            campsiteId = TestCampsites.BANFF_ID,
-            onBack = {}
-        )
+    state = CampsiteDetailsUiState.Loaded(
+        TestCampsites.all.first { it.id == TestCampsites.BANFF_ID }
+    ),
+    campsiteId = TestCampsites.BANFF_ID,
+    onBack = {},
+    navController = rememberNavController()
+)
     }
 }
