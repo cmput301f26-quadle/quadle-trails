@@ -1,0 +1,309 @@
+// Comprehensive unit tests for WaitlistViewModel.
+// Tests loading, successful operations, full waitlists, missing data, and Firebase network exceptions.
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+package com.example.trails.ui.waitlist
+
+import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeWaitlistRepository
+import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.data.model.WaitlistStatus
+import com.google.firebase.Timestamp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.io.IOException
+import java.util.Date
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class WaitlistViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    private lateinit var waitlistRepo: FakeWaitlistRepository
+    private lateinit var lotteryRepo: FakeLotteryRepository
+    private lateinit var viewModel: WaitlistViewModel
+
+    private val lotteryId = "test-lottery-id"
+    private val currentUserId = "current-user-device-id"
+
+    private val testLottery = Lottery(
+        id = lotteryId,
+        ownerId = "owner-01",
+        name = "Rockies Summer 2027",
+        campsiteIds = listOf("campsite-1"),
+        waitlistCapacity = 2
+    )
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        waitlistRepo = FakeWaitlistRepository(initial = emptyList())
+        lotteryRepo = FakeLotteryRepository(initial = listOf(testLottery))
+
+        viewModel = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo
+        )
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    // -------------------------------------------------------------------------
+    // 1. INITIAL STATE & LOADING
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun initialState_userNotOnWaitlist_emitsNotWaitlisted() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is WaitlistUiState.NotWaitlisted)
+        val notWaitlisted = state as WaitlistUiState.NotWaitlisted
+        assertEquals(lotteryId, notWaitlisted.lottery?.id)
+        assertFalse(notWaitlisted.isFull)
+        assertEquals(0, notWaitlisted.entrantCount)
+        assertFalse(notWaitlisted.isRulesAccepted)
+    }
+
+    @Test
+    fun initialState_userAlreadyOnWaitlist_emitsWaitlisted() {
+        val entry = WaitlistEntry(
+            userId = currentUserId,
+            userName = "Chitkarsh",
+            lotteryId = lotteryId,
+            partySize = 2,
+            rulesAccepted = true
+        )
+        val prefilledRepo = FakeWaitlistRepository(initial = listOf(entry))
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = prefilledRepo,
+            lotteryRepository = lotteryRepo
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.Waitlisted)
+        val waitlisted = state as WaitlistUiState.Waitlisted
+        assertEquals(currentUserId, waitlisted.entry.userId)
+        assertEquals(1, waitlisted.entrantCount)
+    }
+
+    @Test
+    fun initialState_waitlistAtCapacity_emitsNotWaitlistedWithIsFullTrue() {
+        // Lottery capacity is 2, fill it with two other users
+        val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, rulesAccepted = true)
+        val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, rulesAccepted = true)
+        val fullRepo = FakeWaitlistRepository(initial = listOf(e1, e2))
+
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = fullRepo,
+            lotteryRepository = lotteryRepo
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.NotWaitlisted)
+        val notWaitlisted = state as WaitlistUiState.NotWaitlisted
+        assertTrue(notWaitlisted.isFull)
+        assertEquals(2, notWaitlisted.entrantCount)
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. RULES AGREEMENT FLAG & VALIDATION
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun onRulesAgreementChanged_updatesCheckboxState() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onRulesAgreementChanged(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as WaitlistUiState.NotWaitlisted
+        assertTrue(state.isRulesAccepted)
+
+        viewModel.onRulesAgreementChanged(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state2 = viewModel.uiState.value as WaitlistUiState.NotWaitlisted
+        assertFalse(state2.isRulesAccepted)
+    }
+
+    @Test
+    fun joinWaitlist_withoutRulesAccepted_emitsErrorState() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Attempt to join without agreeing to rules
+        viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2, rulesAccepted = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertTrue(error.message.contains("rules", ignoreCase = true))
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. SUCCESSFUL DATABASE WRITES
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun joinWaitlist_withRulesAccepted_successful_transitionsToWaitlisted() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onRulesAgreementChanged(true)
+        viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 3)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue("Expected Waitlisted state but was $state", state is WaitlistUiState.Waitlisted)
+        val waitlisted = state as WaitlistUiState.Waitlisted
+        assertEquals(currentUserId, waitlisted.entry.userId)
+        assertEquals(3, waitlisted.entry.partySize)
+        assertEquals(WaitlistStatus.WAITING, waitlisted.entry.status)
+        assertEquals(1, waitlisted.entrantCount)
+    }
+
+    @Test
+    fun leaveWaitlist_successful_transitionsToNotWaitlisted() {
+        // Start as waitlisted
+        viewModel.onRulesAgreementChanged(true)
+        viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value is WaitlistUiState.Waitlisted)
+
+        // Leave waitlist
+        viewModel.leaveWaitlist()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue("Expected NotWaitlisted state but was $state", state is WaitlistUiState.NotWaitlisted)
+        val notWaitlisted = state as WaitlistUiState.NotWaitlisted
+        assertEquals(0, notWaitlisted.entrantCount)
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. FULL WAITLISTS EDGE CASES
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun joinWaitlist_whenWaitlistFull_emitsErrorState() {
+        // Pre-fill to capacity (2)
+        val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, rulesAccepted = true)
+        val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, rulesAccepted = true)
+        val fullRepo = FakeWaitlistRepository(initial = listOf(e1, e2))
+
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = fullRepo,
+            lotteryRepository = lotteryRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.onRulesAgreementChanged(true)
+        vm.joinWaitlist(userName = "Chitkarsh", partySize = 1)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue("Expected Error state but was $state", state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertTrue(error.isFull)
+        assertTrue(error.message.contains("capacity", ignoreCase = true))
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. FIREBASE NETWORK EXCEPTIONS & FAILURE RECOVERY
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun joinWaitlist_firebaseNetworkException_emitsErrorWithoutCrash() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        waitlistRepo.failure = IOException("Firebase network unavailable")
+        viewModel.onRulesAgreementChanged(true)
+        viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertTrue(error.message.contains("network", ignoreCase = true) || error.message.contains("unavailable", ignoreCase = true))
+    }
+
+    @Test
+    fun leaveWaitlist_firebaseNetworkException_emitsErrorWithoutCrash() {
+        // Start as waitlisted
+        viewModel.onRulesAgreementChanged(true)
+        viewModel.joinWaitlist(userName = "Chitkarsh", partySize = 2)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value is WaitlistUiState.Waitlisted)
+
+        // Inject network failure
+        waitlistRepo.failure = IOException("Simulated network timeout")
+        viewModel.leaveWaitlist()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+    }
+
+    @Test
+    fun clearError_restoresValidState() {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Trigger error
+        viewModel.joinWaitlist(userName = "Chitkarsh", rulesAccepted = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value is WaitlistUiState.Error)
+
+        // Clear error
+        viewModel.clearError()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is WaitlistUiState.NotWaitlisted)
+    }
+
+    @Test
+    fun entrants_emitsAllEntrants() {
+        val t1 = Timestamp(Date(100000))
+        val t2 = Timestamp(Date(200000))
+        val e1 = WaitlistEntry(userId = "user-1", lotteryId = lotteryId, joinedAt = t1, rulesAccepted = true)
+        val e2 = WaitlistEntry(userId = "user-2", lotteryId = lotteryId, joinedAt = t2, rulesAccepted = true)
+
+        val repo = FakeWaitlistRepository(initial = listOf(e1, e2))
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            userId = currentUserId,
+            waitlistRepository = repo,
+            lotteryRepository = lotteryRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, vm.entrants.value.size)
+        assertEquals(listOf("user-1", "user-2"), vm.entrants.value.map { it.userId })
+    }
+}

@@ -5,11 +5,24 @@
 //       Show join/leave and save via WaitlistRepository.
 package com.example.trails.ui.waitlist
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 
 @Composable
-fun JoinLotterySection(campsiteId: String, modifier: Modifier = Modifier) {
-    Text(text = "Join Lottery Section", modifier = modifier)
+fun JoinLotterySection(
+    navController: NavController,
+    campsiteId: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Button(onClick = {
+            navController.navigate(WaitlistRoutes.confirmReservation(campsiteId))
+        }) {
+            Text("Join Lottery")
+        }
+    }
 }

@@ -47,6 +47,9 @@ android {
         compose = true
         resValues = true // needed for the maptiler_key resValue above
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -69,10 +72,14 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.osmdroid.android) // OpenStreetMap map pins, US 02.01.02
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockito.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.androidx.compose.material.icons.extended) // added by chitkarsh on 10/29/2026
 }
