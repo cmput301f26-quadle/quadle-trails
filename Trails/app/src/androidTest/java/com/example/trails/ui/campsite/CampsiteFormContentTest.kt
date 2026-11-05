@@ -106,6 +106,20 @@ class CampsiteFormContentTest {
     }
 
     @Test
+    fun noPhoto_showsAddPhotoBox() {
+        showInteractive()
+        composeRule.onNodeWithText("Add promo photo (optional)").assertIsDisplayed()
+    }
+
+    @Test
+    fun removePhoto_clearsImage() {
+        val fields = showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(imageUrl = "https://example.com/ridge.jpg")))
+        composeRule.onNodeWithTag(FormTags.REMOVE_PHOTO).performClick()
+        assertEquals(null, fields().imageUrl)
+        composeRule.onNodeWithText("Add promo photo (optional)").assertIsDisplayed()
+    }
+
+    @Test
     fun notFound_showsMessageAndDisablesSave() {
         var saved = false
         showInteractive(CampsiteFormUiState(isEditing = true, notFound = true), onSave = { saved = true })

@@ -1,11 +1,13 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03
 // PURPOSE: Register a campsite, or edit one when campsiteId is set (Figma · Register Campsite).
-// Outstanding issues: promo photo, availability calendar and map pin (rest of US 02.01.02)
-//  are not built yet. Figma has one "Rules & cancellation policy" box; the model has two
+// Outstanding issues: availability calendar and map pin (rest of US 02.01.02) are not built yet. Figma has one "Rules & cancellation policy" box; the model has two
 //  fields, so the form has two boxes.
 package com.example.trails.ui.campsite
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -49,6 +57,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
@@ -186,6 +195,14 @@ private fun FormFields(
         if (state.saveFailed) {
             Text(stringResource(R.string.campsite_form_save_failed), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 12.dp))
         }
+        val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) onFieldsChange(f.copy(imageUrl = uri.toString()))
+        }
+        PhotoPicker(
+            imageUrl = f.imageUrl,
+            onPick = { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onRemove = { onFieldsChange(f.copy(imageUrl = null)) }
+        )
         LabeledField(stringResource(R.string.campsite_form_name_label), f.name, { onFieldsChange(f.copy(name = it)) },
             stringResource(R.string.campsite_form_name_hint), e["name"], FormTags.NAME)
         LabeledField(stringResource(R.string.campsite_form_location_label), f.locationName, { onFieldsChange(f.copy(locationName = it)) },
@@ -204,6 +221,50 @@ private fun FormFields(
         LabeledField(stringResource(R.string.campsite_form_cancellation_label), f.cancellationPolicy, { onFieldsChange(f.copy(cancellationPolicy = it)) },
             stringResource(R.string.campsite_form_cancellation_hint), e["cancellationPolicy"],
             FormTags.CANCELLATION, minLines = 2)
+    }
+}
+
+/** Dashed "Add promo photo" box, or the chosen photo with Change and Remove (US 02.01.02). */
+@Composable
+private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    val green = MaterialTheme.colorScheme.primary
+    Column(Modifier.padding(bottom = 12.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+                .clip(shape)
+                .drawBehind {
+                    drawRoundRect(
+                        color = green,
+                        style = Stroke(width = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(16f, 10f))),
+                        cornerRadius = CornerRadius(12.dp.toPx())
+                    )
+                }
+                .clickable(onClick = onPick)
+                .testTag(FormTags.PHOTO),
+            contentAlignment = Alignment.Center
+        ) {
+            if (imageUrl != null) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = stringResource(R.string.campsite_form_photo_desc),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(stringResource(R.string.campsite_form_add_photo), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (imageUrl != null) {
+            Row {
+                TextButton(onClick = onPick) { Text(stringResource(R.string.campsite_form_change_photo)) }
+                TextButton(onClick = onRemove, modifier = Modifier.testTag(FormTags.REMOVE_PHOTO)) {
+                    Text(stringResource(R.string.campsite_form_remove_photo))
+                }
+            }
+        }
     }
 }
 
@@ -314,6 +375,8 @@ private fun TagChip(tag: String, onRemove: () -> Unit) {
 /** Test tags used by UI tests to find elements on this screen. */
 object FormTags {
     const val BACK = "form_back"
+    const val PHOTO = "form_photo"
+    const val REMOVE_PHOTO = "form_remove_photo"
     const val NAME = "form_name"
     const val LOCATION = "form_location"
     const val DESCRIPTION = "form_description"

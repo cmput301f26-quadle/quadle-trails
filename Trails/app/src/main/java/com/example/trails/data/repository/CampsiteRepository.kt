@@ -29,4 +29,12 @@ interface CampsiteRepository {
      * @return the campsite's id, newly generated when it was created.
      */
     suspend fun save(campsite: Campsite): String
+
+    /**
+     * Uploads a promo image the owner picked on the device (US 02.01.02).
+     *
+     * @param localUri the picked image, e.g. a "content://" URI as a string.
+     * @return a URL that can be stored in [Campsite.imageUrl] and shown anywhere.
+     */
+    suspend fun uploadImage(localUri: String): String
 }

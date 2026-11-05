@@ -8,12 +8,15 @@ package com.example.trails.data.firestore
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Collections
 import com.example.trails.data.repository.CampsiteRepository
+import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 /**
  * Reads and writes [Campsite]s in the [Collections.CAMPSITES] Firestore collection.
@@ -21,7 +24,8 @@ import kotlinx.coroutines.tasks.await
  * @param db the Firestore instance; defaults to the app's default instance.
  */
 class FirestoreCampsiteRepository(
-    db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    db: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) : CampsiteRepository {
 
     private val campsites = db.collection(Collections.CAMPSITES)
@@ -49,6 +53,13 @@ class FirestoreCampsiteRepository(
         val doc = if (campsite.id.isBlank()) campsites.document() else campsites.document(campsite.id)
         doc.set(campsite).await() // the @DocumentId field is not written into the document
         return doc.id
+    }
+
+    /** Uploads to Firebase Storage under campsite-images/ and returns the download URL. */
+    override suspend fun uploadImage(localUri: String): String {
+        val ref = storage.reference.child("campsite-images/${UUID.randomUUID()}.jpg")
+        ref.putFile(Uri.parse(localUri)).await()
+        return ref.downloadUrl.await().toString()
     }
 
     /** Turns a Firestore query into a Flow that re-emits on every change. */
