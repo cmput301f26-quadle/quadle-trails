@@ -78,6 +78,12 @@ class CampsiteTest {
     }
 
     @Test
+    fun validate_noPin_locationError() {
+        val e = campsite.copy(latitude = 0.0, longitude = 0.0).validate()
+        assertEquals("Drop a pin on the map", e["location"])
+    }
+
+    @Test
     fun validate_latitudeOutOfRange_locationError() {
         assertEquals(setOf("location"), campsite.copy(latitude = 90.5).validate().keys)
     }

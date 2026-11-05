@@ -185,10 +185,24 @@ private fun CampsiteDetails(
         }
 
         Section(stringResource(R.string.campsite_section_location)) {
-            LocationBox(
-                formatCoordinates(c.latitude, c.longitude)
-                    ?: stringResource(R.string.campsite_no_map_pin)
-            )
+            val coords = formatCoordinates(c.latitude, c.longitude)
+            if (coords == null) {
+                LocationBox(stringResource(R.string.campsite_no_map_pin))
+            } else {
+                val shape = RoundedCornerShape(12.dp)
+                CampsiteMap(
+                    latitude = c.latitude,
+                    longitude = c.longitude,
+                    interactive = false,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clip(shape)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                )
+                Spacer(Modifier.height(8.dp))
+                Body(coords)
+            }
         }
 
         Section(stringResource(R.string.campsite_section_tags)) {

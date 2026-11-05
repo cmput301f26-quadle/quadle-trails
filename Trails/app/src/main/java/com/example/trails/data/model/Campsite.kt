@@ -58,6 +58,7 @@ data class Campsite(
         if (pricePerNight < 0) put("pricePerNight", "Price can't be negative")
         if (rules.isBlank()) put("rules", "Rules are required")
         if (cancellationPolicy.isBlank()) put("cancellationPolicy", "Cancellation policy is required")
-        if (latitude !in -90.0..90.0 || longitude !in -180.0..180.0) put("location", "Invalid map pin")
+        if (latitude == 0.0 && longitude == 0.0) put("location", "Drop a pin on the map")
+        else if (latitude !in -90.0..90.0 || longitude !in -180.0..180.0) put("location", "Invalid map pin")
     }
 }

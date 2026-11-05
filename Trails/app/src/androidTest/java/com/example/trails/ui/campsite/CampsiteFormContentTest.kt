@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.example.trails.ui.theme.TrailsTheme
 import org.junit.Assert.assertEquals
@@ -103,6 +104,26 @@ class CampsiteFormContentTest {
         val fields = showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(tags = listOf("Lakeside", "Tennis"))))
         composeRule.onNodeWithTag(FormTags.removeTag("Tennis")).performClick()
         assertEquals(listOf("Lakeside"), fields().tags)
+    }
+
+    @Test
+    fun noPin_showsDropPinPrompt() {
+        showInteractive()
+        composeRule.onNodeWithTag(FormTags.MAP_PIN).performScrollTo()
+        composeRule.onNodeWithText("Tap to drop a pin on the map").assertIsDisplayed()
+    }
+
+    @Test
+    fun withPin_showsCoordinates() {
+        showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(latitude = 53.89, longitude = -118.01)))
+        composeRule.onNodeWithTag(FormTags.MAP_PIN).performScrollTo()
+        composeRule.onNodeWithText("53.89° N, 118.01° W").assertIsDisplayed()
+    }
+
+    @Test
+    fun pinError_shownUnderMapBox() {
+        showInteractive(CampsiteFormUiState(errors = mapOf("location" to "Drop a pin on the map")))
+        composeRule.onNodeWithText("Drop a pin on the map").performScrollTo().assertIsDisplayed()
     }
 
     @Test
