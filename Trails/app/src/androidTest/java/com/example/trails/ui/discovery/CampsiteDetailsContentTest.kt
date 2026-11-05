@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.navigation.compose.rememberNavController
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.ui.campsite.formatDateRange
 import com.example.trails.ui.theme.TrailsTheme
@@ -27,7 +28,12 @@ class CampsiteDetailsContentTest {
         onBack: () -> Unit = {}
     ) = composeRule.setContent {
         TrailsTheme {
-            CampsiteDetailsContent(state, banff.id, onBack)
+            CampsiteDetailsContent(
+                state = state,
+                campsiteId = banff.id,
+                onBack = onBack,
+                navController = rememberNavController()
+            )
         }
     }
 
@@ -47,7 +53,7 @@ class CampsiteDetailsContentTest {
             .performScrollTo()
             .assertIsDisplayed()
         composeRule.onNodeWithText("51.19° N, 115.55° W").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Join Lottery Section").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Join Lottery").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Rating Section").performScrollTo().assertIsDisplayed()
     }
 
@@ -66,7 +72,7 @@ class CampsiteDetailsContentTest {
     fun notFound_showsMessageWithoutJoinOrRating() {
         show(CampsiteDetailsUiState.NotFound)
         composeRule.onNodeWithText("This campsite no longer exists.").assertIsDisplayed()
-        composeRule.onNodeWithText("Join Lottery Section").assertDoesNotExist()
+        composeRule.onNodeWithText("Join Lottery").assertDoesNotExist()
         composeRule.onNodeWithText("Rating Section").assertDoesNotExist()
     }
 
