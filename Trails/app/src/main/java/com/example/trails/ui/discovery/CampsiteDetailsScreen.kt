@@ -76,12 +76,12 @@ fun CampsiteDetailsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     CampsiteDetailsContent(
-    state = state,
-    campsiteId = campsiteId,
-    onBack = { navController.popBackStack() },
-    navController = navController,
-    modifier = modifier
-)
+        state = state,
+        campsiteId = campsiteId,
+        onBack = { navController.popBackStack() },
+        navController = navController,
+        modifier = modifier
+    )
 }
 
 /**
@@ -263,7 +263,7 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: N
 
         Spacer(Modifier.height(24.dp))
         // Owned by Chitkarsh, Neaz: leave this call here, don't edit inside it.
-JoinLotterySection(navController = navController, campsiteId = campsiteId)
+        JoinLotterySection(navController = navController, campsiteId = campsiteId)
         Spacer(Modifier.height(16.dp))
         // Owned by Zainab. Leave this call as it is.
         RatingSection(campsiteId)
@@ -355,12 +355,12 @@ object CampsiteDetailsTags {
 private fun CampsiteDetailsPreview() {
     TrailsTheme {
         CampsiteDetailsContent(
-    state = CampsiteDetailsUiState.Loaded(
-        TestCampsites.all.first { it.id == TestCampsites.BANFF_ID }
-    ),
-    campsiteId = TestCampsites.BANFF_ID,
-    onBack = {},
-    navController = rememberNavController()
-)
+            state = CampsiteDetailsUiState.Loaded(
+                TestCampsites.all.first { it.id == TestCampsites.BANFF_ID }
+            ),
+            campsiteId = TestCampsites.BANFF_ID,
+            onBack = {},
+            navController = rememberNavController()
+        )
     }
 }
