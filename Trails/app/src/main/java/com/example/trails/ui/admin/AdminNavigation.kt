@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // USER STORIES: 01.11.01, 01.13.01, 03.04.01, 03.05.01
 // PURPOSE: Routes and nav graph for the admin screens.
-// TODO: Register new admin screens in adminGraph().
+// Outstanding issues: none.
 package com.example.trails.ui.admin
 
 import androidx.navigation.NavController
@@ -12,10 +12,12 @@ object AdminRoutes {
     const val POLICY = "policy"
     const val ADMIN_CAMPSITES = "admin_campsites"
     const val ADMIN_PROFILES = "admin_profiles"
+    const val ADMIN_HOME = "admin_home"
 }
 
 fun NavGraphBuilder.adminGraph(navController: NavController) {
     composable(AdminRoutes.POLICY) { PolicyScreen(navController) }
     composable(AdminRoutes.ADMIN_CAMPSITES) { AdminCampsitesScreen(navController) }
     composable(AdminRoutes.ADMIN_PROFILES) { AdminProfilesScreen(navController) }
+    composable(AdminRoutes.ADMIN_HOME) { AdminHomeScreen(navController) }
 }
