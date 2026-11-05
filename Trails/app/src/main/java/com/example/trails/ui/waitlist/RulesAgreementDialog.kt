@@ -173,6 +173,7 @@ fun RulesAgreementSection(
 }
 
 // helper row for displaying a single rule with icon
+// ai helped scaffold this icon and text row helper
 @Composable
 private fun RuleRow(
     icon: ImageVector,
@@ -212,12 +213,17 @@ fun ConfirmReservationScreen(
     modifier: Modifier = Modifier
 ) {
     var isChecked by remember { mutableStateOf(false) }
+    var isSubmitting by remember { mutableStateOf(false) }
     var campsiteRules by remember { mutableStateOf("Loading rules...") }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(campsiteId) {
-        val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-        campsiteRules = campsite?.rules ?: "No rules available."
+        try {
+            val campsite = AppContainer.campsiteRepository.getById(campsiteId)
+            campsiteRules = campsite?.rules ?: "No rules available."
+        } catch (_: Exception) {
+            campsiteRules = "No rules available."
+        }
     }
 
     Scaffold(
@@ -248,27 +254,38 @@ fun ConfirmReservationScreen(
                 Box(modifier = Modifier.padding(16.dp)) {
                     Button(
                         onClick = {
+                            if (isSubmitting) return@Button
+                            isSubmitting = true
                             coroutineScope.launch {
-                                val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-                                val lotteryId = campsite?.activeLotteryId
-                                if (lotteryId != null) {
-                                    val now = Timestamp(Date())
-                                    val newEntry = WaitlistEntry(
-                                        userId = CurrentUser.id(),
-                                        userName = "Current User",
-                                        lotteryId = lotteryId,
-                                        partySize = 2,
-                                        joinedAt = now,
-                                        status = WaitlistStatus.WAITING,
-                                        rulesAcceptedAt = now,
-                                        rulesAccepted = true
-                                    )
-                                    AppContainer.waitlistRepository.save(newEntry)
-                                    navController.popBackStack()
+                                try {
+                                    val campsite = AppContainer.campsiteRepository.getById(campsiteId)
+                                    val lotteryId = campsite?.activeLotteryId
+                                    if (!lotteryId.isNullOrBlank()) {
+                                        val now = Timestamp(Date())
+                                        val currentUserId = CurrentUser.id()
+                                        val userProfile = AppContainer.userRepository.getById(currentUserId)
+                                        val currentUserName = userProfile?.name?.ifBlank { null } ?: currentUserId
+                                        val newEntry = WaitlistEntry(
+                                            userId = currentUserId,
+                                            userName = currentUserName,
+                                            lotteryId = lotteryId,
+                                            partySize = 1,
+                                            joinedAt = now,
+                                            status = WaitlistStatus.WAITING,
+                                            rulesAcceptedAt = now,
+                                            rulesAccepted = true
+                                        )
+                                        AppContainer.waitlistRepository.save(newEntry)
+                                        navController.popBackStack()
+                                    }
+                                } catch (_: Exception) {
+                                    // ignore transient failure and re-enable button
+                                } finally {
+                                    isSubmitting = false
                                 }
                             }
                         },
-                        enabled = isChecked,
+                        enabled = isChecked && !isSubmitting,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("confirm_reservation_button"),

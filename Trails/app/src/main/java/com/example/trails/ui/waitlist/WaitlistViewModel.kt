@@ -12,19 +12,24 @@ import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.LotteryRepository
 import com.example.trails.data.repository.RulesNotAcceptedException
+import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistFullException
 import com.example.trails.data.repository.WaitlistRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // ui states for the waitlist screens
+// ai helped scaffold this boilerplate ui state
 sealed interface WaitlistUiState {
     // initial loading state
     data object Loading : WaitlistUiState
@@ -69,11 +74,12 @@ private data class LotteryInfo(
 )
 
 class WaitlistViewModel(
-    private val lotteryId: String,
+    private val lotteryId: String = "",
     private val userId: String = CurrentUser.id(),
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
+    private val userRepository: UserRepository = AppContainer.userRepository,
     private val campsiteId: String? = null
 ) : ViewModel() {
 
@@ -81,10 +87,12 @@ class WaitlistViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     private val _lottery = MutableStateFlow<Lottery?>(null)
     private val _campsite = MutableStateFlow<Campsite?>(null)
+    private val _activeLotteryId = MutableStateFlow(lotteryId)
 
     private val _uiState = MutableStateFlow<WaitlistUiState>(WaitlistUiState.Loading)
 
     // immutable stateflow exposed to prevent data leaks
+    // based on kotlin stateflow documentation
     val uiState: StateFlow<WaitlistUiState> = _uiState.asStateFlow()
 
     // exposed lottery details
@@ -94,7 +102,12 @@ class WaitlistViewModel(
     val campsite: StateFlow<Campsite?> = _campsite.asStateFlow()
 
     // all entrants on the waitlist sorted by join date
-    val entrants: StateFlow<List<WaitlistEntry>> = waitlistRepository.observeForLottery(lotteryId)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val entrants: StateFlow<List<WaitlistEntry>> = _activeLotteryId
+        .flatMapLatest { id ->
+            if (id.isBlank()) flowOf(emptyList())
+            else waitlistRepository.observeForLottery(id).catch { emit(emptyList()) }
+        }
         .map { list -> list.sortedWith(compareBy(nullsLast()) { it.joinedAt?.toDate() }) }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -107,11 +120,30 @@ class WaitlistViewModel(
     private fun loadData() {
         viewModelScope.launch {
             try {
-                val lottery = lotteryRepository.getById(lotteryId)
-                _lottery.value = lottery
-                val targetCampsiteId = campsiteId ?: lottery?.campsiteIds?.firstOrNull()
-                if (targetCampsiteId != null) {
-                    _campsite.value = campsiteRepository.getById(targetCampsiteId)
+                var currentLotteryId = lotteryId
+                var targetCampsiteId = campsiteId
+
+                // resolve campsite if campsite id is provided
+                if (!targetCampsiteId.isNullOrBlank()) {
+                    val campsite = campsiteRepository.getById(targetCampsiteId)
+                    _campsite.value = campsite
+                    if (currentLotteryId.isBlank()) {
+                        currentLotteryId = campsite?.activeLotteryId.orEmpty()
+                    }
+                }
+
+                // load lottery details
+                if (currentLotteryId.isNotBlank()) {
+                    val lottery = lotteryRepository.getById(currentLotteryId)
+                    _lottery.value = lottery
+
+                    if (_campsite.value == null) {
+                        val fallbackCampsiteId = lottery?.campsiteIds?.firstOrNull()
+                        if (!fallbackCampsiteId.isNullOrBlank()) {
+                            _campsite.value = campsiteRepository.getById(fallbackCampsiteId)
+                        }
+                    }
+                    _activeLotteryId.value = currentLotteryId
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to load lottery info."
@@ -119,45 +151,43 @@ class WaitlistViewModel(
         }
     }
 
+    // referenced stackoverflow for combining multiple stateflows
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeWaitlist() {
         val lotteryInfoFlow = combine(_lottery, _campsite) { lottery, campsite ->
             LotteryInfo(lottery, campsite)
         }
 
         viewModelScope.launch {
-            combine(
-                waitlistRepository.observeEntry(lotteryId, userId),
-                waitlistRepository.observeForLottery(lotteryId),
-                lotteryInfoFlow,
-                _userRulesAccepted,
-                _errorMessage
-            ) { userEntry, allEntries, info, rulesAccepted, error ->
-                val entrantCount = allEntries.size
-                val isFull = info.lottery?.waitlistCapacity?.let { entrantCount >= it } ?: false
-
-                if (error != null) {
-                    WaitlistUiState.Error(
-                        message = error,
-                        isFull = isFull,
-                        entries = allEntries
-                    )
-                } else if (userEntry != null) {
-                    WaitlistUiState.Waitlisted(
-                        entry = userEntry,
-                        lottery = info.lottery,
-                        campsite = info.campsite,
-                        entrantCount = entrantCount,
-                        entries = allEntries
-                    )
+            _activeLotteryId.flatMapLatest { currentLotteryId ->
+                if (currentLotteryId.isBlank()) {
+                    combine(
+                        flowOf<WaitlistEntry?>(null),
+                        flowOf<List<WaitlistEntry>>(emptyList()),
+                        lotteryInfoFlow,
+                        _userRulesAccepted,
+                        _errorMessage
+                    ) { userEntry, allEntries, info, rulesAccepted, error ->
+                        createUiState(userEntry, allEntries, info, rulesAccepted, error)
+                    }
                 } else {
-                    WaitlistUiState.NotWaitlisted(
-                        lottery = info.lottery,
-                        campsite = info.campsite,
-                        isFull = isFull,
-                        entrantCount = entrantCount,
-                        isRulesAccepted = rulesAccepted,
-                        entries = allEntries
-                    )
+                    combine(
+                        waitlistRepository.observeEntry(currentLotteryId, userId)
+                            .catch { e ->
+                                _errorMessage.value = e.message ?: "Network error: Failed to load waitlist data."
+                                emit(null)
+                            },
+                        waitlistRepository.observeForLottery(currentLotteryId)
+                            .catch { e ->
+                                _errorMessage.value = e.message ?: "Network error: Failed to load waitlist data."
+                                emit(emptyList())
+                            },
+                        lotteryInfoFlow,
+                        _userRulesAccepted,
+                        _errorMessage
+                    ) { userEntry, allEntries, info, rulesAccepted, error ->
+                        createUiState(userEntry, allEntries, info, rulesAccepted, error)
+                    }
                 }
             }.catch { e ->
                 _uiState.value = WaitlistUiState.Error(
@@ -166,6 +196,42 @@ class WaitlistViewModel(
             }.collect { state ->
                 _uiState.value = state
             }
+        }
+    }
+
+    private fun createUiState(
+        userEntry: WaitlistEntry?,
+        allEntries: List<WaitlistEntry>,
+        info: LotteryInfo,
+        rulesAccepted: Boolean,
+        error: String?
+    ): WaitlistUiState {
+        val entrantCount = allEntries.size
+        val isFull = info.lottery?.waitlistCapacity?.let { entrantCount >= it } ?: false
+
+        return if (error != null) {
+            WaitlistUiState.Error(
+                message = error,
+                isFull = isFull,
+                entries = allEntries
+            )
+        } else if (userEntry != null) {
+            WaitlistUiState.Waitlisted(
+                entry = userEntry,
+                lottery = info.lottery,
+                campsite = info.campsite,
+                entrantCount = entrantCount,
+                entries = allEntries
+            )
+        } else {
+            WaitlistUiState.NotWaitlisted(
+                lottery = info.lottery,
+                campsite = info.campsite,
+                isFull = isFull,
+                entrantCount = entrantCount,
+                isRulesAccepted = rulesAccepted,
+                entries = allEntries
+            )
         }
     }
 
@@ -179,7 +245,7 @@ class WaitlistViewModel(
 
     // joins the waitlist
     fun joinWaitlist(
-        userName: String = "Current User",
+        userName: String? = null,
         partySize: Int = 1,
         rulesAccepted: Boolean = _userRulesAccepted.value
     ) {
@@ -191,13 +257,23 @@ class WaitlistViewModel(
         viewModelScope.launch {
             try {
                 _errorMessage.value = null
-                val lottery = _lottery.value ?: lotteryRepository.getById(lotteryId)
-                val maxCapacity = lottery?.waitlistCapacity
+                val targetLotteryId = _activeLotteryId.value.ifBlank {
+                    _lottery.value?.id?.ifBlank { null } ?: lotteryId
+                }
+                val currentLottery = _lottery.value ?: if (targetLotteryId.isNotBlank()) lotteryRepository.getById(targetLotteryId) else null
+                val maxCapacity = currentLottery?.waitlistCapacity
+
+                // resolve user display name from user repository or param
+                val resolvedUserName = if (!userName.isNullOrBlank()) {
+                    userName
+                } else {
+                    userRepository.getById(userId)?.name?.ifBlank { null } ?: "Entrant"
+                }
 
                 waitlistRepository.joinWaitlist(
-                    lotteryId = lotteryId,
+                    lotteryId = targetLotteryId,
                     userId = userId,
-                    userName = userName,
+                    userName = resolvedUserName,
                     partySize = partySize,
                     rulesAccepted = true,
                     maxCapacity = maxCapacity
@@ -217,7 +293,10 @@ class WaitlistViewModel(
         viewModelScope.launch {
             try {
                 _errorMessage.value = null
-                waitlistRepository.leaveWaitlist(lotteryId, userId)
+                val targetLotteryId = _activeLotteryId.value.ifBlank {
+                    _lottery.value?.id?.ifBlank { null } ?: lotteryId
+                }
+                waitlistRepository.leaveWaitlist(targetLotteryId, userId)
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to leave waitlist. Please check your network connection."
             }

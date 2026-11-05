@@ -1,5 +1,6 @@
 // routes and nav graph for the waitlist screens
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// ai helped scaffold navigation route boilerplate
 package com.example.trails.ui.waitlist
 
 import androidx.navigation.NavController
@@ -20,6 +21,7 @@ object WaitlistRoutes {
     fun waitlistEntrants(lotteryId: String) = "waitlist_entrants/$lotteryId"
 }
 
+// based on android developer guide for compose navigation graph
 fun NavGraphBuilder.waitlistGraph(navController: NavController) {
     composable(WaitlistRoutes.LOTTERY_WAITLIST, arguments = listOf(requiredId("lotteryId"))) { entry ->
         LotteryWaitlistScreen(navController, lotteryId = entry.requireArg("lotteryId"))

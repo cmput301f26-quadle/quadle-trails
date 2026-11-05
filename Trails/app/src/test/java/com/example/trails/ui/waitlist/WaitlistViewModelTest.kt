@@ -1,9 +1,12 @@
 // unit tests for waitlist view model
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate these test cases
 package com.example.trails.ui.waitlist
 
+import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
+import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.model.WaitlistStatus
@@ -26,6 +29,7 @@ import java.util.Date
 @OptIn(ExperimentalCoroutinesApi::class)
 class WaitlistViewModelTest {
 
+    // referenced official coroutines test docs for standardtestdispatcher
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var waitlistRepo: FakeWaitlistRepository
@@ -316,5 +320,37 @@ class WaitlistViewModelTest {
 
         assertEquals(3, vm.entrants.value.size)
         assertEquals(listOf("user-1", "user-2", "user-3"), vm.entrants.value.map { it.userId })
+    }
+
+    @Test
+    fun loadData_campsiteIdOnly_dynamicallyResolvesLotteryAndObserves() {
+        val entry = WaitlistEntry(
+            userId = "user-campsite",
+            userName = "Live User",
+            lotteryId = lotteryId,
+            rulesAccepted = true
+        )
+        val waitlistRepo = FakeWaitlistRepository(initial = listOf(entry))
+        val campsite = Campsite(
+            id = "campsite-dynamically-resolved",
+            name = "Live Banff Campsite",
+            activeLotteryId = lotteryId
+        )
+        val campsiteRepo = FakeCampsiteRepository(initial = listOf(campsite))
+
+        val vm = WaitlistViewModel(
+            lotteryId = "",
+            campsiteId = "campsite-dynamically-resolved",
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo,
+            campsiteRepository = campsiteRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Live Banff Campsite", vm.campsite.value?.name)
+        assertEquals(lotteryId, vm.lottery.value?.id)
+        assertEquals(1, vm.entrants.value.size)
+        assertEquals("user-campsite", vm.entrants.value.first().userId)
     }
 }

@@ -44,6 +44,7 @@ class WaitlistEntrantsScreenTest {
         Dispatchers.resetMain()
     }
 
+    // ai helped scaffold timestamp parsing test helper
     @Test
     fun formatJoinedDate_validTimestamp_returnsFormattedString() {
         val date = Date(1682640000000L)
@@ -56,9 +57,10 @@ class WaitlistEntrantsScreenTest {
     @Test
     fun formatJoinedDate_nullTimestamp_returnsFallback() {
         val formatted = formatJoinedDate(null)
-        assertEquals("May 20, 2027", formatted)
+        assertEquals("—", formatted)
     }
 
+    // referenced stackoverflow for coroutines stateflow testing pattern
     @Test
     fun entrants_sortedOrderPreservedInViewModel() {
         val t1 = Timestamp(Date(1000000))

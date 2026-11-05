@@ -1,22 +1,12 @@
 // a user's entry in a lottery waitlist stored under lotteries/{id}/entries
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// ai helped scaffold this data class boilerplate
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 
-/**
- * a user's place on a lottery waitlist
- *
- * @property userId device id of the entrant and document id
- * @property userName entrant display name when joining
- * @property lotteryId id of the lottery joined
- * @property partySize number of people in the entrant's party
- * @property joinedAt when the entrant joined the waitlist
- * @property status current lottery status
- * @property rulesAcceptedAt when rules were agreed to
- * @property rulesAccepted true if rules were agreed to
- */
+// represents a user's place on a lottery waitlist
 data class WaitlistEntry(
     @DocumentId val userId: String = "",
     val userName: String = "",

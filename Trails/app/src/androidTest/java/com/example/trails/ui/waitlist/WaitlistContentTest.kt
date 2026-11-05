@@ -1,5 +1,6 @@
 // compose ui tests for waitlist content matching stories 01.01.06 01.02.01 and 01.02.02
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate compose ui test suite
 package com.example.trails.ui.waitlist
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -41,6 +42,7 @@ class WaitlistContentTest {
         waitlistCapacity = 10
     )
 
+    // adapted from official compose testing docs for setcontent
     private fun show(
         state: WaitlistUiState,
         onRulesCheckedChange: (Boolean) -> Unit = {},

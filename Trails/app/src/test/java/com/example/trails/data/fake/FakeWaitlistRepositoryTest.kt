@@ -24,6 +24,7 @@ class FakeWaitlistRepositoryTest {
     private val lotteryId = "test-lottery-id"
     private val userId = "test-user-id"
 
+    // used agent for the repetitive setup here
     @Before
     fun setUp() {
         repo = FakeWaitlistRepository(initial = emptyList())

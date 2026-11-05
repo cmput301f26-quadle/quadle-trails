@@ -1,5 +1,6 @@
 // shows waitlist entries for one lottery
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// ai helped scaffold this thin wrapper screen
 package com.example.trails.ui.waitlist
 
 import androidx.compose.runtime.Composable

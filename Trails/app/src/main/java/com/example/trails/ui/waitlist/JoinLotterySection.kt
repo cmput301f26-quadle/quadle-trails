@@ -62,6 +62,7 @@ fun JoinLotterySection(
             .fillMaxWidth()
             .testTag("join_lottery_section")
     ) {
+        // ai helped scaffold the state conditional branching here
         when (uiState) {
             is WaitlistUiState.Loading -> {
                 Row(
@@ -270,12 +271,16 @@ fun JoinLotterySection(
     var activeLotteryId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(campsiteId) {
-        val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-        val lotteryId = campsite?.activeLotteryId
-        activeLotteryId = lotteryId
-        if (lotteryId != null) {
-            val entry = AppContainer.waitlistRepository.getEntry(lotteryId, CurrentUser.id())
-            isWaitlisted = entry != null
+        try {
+            val campsite = AppContainer.campsiteRepository.getById(campsiteId)
+            val lotteryId = campsite?.activeLotteryId
+            activeLotteryId = lotteryId
+            if (!lotteryId.isNullOrBlank()) {
+                val entry = AppContainer.waitlistRepository.getEntry(lotteryId, CurrentUser.id())
+                isWaitlisted = entry != null
+            }
+        } catch (_: Exception) {
+            isWaitlisted = false
         }
     }
 

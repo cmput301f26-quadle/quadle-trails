@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,8 +63,10 @@ import com.example.trails.ui.theme.Moss
 import com.example.trails.ui.theme.Night
 import com.example.trails.ui.theme.NightSurface
 import com.example.trails.ui.theme.TrailGreen
+import com.example.trails.ui.theme.TrailsTheme
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -70,7 +74,7 @@ fun WaitlistEntrantsScreen(
     lotteryId: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: WaitlistViewModel = viewModel { WaitlistViewModel(lotteryId = lotteryId) }
+    viewModel: WaitlistViewModel = viewModel(key = lotteryId) { WaitlistViewModel(lotteryId = lotteryId) }
 ) {
     val entrants by viewModel.entrants.collectAsState()
     val lottery by viewModel.lottery.collectAsState()
@@ -104,6 +108,12 @@ fun WaitlistEntrantsContent(
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage)
+        }
+    }
 
     Scaffold(
         modifier = modifier
@@ -212,6 +222,7 @@ fun WaitlistEntrantsContent(
                     }
                 }
             } else {
+                // adapted from official compose docs for lazycolumn
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -230,6 +241,7 @@ fun WaitlistEntrantsContent(
             }
 
             // bottom notify action from figma 369:5153
+            // following compose material3 guidelines for button styling
             Button(
                 onClick = onNotifyClick,
                 modifier = Modifier
@@ -270,7 +282,7 @@ private fun LotterySummaryCard(
     val tagText = if (isFull) "WAITLIST FULL" else "WAITLIST OPEN"
     val tagColor = if (isFull) Ember else TrailGreen
     val drawFormatted = formatJoinedDate(lottery?.bookingStart ?: lottery?.registrationEnd)
-    val spots = lottery?.numWinners ?: 5
+    val spots = lottery?.numWinners ?: 0
     val closesFormatted = formatJoinedDate(lottery?.registrationEnd)
 
     Column(
@@ -393,8 +405,52 @@ fun EntrantRow(
 
 // formats timestamps into readable date format
 fun formatJoinedDate(timestamp: Timestamp?): String {
-    if (timestamp == null) return "May 20, 2027"
+    if (timestamp == null) return "—"
     val date = timestamp.toDate()
     val formatter = SimpleDateFormat("MMM d, yyyy", Locale.US)
     return formatter.format(date)
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun WaitlistEntrantsScreenPreview() {
+    TrailsTheme {
+        WaitlistEntrantsContent(
+            entrants = listOf(
+                WaitlistEntry(
+                    userId = "user-1",
+                    userName = "Maya Singh",
+                    lotteryId = "lottery-preview",
+                    partySize = 2,
+                    joinedAt = Timestamp(Date(1791648000000L)),
+                    rulesAccepted = true
+                ),
+                WaitlistEntry(
+                    userId = "user-2",
+                    userName = "Daniel Kim",
+                    lotteryId = "lottery-preview",
+                    partySize = 4,
+                    joinedAt = Timestamp(Date(1791734400000L)),
+                    rulesAccepted = true
+                ),
+                WaitlistEntry(
+                    userId = "user-3",
+                    userName = "Lena Fischer",
+                    lotteryId = "lottery-preview",
+                    partySize = 3,
+                    joinedAt = Timestamp(Date(1791820800000L)),
+                )
+            ),
+            lottery = Lottery(
+                id = "lottery-preview",
+                name = "Grande Cache Ridge · June 2027",
+                numWinners = 5,
+                waitlistCapacity = 12
+            ),
+            campsite = Campsite(
+                id = "campsite-preview",
+                name = "Grande Cache Ridge"
+            )
+        )
+    }
 }

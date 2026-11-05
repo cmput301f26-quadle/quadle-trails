@@ -1,5 +1,6 @@
 // compose ui tests for waitlist entrants screen matching user story 02.09.01
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate entrant list ui tests
 package com.example.trails.ui.waitlist
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -64,7 +65,8 @@ class WaitlistEntrantsContentTest {
         }
     }
 
-    // verifies entrants are rendered in the exact order sorted by joinedAt
+    // verifies entrants are rendered in the exact order sorted by joined at
+    // adapted from official compose testing docs for assertisdisplayed and getboundsinroot
     @Test
     fun lazyColumn_rendersEntrantsInCorrectOrder() {
         val t1 = Timestamp(Date(1000000000L))

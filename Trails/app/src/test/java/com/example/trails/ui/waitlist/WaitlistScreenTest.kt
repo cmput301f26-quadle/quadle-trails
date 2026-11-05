@@ -1,5 +1,6 @@
 // unit tests for waitlist screen logic and state bindings
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate these screen test cases
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -54,6 +55,7 @@ class WaitlistScreenTest {
         waitlistCapacity = 5
     )
 
+    // used agent for the repetitive setup here
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)

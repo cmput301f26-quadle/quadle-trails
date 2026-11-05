@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,6 +51,7 @@ import coil3.compose.AsyncImage
 import com.example.trails.data.AppContainer
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
@@ -56,6 +59,9 @@ import com.example.trails.ui.theme.Moss
 import com.example.trails.ui.theme.Night
 import com.example.trails.ui.theme.NightSurface
 import com.example.trails.ui.theme.TrailGreen
+import com.example.trails.ui.theme.TrailsTheme
+import com.google.firebase.Timestamp
+import java.util.Date
 
 // entry point connecting navigation and view model to content
 @Composable
@@ -63,14 +69,15 @@ fun WaitlistScreen(
     navController: NavController,
     campsiteId: String,
     modifier: Modifier = Modifier,
-    lotteryId: String = "sample-lottery-01",
-    viewModel: WaitlistViewModel = viewModel {
+    lotteryId: String? = null,
+    viewModel: WaitlistViewModel = viewModel(key = "$campsiteId-${lotteryId.orEmpty()}") {
         WaitlistViewModel(
-            lotteryId = lotteryId,
+            lotteryId = lotteryId ?: "",
             campsiteId = campsiteId,
             waitlistRepository = AppContainer.waitlistRepository,
             lotteryRepository = AppContainer.lotteryRepository,
-            campsiteRepository = AppContainer.campsiteRepository
+            campsiteRepository = AppContainer.campsiteRepository,
+            userRepository = AppContainer.userRepository
         )
     }
 ) {
@@ -83,6 +90,9 @@ fun WaitlistScreen(
         onLeaveClick = { viewModel.leaveWaitlist() },
         onBack = { navController.popBackStack() },
         onClearError = { viewModel.clearError() },
+        onViewEntrants = { targetLotteryId ->
+            navController.navigate(WaitlistRoutes.waitlistEntrants(targetLotteryId))
+        },
         modifier = modifier
     )
 }
@@ -97,10 +107,12 @@ fun WaitlistContent(
     onLeaveClick: () -> Unit,
     onBack: () -> Unit,
     onClearError: () -> Unit,
+    onViewEntrants: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
 
+    // referenced android dev docs for scaffold and topappbar
     Scaffold(
         topBar = {
             TopAppBar(
@@ -156,6 +168,7 @@ fun WaitlistContent(
             }
             val isRulesAccepted = (state as? WaitlistUiState.NotWaitlisted)?.isRulesAccepted ?: false
 
+            // based on android developer guide for scrollable columns
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -228,7 +241,7 @@ fun WaitlistContent(
                 // campsite identity section
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = campsite?.name ?: "Grande Cache Ridge",
+                        text = campsite?.name.orEmpty(),
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White
                     )
@@ -237,12 +250,12 @@ fun WaitlistContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = campsite?.locationName ?: "Hinton – Grande Cache, AB",
+                            text = campsite?.locationName.orEmpty(),
                             style = MaterialTheme.typography.bodySmall,
                             color = Mist,
                             modifier = Modifier.weight(1f)
                         )
-                        if (campsite != null) {
+                        if (campsite != null && campsite.pricePerNight > 0) {
                             Text(
                                 text = "$${campsite.pricePerNight.toInt()} / night",
                                 style = MaterialTheme.typography.labelLarge,
@@ -270,7 +283,7 @@ fun WaitlistContent(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = lottery?.name ?: "All May weekends · 2027",
+                        text = lottery?.name.orEmpty(),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
@@ -280,12 +293,32 @@ fun WaitlistContent(
                         style = MaterialTheme.typography.bodySmall,
                         color = Mist
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Your Preference: Up to ${campsite?.maxOccupancy ?: 4} Guests",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
+                    if (campsite != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Your Preference: Up to ${campsite.maxOccupancy} Guests",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                    }
+                    if (lottery != null && lottery.id.isNotBlank()) {
+                        val entrantCount = when (state) {
+                            is WaitlistUiState.NotWaitlisted -> state.entrantCount
+                            is WaitlistUiState.Waitlisted -> state.entrantCount
+                            else -> 0
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(
+                            onClick = { onViewEntrants(lottery.id) },
+                            modifier = Modifier.testTag("view_entrants_button")
+                        ) {
+                            Text(
+                                text = "View Entrants List ($entrantCount)",
+                                color = TrailGreen,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -321,7 +354,7 @@ fun WaitlistContent(
 
                 // embedded rules agreement section (story 02.11.01)
                 RulesAgreementSection(
-                    rulesText = campsite?.rules ?: "Quiet hours 10pm-7am. No generators. Follow fire bans.",
+                    rulesText = campsite?.rules.orEmpty(),
                     isChecked = isRulesAccepted,
                     onCheckedChange = onRulesCheckedChange
                 )
@@ -354,5 +387,73 @@ fun WaitlistContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+}
+
+// preview of waitlist screen before joining
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun WaitlistScreenNotWaitlistedPreview() {
+    TrailsTheme {
+        WaitlistContent(
+            state = WaitlistUiState.NotWaitlisted(
+                lottery = Lottery(
+                    id = "lottery-preview",
+                    name = "Summer Rockies Long Weekend",
+                    waitlistCapacity = 10
+                ),
+                campsite = Campsite(
+                    id = "campsite-preview",
+                    name = "Tunnel Mountain Site 14",
+                    locationName = "Banff, AB",
+                    pricePerNight = 42.0,
+                    rules = "Quiet hours 11pm-7am. Store all food in your vehicle."
+                ),
+                isFull = false,
+                isRulesAccepted = false,
+                entrantCount = 2
+            ),
+            onRulesCheckedChange = {},
+            onJoinClick = {},
+            onLeaveClick = {},
+            onBack = {},
+            onClearError = {}
+        )
+    }
+}
+
+// preview of waitlist screen when already in the pool
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun WaitlistScreenWaitlistedPreview() {
+    TrailsTheme {
+        WaitlistContent(
+            state = WaitlistUiState.Waitlisted(
+                entry = WaitlistEntry(
+                    userId = "user-preview",
+                    lotteryId = "lottery-preview",
+                    partySize = 2,
+                    joinedAt = Timestamp(Date()),
+                    rulesAccepted = true
+                ),
+                lottery = Lottery(
+                    id = "lottery-preview",
+                    name = "Summer Rockies Long Weekend",
+                    waitlistCapacity = 10
+                ),
+                campsite = Campsite(
+                    id = "campsite-preview",
+                    name = "Tunnel Mountain Site 14",
+                    locationName = "Banff, AB",
+                    pricePerNight = 42.0
+                ),
+                entrantCount = 3
+            ),
+            onRulesCheckedChange = {},
+            onJoinClick = {},
+            onLeaveClick = {},
+            onBack = {},
+            onClearError = {}
+        )
     }
 }

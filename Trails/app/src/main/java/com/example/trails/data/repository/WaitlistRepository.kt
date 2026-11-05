@@ -5,6 +5,7 @@ package com.example.trails.data.repository
 import com.example.trails.data.model.WaitlistEntry
 import kotlinx.coroutines.flow.Flow
 
+// based on kotlin flow documentation for repository streaming
 interface WaitlistRepository {
     // observes all entries for a lottery in real time
     fun observeForLottery(lotteryId: String): Flow<List<WaitlistEntry>>

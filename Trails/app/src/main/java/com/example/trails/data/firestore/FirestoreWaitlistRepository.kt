@@ -24,6 +24,7 @@ class FirestoreWaitlistRepository(
     private fun entriesCollection(lotteryId: String): CollectionReference =
         db.collection(Collections.LOTTERIES).document(lotteryId).collection(Collections.ENTRIES)
 
+    // adapted from official firestore docs for snapshot listener with callbackflow
     override fun observeForLottery(lotteryId: String): Flow<List<WaitlistEntry>> = callbackFlow {
         if (lotteryId.isBlank()) {
             trySend(emptyList())
@@ -35,9 +36,14 @@ class FirestoreWaitlistRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val entries = snapshot?.toObjects(WaitlistEntry::class.java).orEmpty()
-                .sortedWith(compareBy(nullsLast()) { it.joinedAt?.toDate() })
-            trySend(entries)
+            try {
+                // referenced stackoverflow for sorting firestore documents in memory by date
+                val entries = snapshot?.toObjects(WaitlistEntry::class.java).orEmpty()
+                    .sortedWith(compareBy(nullsLast()) { it.joinedAt?.toDate() })
+                trySend(entries)
+            } catch (e: Exception) {
+                close(e)
+            }
         }
         awaitClose { registration.remove() }
     }
@@ -53,12 +59,16 @@ class FirestoreWaitlistRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val entry = if (snapshot != null && snapshot.exists()) {
-                snapshot.toObject(WaitlistEntry::class.java)
-            } else {
-                null
+            try {
+                val entry = if (snapshot != null && snapshot.exists()) {
+                    snapshot.toObject(WaitlistEntry::class.java)
+                } else {
+                    null
+                }
+                trySend(entry)
+            } catch (e: Exception) {
+                close(e)
             }
-            trySend(entry)
         }
         awaitClose { registration.remove() }
     }
@@ -84,7 +94,7 @@ class FirestoreWaitlistRepository(
 
     override suspend fun save(entry: WaitlistEntry) {
         val errors = entry.validate()
-        require(errors.isEmpty()) { "invalid waitlist entry: $errors" }
+        require(errors.isEmpty()) { "Invalid waitlist entry: $errors" }
         entriesCollection(entry.lotteryId).document(entry.userId).set(entry).await()
     }
 
@@ -101,16 +111,16 @@ class FirestoreWaitlistRepository(
         rulesAccepted: Boolean,
         maxCapacity: Int?
     ): WaitlistEntry {
-        if (lotteryId.isBlank()) throw IllegalArgumentException("lottery id cannot be blank")
-        if (userId.isBlank()) throw IllegalArgumentException("user id cannot be blank")
-        if (partySize < 1) throw IllegalArgumentException("party size must be at least 1")
-        if (!rulesAccepted) throw RulesNotAcceptedException("you must accept the campsite rules before joining the waitlist")
+        if (lotteryId.isBlank()) throw IllegalArgumentException("Lottery ID cannot be blank.")
+        if (userId.isBlank()) throw IllegalArgumentException("User ID cannot be blank.")
+        if (partySize < 1) throw IllegalArgumentException("Party size must be at least 1.")
+        if (!rulesAccepted) throw RulesNotAcceptedException("You must accept the campsite rules before joining the waitlist.")
 
         val existing = getEntry(lotteryId, userId)
         if (existing == null && maxCapacity != null) {
             val currentCount = getEntryCount(lotteryId)
             if (currentCount >= maxCapacity) {
-                throw WaitlistFullException("the waitlist for this lottery has reached maximum capacity ($maxCapacity)")
+                throw WaitlistFullException("The waitlist for this lottery has reached maximum capacity ($maxCapacity).")
             }
         }
 

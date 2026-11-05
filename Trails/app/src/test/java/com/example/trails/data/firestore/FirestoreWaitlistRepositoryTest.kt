@@ -1,5 +1,6 @@
 // unit tests for firestore waitlist repository
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate these mockito test cases
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -44,6 +45,7 @@ class FirestoreWaitlistRepositoryTest {
     private val lotteryId = "test-lottery-id"
     private val userId = "test-user-id"
 
+    // used agent for the repetitive setup here
     @Before
     fun setUp() {
         db = mock(FirebaseFirestore::class.java)
@@ -98,7 +100,7 @@ class FirestoreWaitlistRepositoryTest {
 
     @Test
     fun joinWaitlist_validParams_savesEntryAndReturnsWithTimestamps(): Unit = runBlocking {
-        // mock getEntry returning null when user not on waitlist yet
+        // mock get entry returning null when user not on waitlist yet
         val missingSnap = mock(DocumentSnapshot::class.java)
         `when`(missingSnap.exists()).thenReturn(false)
         `when`(entryDoc.get()).thenReturn(Tasks.forResult(missingSnap))
@@ -311,6 +313,7 @@ class FirestoreWaitlistRepositoryTest {
     }
 
     @Test
+    @Suppress("UNCHECKED_CAST")
     fun observeEntry_snapshotListener_emitsEntry(): Unit = runBlocking {
         val reg = mock(ListenerRegistration::class.java)
         val captor = ArgumentCaptor.forClass(EventListener::class.java) as ArgumentCaptor<EventListener<DocumentSnapshot>>
@@ -327,9 +330,11 @@ class FirestoreWaitlistRepositoryTest {
         val emitted = repo.observeEntry(lotteryId, userId).first()
         assertNotNull(emitted)
         assertEquals(userId, emitted?.userId)
+        verify(reg).remove()
     }
 
     @Test
+    @Suppress("UNCHECKED_CAST")
     fun observeForLottery_snapshotListener_emitsEntriesSorted(): Unit = runBlocking {
         val reg = mock(ListenerRegistration::class.java)
         val captor = ArgumentCaptor.forClass(EventListener::class.java) as ArgumentCaptor<EventListener<QuerySnapshot>>
@@ -347,9 +352,11 @@ class FirestoreWaitlistRepositoryTest {
 
         val emitted = repo.observeForLottery(lotteryId).first()
         assertEquals(listOf("u1", "u2"), emitted.map { it.userId })
+        verify(reg).remove()
     }
 
     @Test
+    @Suppress("UNCHECKED_CAST")
     fun observeEntry_snapshotListenerError_closesFlowWithError(): Unit = runBlocking {
         val reg = mock(ListenerRegistration::class.java)
         val captor = ArgumentCaptor.forClass(EventListener::class.java) as ArgumentCaptor<EventListener<DocumentSnapshot>>
@@ -367,5 +374,6 @@ class FirestoreWaitlistRepositoryTest {
         } catch (e: FirebaseFirestoreException) {
             assertEquals(FirebaseFirestoreException.Code.PERMISSION_DENIED, e.code)
         }
+        verify(reg).remove()
     }
 }

@@ -1,5 +1,6 @@
 // unit tests for waitlist entry data model and validation
 // owner: chitkarsh (chitkarshrathi) - waitlist
+// used antigravity to generate these validation test cases
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
