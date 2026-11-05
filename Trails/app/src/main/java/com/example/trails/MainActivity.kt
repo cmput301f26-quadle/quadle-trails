@@ -1,3 +1,5 @@
+// The app's only activity: sets up edge-to-edge and shows TrailsApp.
+// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
 package com.example.trails
 
 import android.os.Bundle
@@ -5,11 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import com.example.trails.ui.navigation.AppNavGraph
+import com.example.trails.ui.navigation.TrailsApp
 import com.example.trails.ui.theme.TrailsTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,11 +19,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
         setContent {
-            TrailsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavGraph(modifier = Modifier.padding(innerPadding))
-                }
-            }
+            TrailsTheme { TrailsApp() }
         }
     }
 }

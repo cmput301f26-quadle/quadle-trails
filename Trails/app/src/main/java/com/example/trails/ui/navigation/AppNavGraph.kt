@@ -13,16 +13,18 @@ import com.example.trails.ui.discovery.DiscoveryRoutes
 import com.example.trails.ui.discovery.discoveryGraph
 import com.example.trails.ui.lottery.lotteryGraph
 import com.example.trails.ui.profile.profileGraph
+import com.example.trails.ui.shell.shellGraph
 import com.example.trails.ui.waitlist.waitlistGraph
 
 @Composable
 fun AppNavGraph(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = DiscoveryRoutes.BROWSE
 ) {
     NavHost(
         navController = navController,
-        startDestination = DiscoveryRoutes.BROWSE,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         discoveryGraph(navController)
@@ -31,5 +33,6 @@ fun AppNavGraph(
         waitlistGraph(navController)
         profileGraph(navController)
         adminGraph(navController)
+        shellGraph(navController)
     }
 }

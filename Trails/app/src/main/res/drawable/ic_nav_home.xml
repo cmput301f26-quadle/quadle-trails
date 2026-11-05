@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home tab icon (filled house), exported from the QUADLE-PROJECT Figma "Navigation / Bottom bar" component. -->
+<!-- OWNER: Zainab (zsaghir) — App shell. Drawn white; the bottom bar tints it TrailGreen (#22C55E). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Figma icon is 22x20; centred in a 24x24 box like the other tabs. -->
+    <group android:translateX="1" android:translateY="2">
+        <path
+            android:fillColor="@android:color/white"
+            android:fillType="evenOdd"
+            android:pathData="M11.5942 0.21588C11.2486 -0.071964 10.751 -0.0719594 10.4054 0.215891L0.343147 8.59684C0.0368584 8.85195 -0.0785678 9.27509 0.0547755 9.65396C0.188119 10.0328 0.541458 10.2857 0.93753 10.2857H2.39473L3.13977 18.5573C3.21338 19.3745 3.88798 20 4.69574 20H8.18769C8.53286 20 8.81268 19.7157 8.81268 19.3651V14.4859C8.81268 12.5811 10.3425 12.5811 10.6876 12.5811H11.3126C11.6578 12.5811 13.1876 12.5811 13.1876 14.4859V19.3651C13.1876 19.7157 13.4674 20 13.8126 20H17.3046C18.1124 20 18.787 19.3745 18.8606 18.5573L19.6056 10.2857H21.0625C21.4585 10.2857 21.8119 10.0328 21.9452 9.65396C22.0786 9.27507 21.9631 8.85194 21.6568 8.59683L11.5942 0.21588Z" />
+    </group>
+</vector>

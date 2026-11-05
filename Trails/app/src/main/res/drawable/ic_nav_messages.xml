@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages tab icon (chat bubble outline), exported from the QUADLE-PROJECT Figma "Navigation / Bottom bar" component. -->
+<!-- OWNER: Zainab (zsaghir) — App shell. Drawn white; the bottom bar tints it TrailGreen (#22C55E). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Figma icon is 20x20; centred in a 24x24 box like the other tabs. -->
+    <group android:translateX="2" android:translateY="2">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="@android:color/white"
+            android:strokeWidth="2"
+            android:pathData="M4.76855 2.67676C6.49446 1.44384 8.60049 0.859896 10.7148 1.02832C12.8292 1.19678 14.8163 2.10706 16.3252 3.59766C17.834 5.08825 18.7677 7.06377 18.9619 9.17578C19.1562 11.2879 18.5985 13.4008 17.3867 15.1416C16.1749 16.8824 14.3871 18.1392 12.3389 18.6904C10.2907 19.2417 8.11325 19.0518 6.19141 18.1543L6.1582 18.1387L6.12402 18.126L5.9248 18.0576C5.45585 17.9162 4.95813 17.8917 4.47559 17.9873L4.43164 17.9961L4.38867 18.0088L1.00684 18.9971L2.03711 15.8164L2.05176 15.7705L2.0625 15.7236C2.19116 15.1391 2.14146 14.529 1.9209 13.9727L1.9082 13.9395L1.89258 13.9072L1.72852 13.5459C0.947918 11.7252 0.788044 9.69383 1.28125 7.76758C1.80742 5.71281 3.04263 3.90971 4.76855 2.67676Z" />
+    </group>
+</vector>
