@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Zainab (zsaghir) — App shell -->
+<resources>
+    <!-- Bottom bar tab content descriptions. The bar is icon-only, so these are
+         what screen readers announce and what UI tests use to find each tab. -->
+    <string name="nav_home">Home</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_settings">Settings</string>
+</resources>

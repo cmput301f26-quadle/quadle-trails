@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings tab icon (gear outline), exported from the QUADLE-PROJECT Figma "Navigation / Bottom bar" component. -->
+<!-- OWNER: Zainab (zsaghir) — App shell. Drawn white; the bottom bar tints it TrailGreen (#22C55E). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.8"
+        android:pathData="M5.18262 10.4336L4.87598 10.165L3.1543 8.65625L4.58301 6.23535L6.83203 6.96191L7.20605 7.08203L7.54883 6.89062L9.61426 5.73242L9.96582 5.53516L10.0527 5.1416L10.5488 2.90039H13.4512L13.9473 5.1416L14.0342 5.53516L14.3857 5.73242L16.4512 6.89062L16.7939 7.08203L17.168 6.96191L19.416 6.23535L20.8447 8.65625L19.124 10.165L18.8174 10.4336V13.5664L19.124 13.835L20.8447 15.3428L19.416 17.7637L17.168 17.0381L16.7939 16.918L16.4512 17.1094L14.3857 18.2676L14.0342 18.4648L13.9473 18.8584L13.4512 21.0996H10.5488L10.0527 18.8584L9.96582 18.4648L9.61426 18.2676L7.54883 17.1094L7.20605 16.918L6.83203 17.0381L4.58301 17.7637L3.1543 15.3428L4.87598 13.835L5.18262 13.5664V10.4336Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M11.9993 10.0008C13.104 10.0008 14.0002 10.8964 14.0002 12.0008C14 13.105 13.1039 13.9998 11.9993 13.9998C10.8949 13.9996 9.99952 13.1049 9.99927 12.0008C9.99927 10.8966 10.8947 10.0011 11.9993 10.0008Z" />
+</vector>
