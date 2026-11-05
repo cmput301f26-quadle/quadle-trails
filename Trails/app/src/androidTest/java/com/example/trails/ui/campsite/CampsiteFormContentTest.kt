@@ -92,18 +92,52 @@ class CampsiteFormContentTest {
     @Test
     fun addTag_appearsAsChip() {
         val fields = showInteractive()
-        composeRule.onNodeWithTag(FormTags.ADD_TAG).performClick()
-        composeRule.onNodeWithTag(FormTags.TAG_INPUT).performTextInput("Lakeside")
-        composeRule.onNodeWithTag(FormTags.TAG_CONFIRM).performClick()
+        composeRule.onNodeWithTag(FormTags.ADD_TAG).performScrollTo().performClick()
+        composeRule.onNodeWithTag(FormTags.TAG_INPUT).performScrollTo().performTextInput("Lakeside")
+        composeRule.onNodeWithTag(FormTags.TAG_CONFIRM).performScrollTo().performClick()
         assertEquals(listOf("Lakeside"), fields().tags)
-        composeRule.onNodeWithText("Lakeside").assertIsDisplayed()
+        composeRule.onNodeWithText("Lakeside").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun removeTag_removesChip() {
         val fields = showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(tags = listOf("Lakeside", "Tennis"))))
-        composeRule.onNodeWithTag(FormTags.removeTag("Tennis")).performClick()
+        composeRule.onNodeWithTag(FormTags.removeTag("Tennis")).performScrollTo().performClick()
         assertEquals(listOf("Lakeside"), fields().tags)
+    }
+
+    @Test
+    fun calendar_opensOnSelectedMonth() {
+        showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(availableDays = setOf(dayKey(2027, 5, 7)))))
+        composeRule.onNodeWithTag(CalendarTags.MONTH).performScrollTo()
+        composeRule.onNodeWithText("May 2027").assertIsDisplayed()
+    }
+
+    @Test
+    fun tapDay_marksItAvailable() {
+        val fields = showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(availableDays = setOf(dayKey(2027, 5, 7)))))
+        composeRule.onNodeWithTag(CalendarTags.day(dayKey(2027, 5, 10))).performScrollTo().performClick()
+        assertEquals(setOf(dayKey(2027, 5, 7), dayKey(2027, 5, 10)), fields().availableDays)
+    }
+
+    @Test
+    fun tapSelectedDay_unmarksIt() {
+        val fields = showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(availableDays = setOf(dayKey(2027, 5, 7)))))
+        composeRule.onNodeWithTag(CalendarTags.day(dayKey(2027, 5, 7))).performScrollTo().performClick()
+        assertEquals(emptySet<Long>(), fields().availableDays)
+    }
+
+    @Test
+    fun nextArrow_showsNextMonth() {
+        showInteractive(CampsiteFormUiState(fields = CampsiteFormFields(availableDays = setOf(dayKey(2027, 5, 7)))))
+        composeRule.onNodeWithTag(CalendarTags.NEXT).performScrollTo().performClick()
+        composeRule.onNodeWithText("June 2027").assertIsDisplayed()
+    }
+
+    @Test
+    fun noDays_errorShown() {
+        showInteractive(CampsiteFormUiState(errors = mapOf("availability" to "Pick at least one available date")))
+        composeRule.onNodeWithText("Pick at least one available date").performScrollTo().assertIsDisplayed()
     }
 
     @Test

@@ -1,7 +1,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03
 // PURPOSE: Register a campsite, or edit one when campsiteId is set (Figma · Register Campsite).
-// Outstanding issues: availability calendar is not built yet. Figma has one "Rules & cancellation policy" box; the model has two
+// Outstanding issues: none. Figma has one "Rules & cancellation policy" box; the model has two
 //  fields, so the form has two boxes.
 package com.example.trails.ui.campsite
 
@@ -215,6 +215,9 @@ private fun FormFields(
             LabeledField(stringResource(R.string.campsite_form_price_label), f.pricePerNight, { onFieldsChange(f.copy(pricePerNight = it)) },
                 stringResource(R.string.campsite_form_price_hint), e["pricePerNight"], FormTags.PRICE, Modifier.weight(1f), KeyboardType.Decimal)
         }
+        AvailabilityField(f.availableDays, e["availability"]) { key ->
+            onFieldsChange(f.copy(availableDays = toggleDay(f.availableDays, key)))
+        }
         var pickingPin by rememberSaveable { mutableStateOf(false) }
         MapPinField(f.latitude, f.longitude, e["location"], onClick = { pickingPin = true })
         if (pickingPin) {
@@ -277,6 +280,28 @@ private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> U
                     Text(stringResource(R.string.campsite_form_remove_photo))
                 }
             }
+        }
+    }
+}
+
+/** "Availability *" label, editable calendar, and the error if no day is picked. */
+@Composable
+private fun AvailabilityField(days: Set<Long>, error: String?, onToggleDay: (Long) -> Unit) {
+    Column(Modifier.padding(bottom = 12.dp)) {
+        Text(stringResource(R.string.campsite_form_availability_label), style = MaterialTheme.typography.titleSmall)
+        Spacer(Modifier.height(6.dp))
+        AvailabilityCalendar(
+            availableDays = days,
+            onToggleDay = onToggleDay,
+            hint = stringResource(R.string.campsite_calendar_hint)
+        )
+        if (error != null) {
+            Text(
+                error,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
         }
     }
 }
