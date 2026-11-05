@@ -25,7 +25,8 @@ class CampsiteFormFieldsTest {
             rules = "Quiet hours 10pm-7am. No generators.",
             cancellationPolicy = "Free cancellation up to 7 days before arrival.",
             latitude = 53.89,
-            longitude = -118.01
+            longitude = -118.01,
+            availableDays = setOf(dayKey(2027, 5, 7), dayKey(2027, 5, 8))
         )
     }
 
@@ -83,7 +84,10 @@ class CampsiteFormFieldsTest {
     @Test
     fun toCampsite_blankRequiredText_allReported() {
         val e = errors(CampsiteFormFields(maxOccupancy = "4", pricePerNight = "30").toCampsite(null, "owner-01"))
-        assertEquals(setOf("name", "locationName", "description", "rules", "cancellationPolicy", "location"), e.keys)
+        assertEquals(
+            setOf("name", "locationName", "description", "rules", "cancellationPolicy", "location", "availability"),
+            e.keys
+        )
     }
 
     @Test
@@ -149,6 +153,31 @@ class CampsiteFormFieldsTest {
     @Test
     fun changedFrom_movedPin_reportsLocation() {
         assertEquals(setOf("location"), fields.copy(latitude = 50.0).changedFrom(fields))
+    }
+
+    @Test
+    fun toCampsite_noDays_availabilityError() {
+        val e = errors(fields.copy(availableDays = emptySet()).toCampsite(null, "owner-01"))
+        assertEquals("Pick at least one available date", e["availability"])
+    }
+
+    @Test
+    fun toCampsite_consecutiveDays_oneRange() {
+        val c = valid(fields.toCampsite(null, "owner-01"))
+        assertEquals(1, c.availability.size)
+        assertEquals(fields.availableDays, availabilityToDays(c.availability))
+    }
+
+    @Test
+    fun from_availability_prefillsDays() {
+        val c = Campsite(availability = daysToAvailability(setOf(dayKey(2027, 5, 14))))
+        assertEquals(setOf(dayKey(2027, 5, 14)), CampsiteFormFields.from(c).availableDays)
+    }
+
+    @Test
+    fun changedFrom_toggledDay_reportsAvailability() {
+        val edited = fields.copy(availableDays = fields.availableDays + dayKey(2027, 5, 9))
+        assertEquals(setOf("availability"), edited.changedFrom(fields))
     }
 
     @Test

@@ -41,6 +41,14 @@
     <string name="campsite_form_occupancy_hint">e.g. 8</string>
     <string name="campsite_form_price_label">Price per night *</string>
     <string name="campsite_form_price_hint">e.g. $65</string>
+    <string name="campsite_form_availability_label">Availability *</string>
+    <string name="campsite_calendar_hint">Tap dates to mark them available</string>
+    <plurals name="campsite_calendar_open">
+        <item quantity="one">%1$d day open this month</item>
+        <item quantity="other">%1$d days open this month</item>
+    </plurals>
+    <string name="campsite_calendar_prev">Previous month</string>
+    <string name="campsite_calendar_next">Next month</string>
     <string name="campsite_form_map_label">Map location *</string>
     <string name="campsite_form_map_hint">Tap to drop a pin on the map</string>
     <string name="campsite_form_map_change">Tap to move the pin</string>

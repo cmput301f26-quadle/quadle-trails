@@ -76,6 +76,20 @@ class OwnerCampsiteContentTest {
     }
 
     @Test
+    fun availability_showsCalendarWithOpenCount() {
+        val days = setOf(dayKey(2027, 5, 7), dayKey(2027, 5, 8), dayKey(2027, 5, 9))
+        show(OwnerCampsiteUiState.Loaded(hinton.copy(availability = daysToAvailability(days)), null))
+        composeRule.onNodeWithText("May 2027").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("3 days open this month").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun noAvailability_showsPlaceholder() {
+        show()
+        composeRule.onNodeWithText("No dates added yet").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun tapEdit_callsOnEdit() {
         var edited = false
         show(onEdit = { edited = true })

@@ -1,7 +1,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.01.04
 // PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner).
-// Outstanding issues: availability shows date ranges as text (no calendar yet); the
+// Outstanding issues: booked days aren't shown on the calendar (no reservations yet); the
 //  "Published" chip is always shown (no published flag in the model); the QR code card is
 //  US 02.02.01, final part.
 package com.example.trails.ui.campsite
@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -179,9 +180,9 @@ private fun CampsiteDetails(
         Section(stringResource(R.string.campsite_section_description)) { Body(c.description) }
 
         Section(stringResource(R.string.campsite_section_availability)) {
-            val ranges = c.availability.mapNotNull { formatDateRange(it) }
-            if (ranges.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
-            else ranges.forEach { Body(it) }
+            val days = remember(c.availability) { availabilityToDays(c.availability) }
+            if (days.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
+            else AvailabilityCalendar(days)
         }
 
         Section(stringResource(R.string.campsite_section_location)) {
