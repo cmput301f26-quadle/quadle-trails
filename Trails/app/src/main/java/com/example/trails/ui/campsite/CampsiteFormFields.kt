@@ -1,7 +1,7 @@
 // Form logic for registering and editing a campsite (US 02.01.01, 02.01.02 tags, 02.01.03).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Plain Kotlin with no Android or coroutine types, so it is unit-tested directly.
-// Outstanding issues: availability and map pin are not part of the form yet (US 02.01.02).
+// Outstanding issues: availability is not part of the form yet.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.Campsite
@@ -19,6 +19,8 @@ import com.example.trails.data.model.Campsite
  * @property rules house rules.
  * @property cancellationPolicy refund and cancellation terms.
  * @property imageUrl the promo photo: an uploaded URL, a just-picked local URI, or null for none.
+ * @property latitude map pin latitude, or null if no pin has been dropped.
+ * @property longitude map pin longitude, or null if no pin has been dropped.
  */
 data class CampsiteFormFields(
     val name: String = "",
@@ -29,21 +31,28 @@ data class CampsiteFormFields(
     val tags: List<String> = emptyList(),
     val rules: String = "",
     val cancellationPolicy: String = "",
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 ) {
     companion object {
         /** Pre-fills the form from an existing campsite, for editing (US 02.01.03). */
-        fun from(campsite: Campsite) = CampsiteFormFields(
-            name = campsite.name,
-            locationName = campsite.locationName,
-            description = campsite.description,
-            maxOccupancy = campsite.maxOccupancy.toString(),
-            pricePerNight = formatPrice(campsite.pricePerNight),
-            tags = campsite.tags,
-            rules = campsite.rules,
-            cancellationPolicy = campsite.cancellationPolicy,
-            imageUrl = campsite.imageUrl
-        )
+        fun from(campsite: Campsite): CampsiteFormFields {
+            val hasPin = campsite.latitude != 0.0 || campsite.longitude != 0.0
+            return CampsiteFormFields(
+                name = campsite.name,
+                locationName = campsite.locationName,
+                description = campsite.description,
+                maxOccupancy = campsite.maxOccupancy.toString(),
+                pricePerNight = formatPrice(campsite.pricePerNight),
+                tags = campsite.tags,
+                rules = campsite.rules,
+                cancellationPolicy = campsite.cancellationPolicy,
+                imageUrl = campsite.imageUrl,
+                latitude = campsite.latitude.takeIf { hasPin },
+                longitude = campsite.longitude.takeIf { hasPin }
+            )
+        }
 
         /** "65" for whole dollars, "42.50" otherwise. */
         fun formatPrice(price: Double): String =
@@ -63,7 +72,7 @@ sealed interface CampsiteFormResult {
 /**
  * Builds the campsite to save from the form.
  *
- * When editing, fields the form doesn't show (id, owner, map pin, availability,
+ * When editing, fields the form doesn't show (id, owner, availability,
  * rating, active lottery) are kept from [base].
  *
  * @param base the campsite being edited, or null when registering a new one.
@@ -83,7 +92,9 @@ fun CampsiteFormFields.toCampsite(base: Campsite?, ownerId: String): CampsiteFor
         tags = tags,
         rules = rules.trim(),
         cancellationPolicy = cancellationPolicy.trim(),
-        imageUrl = imageUrl
+        imageUrl = imageUrl,
+        latitude = latitude ?: 0.0,
+        longitude = longitude ?: 0.0
     )
 
     val errors = candidate.validate().toMutableMap()
@@ -121,4 +132,5 @@ fun CampsiteFormFields.changedFrom(old: CampsiteFormFields): Set<String> = build
     if (pricePerNight != old.pricePerNight) add("pricePerNight")
     if (rules != old.rules) add("rules")
     if (cancellationPolicy != old.cancellationPolicy) add("cancellationPolicy")
+    if (latitude != old.latitude || longitude != old.longitude) add("location")
 }

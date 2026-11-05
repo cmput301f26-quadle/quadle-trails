@@ -1,7 +1,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03
 // PURPOSE: Register a campsite, or edit one when campsiteId is set (Figma · Register Campsite).
-// Outstanding issues: availability calendar and map pin (rest of US 02.01.02) are not built yet. Figma has one "Rules & cancellation policy" box; the model has two
+// Outstanding issues: availability calendar is not built yet. Figma has one "Rules & cancellation policy" box; the model has two
 //  fields, so the form has two boxes.
 package com.example.trails.ui.campsite
 
@@ -215,6 +215,19 @@ private fun FormFields(
             LabeledField(stringResource(R.string.campsite_form_price_label), f.pricePerNight, { onFieldsChange(f.copy(pricePerNight = it)) },
                 stringResource(R.string.campsite_form_price_hint), e["pricePerNight"], FormTags.PRICE, Modifier.weight(1f), KeyboardType.Decimal)
         }
+        var pickingPin by rememberSaveable { mutableStateOf(false) }
+        MapPinField(f.latitude, f.longitude, e["location"], onClick = { pickingPin = true })
+        if (pickingPin) {
+            MapPinPickerDialog(
+                initialLatitude = f.latitude,
+                initialLongitude = f.longitude,
+                onConfirm = { lat, lng ->
+                    onFieldsChange(f.copy(latitude = lat, longitude = lng))
+                    pickingPin = false
+                },
+                onDismiss = { pickingPin = false }
+            )
+        }
         TagsSection(f.tags) { onFieldsChange(f.copy(tags = it)) }
         LabeledField(stringResource(R.string.campsite_form_rules_label), f.rules, { onFieldsChange(f.copy(rules = it)) },
             stringResource(R.string.campsite_form_rules_hint), e["rules"], FormTags.RULES, minLines = 2)
@@ -264,6 +277,52 @@ private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> U
                     Text(stringResource(R.string.campsite_form_remove_photo))
                 }
             }
+        }
+    }
+}
+
+/** "Map location *" box: shows the pin's coordinates, or prompts to drop one. Tapping opens the picker. */
+@Composable
+private fun MapPinField(latitude: Double?, longitude: Double?, error: String?, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    val borderColour = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+    val coords = if (latitude != null && longitude != null) formatCoordinates(latitude, longitude) else null
+    Column(Modifier.padding(bottom = 12.dp)) {
+        Text(stringResource(R.string.campsite_form_map_label), style = MaterialTheme.typography.titleSmall)
+        Spacer(Modifier.height(6.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(96.dp)
+                .clip(shape)
+                .border(1.dp, borderColour, shape)
+                .clickable(onClick = onClick)
+                .testTag(FormTags.MAP_PIN),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("📍", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    coords ?: stringResource(R.string.campsite_form_map_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (coords != null) {
+                    Text(
+                        stringResource(R.string.campsite_form_map_change),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+        if (error != null) {
+            Text(
+                error,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
         }
     }
 }
@@ -377,6 +436,7 @@ object FormTags {
     const val BACK = "form_back"
     const val PHOTO = "form_photo"
     const val REMOVE_PHOTO = "form_remove_photo"
+    const val MAP_PIN = "form_map_pin"
     const val NAME = "form_name"
     const val LOCATION = "form_location"
     const val DESCRIPTION = "form_description"

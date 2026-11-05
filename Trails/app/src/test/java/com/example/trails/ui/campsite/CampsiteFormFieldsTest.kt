@@ -23,7 +23,9 @@ class CampsiteFormFieldsTest {
             pricePerNight = "65",
             tags = listOf("Lakeside", "Cookhouse"),
             rules = "Quiet hours 10pm-7am. No generators.",
-            cancellationPolicy = "Free cancellation up to 7 days before arrival."
+            cancellationPolicy = "Free cancellation up to 7 days before arrival.",
+            latitude = 53.89,
+            longitude = -118.01
         )
     }
 
@@ -81,7 +83,7 @@ class CampsiteFormFieldsTest {
     @Test
     fun toCampsite_blankRequiredText_allReported() {
         val e = errors(CampsiteFormFields(maxOccupancy = "4", pricePerNight = "30").toCampsite(null, "owner-01"))
-        assertEquals(setOf("name", "locationName", "description", "rules", "cancellationPolicy"), e.keys)
+        assertEquals(setOf("name", "locationName", "description", "rules", "cancellationPolicy", "location"), e.keys)
     }
 
     @Test
@@ -115,6 +117,38 @@ class CampsiteFormFieldsTest {
         val existing = Campsite(id = "c1", ownerId = "owner-01", imageUrl = "https://example.com/ridge.jpg")
         val c = valid(fields.copy(imageUrl = null).toCampsite(existing, "owner-01"))
         assertEquals(null, c.imageUrl)
+    }
+
+    @Test
+    fun toCampsite_pin_copiedToCampsite() {
+        val c = valid(fields.toCampsite(null, "owner-01"))
+        assertEquals(53.89, c.latitude, 0.0)
+        assertEquals(-118.01, c.longitude, 0.0)
+    }
+
+    @Test
+    fun toCampsite_noPin_locationError() {
+        val e = errors(fields.copy(latitude = null, longitude = null).toCampsite(null, "owner-01"))
+        assertEquals(setOf("location"), e.keys)
+    }
+
+    @Test
+    fun from_campsiteWithPin_prefillsPin() {
+        val f = CampsiteFormFields.from(Campsite(latitude = 51.18, longitude = -115.55))
+        assertEquals(51.18, f.latitude!!, 0.0)
+        assertEquals(-115.55, f.longitude!!, 0.0)
+    }
+
+    @Test
+    fun from_campsiteWithoutPin_nullPin() {
+        val f = CampsiteFormFields.from(Campsite())
+        assertEquals(null, f.latitude)
+        assertEquals(null, f.longitude)
+    }
+
+    @Test
+    fun changedFrom_movedPin_reportsLocation() {
+        assertEquals(setOf("location"), fields.copy(latitude = 50.0).changedFrom(fields))
     }
 
     @Test
