@@ -1,4 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OWNER: Neaz (NeazMZ06) — Search & Discovery — strings for ui/discovery. -->
 <resources>
+    <string name="discovery_browse_title">Browse</string>
+
+    <!-- Campsite card (US 01.01.04) -->
+    <string name="discovery_card_location_guests">%1$s · Up to %2$d guests</string>
+    <string name="discovery_card_price">$%1$s / night</string>
+    <string name="discovery_card_rating">★ %1$s</string>
+    <string name="discovery_card_no_rating">No ratings yet</string>
+    <plurals name="discovery_rating_count">
+        <item quantity="one">%1$d rating</item>
+        <item quantity="other">%1$d ratings</item>
+    </plurals>
+
+    <!-- Campsite details (US 01.01.05) -->
+    <string name="discovery_details_title">Campsite Details</string>
+    <string name="discovery_details_not_found">This campsite no longer exists.</string>
+    <string name="discovery_stat_capacity">Capacity</string>
+    <string name="discovery_stat_per_night">Per night</string>
+    <string name="discovery_stat_rating">★ %1$s</string>
+    <string name="discovery_price">$%1$s</string>
+    <string name="discovery_section_about">About</string>
+    <string name="discovery_section_availability">Availability</string>
+    <string name="discovery_no_availability">No dates listed</string>
+    <string name="discovery_section_location">Location</string>
+    <string name="discovery_no_map_pin">No map pin yet</string>
+    <string name="discovery_section_amenities">Amenities</string>
+    <string name="discovery_no_amenities">No amenities listed</string>
+    <string name="discovery_section_rules">Rules</string>
+    <string name="discovery_section_cancellation">Cancellation policy</string>
+    <string name="discovery_photo_desc">Campsite photo</string>
 </resources>
