@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -61,6 +62,7 @@ import com.example.trails.ui.theme.Moss
 import com.example.trails.ui.theme.Night
 import com.example.trails.ui.theme.NightSurface
 import com.example.trails.ui.theme.TrailGreen
+import com.example.trails.ui.theme.TrailsTheme
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -318,5 +320,19 @@ fun ConfirmReservationScreen(
                 onCheckedChange = { isChecked = it }
             )
         }
+    }
+}
+
+// preview of rules agreement section with policies and checkbox
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun RulesAgreementSectionPreview() {
+    TrailsTheme {
+        RulesAgreementSection(
+            rulesText = "Quiet hours 10pm-7am. No generators allowed. Keep all food stored in vehicles.",
+            isChecked = false,
+            onCheckedChange = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

@@ -1,4 +1,4 @@
-// main waitlist screen matching story 01.01.06 pixel for pixel
+// main waitlist screen matching story 01.01.06
 // owner: chitkarsh (chitkarshrathi) - waitlist
 package com.example.trails.ui.waitlist
 

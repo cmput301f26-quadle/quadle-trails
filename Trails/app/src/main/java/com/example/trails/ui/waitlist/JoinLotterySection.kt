@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -48,6 +49,9 @@ import com.example.trails.ui.theme.Moss
 import com.example.trails.ui.theme.Night
 import com.example.trails.ui.theme.NightSurface
 import com.example.trails.ui.theme.TrailGreen
+import com.example.trails.ui.theme.TrailsTheme
+import com.google.firebase.Timestamp
+import java.util.Date
 
 // reusable component representing stories 01.02.01 and 01.02.02
 @Composable
@@ -312,5 +316,66 @@ fun JoinLotterySection(
                 Text("Join Lottery")
             }
         }
+    }
+}
+
+// preview of join lottery section when open and not joined
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun JoinLotterySectionPreview_Open() {
+    TrailsTheme {
+        JoinLotterySection(
+            uiState = WaitlistUiState.NotWaitlisted(
+                isFull = false,
+                isRulesAccepted = false,
+                entrantCount = 3
+            ),
+            onJoinClick = {},
+            onLeaveClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+// preview of join lottery section when already on waitlist
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun JoinLotterySectionPreview_Waitlisted() {
+    TrailsTheme {
+        JoinLotterySection(
+            uiState = WaitlistUiState.Waitlisted(
+                entry = WaitlistEntry(
+                    userId = "user-preview",
+                    userName = "Chitkarsh",
+                    lotteryId = "lottery-preview",
+                    partySize = 2,
+                    joinedAt = Timestamp(Date(1791648000000L)),
+                    rulesAccepted = true,
+                    rulesAcceptedAt = Timestamp(Date(1791648000000L))
+                ),
+                entrantCount = 4
+            ),
+            onJoinClick = {},
+            onLeaveClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+// preview of join lottery section when waitlist is full
+@Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
+@Composable
+private fun JoinLotterySectionPreview_Full() {
+    TrailsTheme {
+        JoinLotterySection(
+            uiState = WaitlistUiState.NotWaitlisted(
+                isFull = true,
+                isRulesAccepted = false,
+                entrantCount = 10
+            ),
+            onJoinClick = {},
+            onLeaveClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
