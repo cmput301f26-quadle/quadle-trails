@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,8 +30,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,6 +49,7 @@ import com.example.trails.data.AppContainer
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
@@ -115,27 +113,10 @@ fun WaitlistContent(
     // referenced android dev docs for scaffold and topappbar
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Join Lottery",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("waitlist_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Night)
+            TrailsTopBar(
+                title = "Join Lottery",
+                onBack = onBack,
+                backTestTag = "waitlist_back_button"
             )
         },
         containerColor = Night,

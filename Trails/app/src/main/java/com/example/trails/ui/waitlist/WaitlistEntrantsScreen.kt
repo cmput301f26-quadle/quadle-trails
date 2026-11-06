@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
@@ -30,14 +29,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
@@ -122,30 +119,10 @@ fun WaitlistEntrantsContent(
         containerColor = Night,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Waitlist",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("waitlist_entrants_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Night
-                )
+            TrailsTopBar(
+                title = "Waitlist",
+                onBack = onBack,
+                backTestTag = "waitlist_entrants_back_button"
             )
         }
     ) { innerPadding ->
