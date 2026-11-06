@@ -1,6 +1,7 @@
-// compose ui tests for waitlist entrants screen matching user story 02.09.01
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate entrant list ui tests
+// Compose UI test suite validating waitlist entrants screen rendering, cards, and actions (UI Controller tests).
+// implements US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +22,10 @@ import org.junit.Rule
 import org.junit.Test
 import java.util.Date
 
+/**
+ * Compose UI test suite validating [WaitlistEntrantsContent] entrant list ordering,
+ * empty states, and header count displays.
+ */
 class WaitlistEntrantsContentTest {
 
     @get:Rule

@@ -1,6 +1,7 @@
-// unit tests for firestore waitlist repository
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate these mockito test cases
+// Unit test suite for FirestoreWaitlistRepository verifying collections and CRUD logic (Repository pattern).
+// implements US 01.02.01, US 01.02.02, US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -33,6 +34,10 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.util.Date
 
+/**
+ * Unit test suite for [FirestoreWaitlistRepository], verifying Firestore collection references,
+ * document parsing, real-time snapshot listeners, capacity enforcement, and CRUD operations.
+ */
 class FirestoreWaitlistRepositoryTest {
 
     private lateinit var db: FirebaseFirestore

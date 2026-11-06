@@ -1,5 +1,7 @@
-// join and leave lottery section for campsite waitlists
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// Reusable UI component composable rendering controls to join and leave lottery waitlists (UI Component pattern).
+// implements US 01.02.01, US 01.02.02
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -54,6 +56,18 @@ import com.google.firebase.Timestamp
 import java.util.Date
 
 // reusable component representing stories 01.02.01 and 01.02.02
+/**
+ * Embedded section rendering the interactive join or leave controls for a lottery waitlist.
+ *
+ * Observes [uiState] to display appropriate loading indicators, entrant counts,
+ * capacity limits, rules agreement status, or error messages.
+ * Triggers [onJoinClick] when the entrant clicks to join, and [onLeaveClick] when the entrant requests removal.
+ *
+ * @param uiState the current waitlist UI state to display.
+ * @param onJoinClick callback triggered when the user attempts to enter the lottery waitlist pool.
+ * @param onLeaveClick callback triggered when the user requests to leave the waitlist.
+ * @param modifier optional [Modifier] for layout adjustments.
+ */
 @Composable
 fun JoinLotterySection(
     uiState: WaitlistUiState,
@@ -273,6 +287,16 @@ private fun NotWaitlistedContent(
 }
 
 // campsite details button hidden when the campsite has no active lottery
+/**
+ * Button embedded on the campsite details screen to navigate to or launch the waitlist flow.
+ *
+ * Observes asynchronous loading of the campsite's active lottery and the current user's waitlist status.
+ * Triggers navigation to the waitlist screen via [navController] if an active lottery exists.
+ *
+ * @param navController navigation controller used to transition to the waitlist screen.
+ * @param campsiteId identifier of the campsite being viewed.
+ * @param modifier optional [Modifier] for layout adjustments.
+ */
 @Composable
 fun JoinLotterySection(
     navController: NavController,

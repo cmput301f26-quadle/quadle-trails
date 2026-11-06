@@ -1,6 +1,7 @@
-// unit tests for waitlist view model
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate these test cases
+// Unit test suite verifying WaitlistViewModel state flows, capacity checks, and operations (MVVM pattern).
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -26,6 +27,10 @@ import org.junit.Test
 import java.io.IOException
 import java.util.Date
 
+/**
+ * Unit test suite for [WaitlistViewModel], validating waitlist state flows,
+ * capacity checks, rules acceptance, error retention, and Firestore integration.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WaitlistViewModelTest {
 

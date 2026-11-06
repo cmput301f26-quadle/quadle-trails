@@ -1,4 +1,7 @@
-// owner: shared —
+// Shared reusable top app bar component providing consistent navigation and actions across screens (UI Component pattern).
+// implements US 01.01.06, US 01.02.01, US 02.09.01
+// Outstanding issues: None
+// OWNER: shared — created by Chitkarsh (chitkarshrathi)
 package com.example.trails.ui.common
 
 import androidx.compose.foundation.clickable
@@ -34,6 +37,26 @@ import com.example.trails.ui.theme.TrailGreen
 import com.example.trails.ui.theme.TrailsTheme
 
 // shared top bar with standard string title and back navigation
+/**
+ * Shared top app bar composable providing consistent typography, navigation icons, and action items.
+ *
+ * Observes [title], optional [subtitle], action buttons, and back button configuration.
+ * Triggers [onBack] when the navigation icon is clicked, and [onAction] when the action label is tapped.
+ *
+ * @param title text displayed as the primary screen title.
+ * @param modifier optional [Modifier] for top bar layout adjustments.
+ * @param onBack optional callback invoked when the user taps the back navigation icon; omitted if null.
+ * @param backTestTag optional test tag assigned to the back button icon.
+ * @param backContentDescription accessibility description for the back button icon.
+ * @param useChevron if true, renders a chevron left icon instead of the standard back arrow.
+ * @param subtitle optional secondary text rendered below the primary title.
+ * @param actionLabel optional text button displayed on the right edge of the top bar.
+ * @param onAction callback invoked when the [actionLabel] text is clicked.
+ * @param actionTestTag optional test tag assigned to the action text button.
+ * @param actions composable slot for rendering additional icon buttons or menu items on the right.
+ * @param containerColor background color for the app bar surface.
+ * @param contentColor color applied to title text and navigation icons.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrailsTopBar(
@@ -85,6 +108,25 @@ fun TrailsTopBar(
 }
 
 // flexible top bar overload allowing custom composable title content
+/**
+ * Flexible top app bar composable supporting arbitrary custom composable title content.
+ *
+ * Observes custom [titleContent], action slots, and navigation parameters.
+ * Triggers [onBack] when the navigation icon is tapped, and [onAction] when the action label is clicked.
+ *
+ * @param titleContent composable lambda rendering the title content.
+ * @param modifier optional [Modifier] for top bar layout adjustments.
+ * @param onBack optional callback invoked when the back icon is tapped.
+ * @param backTestTag optional test tag assigned to the back button.
+ * @param backContentDescription accessibility description for the back navigation icon.
+ * @param useChevron if true, renders a chevron icon instead of an arrow icon.
+ * @param actionLabel optional text button displayed on the right.
+ * @param onAction callback invoked when the action label is clicked.
+ * @param actionTestTag optional test tag for the action label.
+ * @param actions composable slot for rendering right-aligned action elements.
+ * @param containerColor background color for the top bar surface.
+ * @param contentColor color applied to the navigation icons and title container.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrailsTopBar(

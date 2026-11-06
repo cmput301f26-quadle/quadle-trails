@@ -1,5 +1,7 @@
-// screen displaying sorted entrants for a lottery
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// UI Controller composable displaying the list of sorted entrants enrolled on a lottery waitlist (UI Controller in MVVM).
+// implements US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -66,6 +68,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Screen displaying the list of all entrants enrolled in a lottery's waitlist.
+ *
+ * Observes [WaitlistViewModel.entrants], [WaitlistViewModel.lottery], [WaitlistViewModel.campsite], and [WaitlistViewModel.uiState].
+ * Triggers [onBack] when back navigation is requested.
+ *
+ * @param lotteryId the identifier of the lottery whose entrants are shown.
+ * @param onBack callback triggered to navigate back to the previous screen.
+ * @param modifier optional [Modifier] for screen styling.
+ * @param viewModel scoped [WaitlistViewModel] instance managing waitlist state.
+ */
 @Composable
 fun WaitlistEntrantsScreen(
     lotteryId: String,
@@ -92,6 +105,21 @@ fun WaitlistEntrantsScreen(
     )
 }
 
+/**
+ * Stateless layout displaying the list of entrants, occupancy stats, and notification actions.
+ *
+ * Observes [entrants], [lottery], [campsite], [isLoading], and displays [errorMessage] in a snackbar.
+ * Triggers [onBack] when navigating back and [onNotifyClick] when tapping notification actions.
+ *
+ * @param entrants sorted list of [WaitlistEntry] items enrolled in the lottery.
+ * @param lottery optional [Lottery] details for header info.
+ * @param campsite optional [Campsite] details for header info.
+ * @param isLoading whether entrant data is currently being fetched.
+ * @param errorMessage error message to display in the snackbar, if present.
+ * @param onBack callback triggered on back navigation.
+ * @param onNotifyClick callback triggered to notify entrants.
+ * @param modifier optional [Modifier] for layout adjustments.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaitlistEntrantsContent(
