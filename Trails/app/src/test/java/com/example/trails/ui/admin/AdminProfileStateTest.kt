@@ -1,13 +1,16 @@
-// Unit tests for buildAdminProfileState() and the admin Profile page text helpers (US 03.05.01).
+// Unit tests for buildAdminProfileState() and the admin Profile page text helpers (US 03.05.01, 03.02.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
+import com.example.trails.data.model.WaitlistEntry
 import com.google.firebase.Timestamp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Calendar
@@ -112,5 +115,64 @@ class AdminProfileStateTest {
     fun initials_blank_questionMark() {
         assertEquals("?", profileInitials(""))
         assertEquals("?", profileInitials("   "))
+    }
+
+    // This checks that the signed-in admin's own profile is marked as theirs, so it can't be removed.
+    @Test
+    fun self_isSelfTrue() {
+        val state = buildAdminProfileState(maya, campsites, currentUserId = "device-maya")
+        assertTrue((state as AdminProfileUiState.Loaded).isSelf)
+    }
+
+    // This checks that someone else's profile is not marked as the admin's own.
+    @Test
+    fun otherUser_isSelfFalse() {
+        val state = buildAdminProfileState(maya, campsites, currentUserId = "device-zainab")
+        assertFalse((state as AdminProfileUiState.Loaded).isSelf)
+    }
+
+    // This checks that the lottery entry count only includes this user's waitlist entries.
+    @Test
+    fun entryCount_matchesWaitlist() {
+        val entries = listOf(
+            WaitlistEntry(userId = "device-maya", lotteryId = "summer"),
+            WaitlistEntry(userId = "device-maya", lotteryId = "fall"),
+            WaitlistEntry(userId = "device-priya", lotteryId = "summer")
+        )
+        val state = buildAdminProfileState(maya, campsites, entries)
+        assertEquals(2, (state as AdminProfileUiState.Loaded).lotteryEntryCount)
+    }
+
+    // This checks the dialog message for an owner with campsites and several lottery entries.
+    @Test
+    fun removeMessage_ownerWithCampsites() {
+        assertEquals(
+            "Maya Singh loses access to Quadle. Their 2 campsites and 3 lottery entries are removed. " +
+                "This can't be undone.",
+            removeProfileMessage("Maya Singh", 2, 3)
+        )
+    }
+
+    // This checks that an entrant with no campsites gets a message without the campsites part.
+    @Test
+    fun removeMessage_entrantNoCampsites() {
+        assertEquals(
+            "Priya Sharma loses access to Quadle. Their 4 lottery entries are removed. This can't be undone.",
+            removeProfileMessage("Priya Sharma", 0, 4)
+        )
+    }
+
+    // This checks that counts of one use the singular "1 campsite" and "1 lottery entry".
+    @Test
+    fun removeMessage_singular() {
+        assertEquals(
+            "Maya Singh loses access to Quadle. Their 1 campsite and 1 lottery entry are removed. " +
+                "This can't be undone.",
+            removeProfileMessage("Maya Singh", 1, 1)
+        )
+        assertEquals(
+            "Priya Sharma loses access to Quadle. Their 1 lottery entry is removed. This can't be undone.",
+            removeProfileMessage("Priya Sharma", 0, 1)
+        )
     }
 }

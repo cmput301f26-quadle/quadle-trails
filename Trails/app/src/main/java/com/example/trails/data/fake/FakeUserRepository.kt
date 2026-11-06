@@ -25,4 +25,8 @@ class FakeUserRepository(initial: List<User> = TestUsers.all) : UserRepository {
     override suspend fun save(user: User) {
         users.update { list -> list.filterNot { it.deviceId == user.deviceId } + user }
     }
+
+    override suspend fun delete(deviceId: String) {
+        users.update { list -> list.filterNot { it.deviceId == deviceId } }
+    }
 }
