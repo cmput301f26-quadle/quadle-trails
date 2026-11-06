@@ -24,4 +24,20 @@
     <string name="admin_campsites_search_hint">Search campsites or owners</string>
     <string name="admin_campsites_empty">No campsites yet</string>
     <string name="admin_campsites_no_match">No campsites match your search</string>
+
+    <!-- Rating section and Rate campsite sheet (US 01.13.01) -->
+    <string name="rating_rate_button">Rate this campsite</string>
+    <string name="rating_edit_button">Edit rating</string>
+    <string name="rating_your_rating">Your rating</string>
+    <string name="rating_thanks">Thanks for your rating</string>
+    <string name="rating_stars_desc">%1$d out of 5 stars</string>
+    <string name="rating_sheet_title">How was your experience?</string>
+    <string name="rating_star_button_desc">Rate %1$d out of 5</string>
+    <string name="rating_tap_star">Tap a star to choose your rating</string>
+    <string name="rating_review_label">Review (optional)</string>
+    <string name="rating_review_counter">%1$d / %2$d</string>
+    <string name="rating_review_helper">Share your experience of the campsite. Keep your review respectful and leave out personal information.</string>
+    <string name="rating_submit">Submit rating</string>
+    <string name="rating_cancel">Cancel</string>
+    <string name="rating_error">Couldn\'t save your rating. Please try again.</string>
 </resources>
