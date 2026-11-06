@@ -12,6 +12,7 @@ import com.example.trails.ui.navigation.requiredId
 
 object AdminRoutes {
     const val POLICY = "policy"
+    const val GUIDELINES = "guidelines"
     const val ADMIN_CAMPSITES = "admin_campsites"
     const val ADMIN_PROFILES = "admin_profiles"
     const val ADMIN_HOME = "admin_home"
@@ -23,6 +24,7 @@ object AdminRoutes {
 
 fun NavGraphBuilder.adminGraph(navController: NavController) {
     composable(AdminRoutes.POLICY) { PolicyScreen(navController) }
+    composable(AdminRoutes.GUIDELINES) { GuidelinesScreen(navController) }
     composable(AdminRoutes.ADMIN_CAMPSITES) { AdminCampsitesScreen(navController) }
     composable(AdminRoutes.ADMIN_PROFILES) { AdminProfilesScreen(navController) }
     composable(AdminRoutes.ADMIN_HOME) { AdminHomeScreen(navController) }

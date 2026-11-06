@@ -11,7 +11,6 @@ package com.example.trails.ui.admin
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,8 +42,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.trails.R
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
@@ -108,7 +105,14 @@ fun AdminProfileContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { AdminProfileHeader(onBack) }
+        topBar = {
+            TrailsTopBar(
+                title = stringResource(R.string.admin_profile_title),
+                onBack = onBack,
+                backTestTag = AdminProfileTags.BACK,
+                backContentDescription = stringResource(R.string.admin_profiles_back)
+            )
+        }
     ) { padding ->
         Box(
             Modifier
@@ -143,32 +147,6 @@ fun AdminProfileContent(
                 }
             }
         }
-    }
-}
-
-/** Green back arrow and the "Profile" title, matching the Profiles list header. */
-@Composable
-private fun AdminProfileHeader(onBack: () -> Unit) {
-    val backLabel = stringResource(R.string.admin_profiles_back)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack)
-                .semantics { contentDescription = backLabel }
-                .testTag(AdminProfileTags.BACK),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("‹", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.admin_profile_title), style = MaterialTheme.typography.titleLarge)
     }
 }
 
