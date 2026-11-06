@@ -192,7 +192,8 @@ private fun DetailsHeader(title: String, onBack: () -> Unit) {
 /**
  * Scrollable campsite details, followed by the rating section.
  *
- * The join section is included only when [Campsite.activeLotteryId] is set.
+ * The join button is included only when [Campsite.activeLotteryId] is set.
+ * That id is passed through, so the button does not wait on another campsite read.
  * The live map is skipped in the Compose preview, where osmdroid has no storage.
  * On an emulator or device the map is shown.
  *
@@ -298,7 +299,11 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: N
         Spacer(Modifier.height(24.dp))
         // No lottery means there is nothing to join. The section itself also checks.
         if (!campsite.activeLotteryId.isNullOrBlank()) {
-            JoinLotterySection(navController = navController, campsiteId = campsiteId)
+            JoinLotterySection(
+                navController = navController,
+                campsiteId = campsiteId,
+                knownLotteryId = campsite.activeLotteryId
+            )
         }
         Spacer(Modifier.height(16.dp))
         // Owned by Zainab. Leave this call as it is.

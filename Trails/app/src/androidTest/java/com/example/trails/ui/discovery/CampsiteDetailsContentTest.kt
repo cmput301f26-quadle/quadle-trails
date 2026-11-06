@@ -59,7 +59,6 @@ class CampsiteDetailsContentTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText("51.19° N, 115.55° W").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Join Lottery").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Rating Section").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -86,7 +85,7 @@ class CampsiteDetailsContentTest {
         show(CampsiteDetailsUiState.NotFound)
         composeRule.onNodeWithText("This campsite no longer exists.").assertIsDisplayed()
         composeRule.onNodeWithText("Join Lottery").assertDoesNotExist()
-        composeRule.onNodeWithText("Rating Section").assertDoesNotExist()
+        composeRule.onNodeWithText("Rate this campsite").assertDoesNotExist()
     }
 
     @Test

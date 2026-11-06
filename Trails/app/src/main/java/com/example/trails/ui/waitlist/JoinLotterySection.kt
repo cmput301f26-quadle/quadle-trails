@@ -286,44 +286,39 @@ private fun NotWaitlistedContent(
     }
 }
 
-// campsite details button hidden when the campsite has no active lottery
+// Campsite details button. Hidden when the campsite has no active lottery.
 /**
  * Button embedded on the campsite details screen to navigate to or launch the waitlist flow.
  *
- * Observes asynchronous loading of the campsite's active lottery and the current user's waitlist status.
- * Triggers navigation to the waitlist screen via [navController] if an active lottery exists.
+ * The button is shown from [knownLotteryId], which the details page already loaded.
+ * A second read only checks whether the current user is already on that waitlist.
+ * If that read fails, the button stays "Join Lottery" instead of disappearing.
  *
  * @param navController navigation controller used to transition to the waitlist screen.
  * @param campsiteId identifier of the campsite being viewed.
+ * @param knownLotteryId lottery id already loaded with the campsite. Blank or null hides the button.
  * @param modifier optional [Modifier] for layout adjustments.
  */
 @Composable
 fun JoinLotterySection(
     navController: NavController,
     campsiteId: String,
+    knownLotteryId: String? = null,
     modifier: Modifier = Modifier
 ) {
     var isWaitlisted by remember { mutableStateOf(false) }
-    var activeLotteryId by remember { mutableStateOf<String?>(null) }
-    var loaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(campsiteId) {
+    LaunchedEffect(campsiteId, knownLotteryId) {
+        if (knownLotteryId.isNullOrBlank()) return@LaunchedEffect
         try {
-            val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-            val lotteryId = campsite?.activeLotteryId
-            activeLotteryId = lotteryId
-            if (!lotteryId.isNullOrBlank()) {
-                val entry = AppContainer.waitlistRepository.getEntry(lotteryId, CurrentUser.id())
-                isWaitlisted = entry != null
-            }
+            val entry = AppContainer.waitlistRepository.getEntry(knownLotteryId, CurrentUser.id())
+            isWaitlisted = entry != null
         } catch (_: Exception) {
             isWaitlisted = false
-        } finally {
-            loaded = true
         }
     }
 
-    if (!loaded || activeLotteryId.isNullOrBlank()) return
+    if (knownLotteryId.isNullOrBlank()) return
 
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         if (isWaitlisted) {
