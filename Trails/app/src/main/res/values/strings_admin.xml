@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OWNER: Zainab (zsaghir) — Admin, Ratings & Policy — strings for ui/admin. -->
 <resources>
+    <!-- Admin Profiles screen (US 03.05.01) -->
+    <string name="admin_profiles_title">Profiles</string>
+    <string name="admin_profiles_back">Back</string>
+    <string name="admin_profiles_search_hint">Search by name or email</string>
+    <string name="admin_profiles_filter_all">All</string>
+    <string name="admin_profiles_filter_owners">Owners</string>
+    <string name="admin_profiles_filter_entrants">Entrants</string>
+    <string name="admin_profiles_filter_admins">Admins</string>
+    <string name="admin_profiles_sort_az">A–Z</string>
+    <string name="admin_profiles_empty">No profiles yet</string>
+    <string name="admin_profiles_no_match">No profiles match</string>
 </resources>
