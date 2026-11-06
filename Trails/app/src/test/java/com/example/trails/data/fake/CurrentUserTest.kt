@@ -32,6 +32,21 @@ class CurrentUserTest {
     }
 
     @Test
+    fun useSampleUser_switchesTheCurrentUser() {
+        CurrentUser.useSampleUser(TestUsers.ADMIN_ID)
+        assertEquals(TestUsers.ADMIN_ID, CurrentUser.id())
+        assertEquals(TestUsers.ADMIN_ID, CurrentUser.session.value)
+    }
+
+    @Test
+    fun useSampleUser_isIgnoredOnceARealProviderIsInstalled() {
+        CurrentUser.install(SequenceProvider("uid-1"))
+        CurrentUser.useSampleUser(TestUsers.ADMIN_ID)
+        assertEquals("", CurrentUser.id())
+        assertNull(CurrentUser.session.value)
+    }
+
+    @Test
     fun withNoProviderInstalled_usesTheSampleEntrant() {
         assertEquals(TestUsers.ENTRANT_ID, CurrentUser.id())
     }

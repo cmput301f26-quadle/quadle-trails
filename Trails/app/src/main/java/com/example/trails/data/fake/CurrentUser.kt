@@ -61,6 +61,22 @@ object CurrentUser {
         provider.deleteIdentity()
     }
 
+    /** True while the app runs as a sample user, so testers can switch between them. */
+    val canUseSampleUsers: Boolean
+        get() = provider is FixedDeviceIdProvider
+
+    /**
+     * Runs the app as one of the sample users in [TestUsers], so every role can be
+     * tested without changing code. Ignored once a real identity provider is installed.
+     *
+     * @param id the sample user's device id.
+     */
+    fun useSampleUser(id: String) {
+        if (!canUseSampleUsers) return
+        provider = FixedDeviceIdProvider(id)
+        _session.value = id
+    }
+
     /** Ends the session, so the identity gate establishes a new one. */
     fun endSession() {
         _session.value = null
