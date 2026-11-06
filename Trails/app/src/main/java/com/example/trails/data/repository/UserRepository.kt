@@ -13,4 +13,11 @@ interface UserRepository {
     fun observe(deviceId: String): Flow<User?>
     suspend fun getById(deviceId: String): User?
     suspend fun save(user: User)
+
+    /**
+     * Deletes the user profile with [deviceId]; does nothing if it doesn't exist (US 03.02.01).
+     *
+     * @param deviceId device id of the user whose profile should be deleted.
+     */
+    suspend fun delete(deviceId: String)
 }
