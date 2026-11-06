@@ -26,17 +26,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -66,7 +59,6 @@ import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.ui.discovery.DiscoveryRoutes
-import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -145,11 +137,13 @@ fun AdminCampsiteContent(
                         onRemove = { showDialog = true }
                     )
                     if (showDialog || removeState.removing) {
-                        RemoveCampsiteDialog(
+                        AdminRemoveDialog(
+                            title = stringResource(R.string.admin_campsite_remove_title),
                             message = removeCampsiteMessage(
                                 state.campsite.name, state.lotteryCount, state.entryCount
                             ),
                             removing = removeState.removing,
+                            tags = AdminCampsiteTags.dialogTags,
                             onCancel = { showDialog = false },
                             onRemove = {
                                 showDialog = false
@@ -244,18 +238,11 @@ private fun CampsiteDetails(
                     .testTag(AdminCampsiteTags.ERROR)
             )
         }
-        // Muted red: a tinted fill with red text, so it reads as destructive without shouting.
-        Button(
-            onClick = onRemove,
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Ember.copy(alpha = 0.15f), contentColor = Ember),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .testTag(AdminCampsiteTags.REMOVE_BUTTON)
-        ) {
-            Text(stringResource(R.string.admin_campsite_remove))
-        }
+        AdminRemoveButton(
+            label = stringResource(R.string.admin_campsite_remove),
+            tag = AdminCampsiteTags.REMOVE_BUTTON,
+            onClick = onRemove
+        )
     }
 }
 
@@ -306,48 +293,6 @@ private fun InfoRow(label: String, value: String, tag: String) {
     }
 }
 
-/**
- * "Remove campsite?" confirmation with a trash icon, Cancel and a Remove button in the theme's green.
- *
- * @param message the body text from [removeCampsiteMessage].
- * @param removing true while the removal runs; both buttons are disabled and it can't be dismissed.
- * @param onCancel called when Cancel is tapped or the dialog is dismissed.
- * @param onRemove called when Remove is tapped.
- */
-@Composable
-private fun RemoveCampsiteDialog(
-    message: String,
-    removing: Boolean,
-    onCancel: () -> Unit,
-    onRemove: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = { if (!removing) onCancel() },
-        icon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = Ember) },
-        title = { Text(stringResource(R.string.admin_campsite_remove_title)) },
-        text = { Text(message, modifier = Modifier.testTag(AdminCampsiteTags.DIALOG_MESSAGE)) },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onCancel,
-                enabled = !removing,
-                modifier = Modifier.testTag(AdminCampsiteTags.DIALOG_CANCEL)
-            ) {
-                Text(stringResource(R.string.admin_campsite_remove_cancel))
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onRemove,
-                enabled = !removing,
-                modifier = Modifier.testTag(AdminCampsiteTags.DIALOG_REMOVE)
-            ) {
-                Text(stringResource(R.string.admin_campsite_remove_confirm))
-            }
-        },
-        modifier = Modifier.testTag(AdminCampsiteTags.DIALOG)
-    )
-}
-
 /** Test tags used by UI tests to find elements on this screen. */
 object AdminCampsiteTags {
     const val BACK = "admin_campsite_back"
@@ -364,6 +309,9 @@ object AdminCampsiteTags {
     const val DIALOG_MESSAGE = "admin_campsite_dialog_message"
     const val DIALOG_CANCEL = "admin_campsite_dialog_cancel"
     const val DIALOG_REMOVE = "admin_campsite_dialog_remove"
+
+    /** The dialog's tags, bundled for [AdminRemoveDialog]. */
+    internal val dialogTags = AdminRemoveDialogTags(DIALOG, DIALOG_MESSAGE, DIALOG_CANCEL, DIALOG_REMOVE)
 }
 
 /** Design-time preview of the sample Banff campsite, for comparing against Scenario 8. */
