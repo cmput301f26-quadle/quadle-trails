@@ -49,8 +49,8 @@ fun routeFor(tab: BottomNavTab, mode: Role): String = when (tab) {
 }
 
 /**
- * Which tab to highlight for the screen being shown. Profile and app policy
- * count as Settings; every other screen counts as Home.
+ * Which tab to highlight for the screen being shown. Profile, app policy and
+ * camping guidelines count as Settings; every other screen counts as Home.
  *
  * @param route the current route pattern (e.g. `NavDestination.route`), or null if none.
  * @return the selected tab, or null when there is no route.
@@ -62,6 +62,7 @@ fun selectedTab(route: String?): BottomNavTab? = when (route) {
     ShellRoutes.SETTINGS,
     ProfileRoutes.PROFILE,
     ProfileRoutes.EDIT_PROFILE,
-    AdminRoutes.POLICY -> BottomNavTab.SETTINGS
+    AdminRoutes.POLICY,
+    AdminRoutes.GUIDELINES -> BottomNavTab.SETTINGS
     else -> BottomNavTab.HOME
 }

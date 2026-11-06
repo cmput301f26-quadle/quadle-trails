@@ -9,7 +9,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import com.example.trails.ui.navigation.TrailsApp
 import com.example.trails.ui.theme.TrailsTheme
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
