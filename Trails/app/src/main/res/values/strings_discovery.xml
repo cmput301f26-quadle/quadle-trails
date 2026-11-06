@@ -34,18 +34,43 @@
     <!-- Results list (US 01.01.03) -->
     <string name="discovery_no_campsites">No campsites to show.</string>
     <string name="discovery_no_match">No campsites match.</string>
+    <string name="discovery_no_match_help">Try a different place, dates, or number of guests.</string>
+    <string name="discovery_search_results">Search results</string>
+    <string name="discovery_edit_filters">Edit filters</string>
+    <string name="discovery_reset_all">Reset all filters</string>
+    <plurals name="discovery_matching_count">
+        <item quantity="one">%d matching campsite</item>
+        <item quantity="other">%d matching campsites</item>
+    </plurals>
 
     <!-- Keyword search (US 01.01.01) -->
     <string name="discovery_search_hint">Search campsites</string>
+    <string name="discovery_clear_search">Clear search</string>
+    <string name="discovery_open_filters">Filters</string>
+    <string name="discovery_search_place">Search a place instead</string>
+    <string name="discovery_see_area">See campsites in this area</string>
+    <plurals name="discovery_search_count">
+        <item quantity="one">%1$d result for \"%2$s\"</item>
+        <item quantity="other">%1$d results for \"%2$s\"</item>
+    </plurals>
 
     <!-- Filters (US 01.01.02) -->
+    <string name="discovery_filters_title">Filters</string>
     <string name="discovery_filter_location">Location</string>
     <string name="discovery_filter_location_hint">City or park</string>
     <string name="discovery_filter_guests">Guests</string>
-    <string name="discovery_filter_guests_hint">At least</string>
-    <string name="discovery_filter_arrive">Arrive</string>
-    <string name="discovery_filter_leave">Leave</string>
+    <string name="discovery_filter_guests_hint">Any</string>
+    <string name="discovery_filter_arrive">Check-in</string>
+    <string name="discovery_filter_leave">Check-out</string>
     <string name="discovery_filter_clear_dates">Clear dates</string>
+    <string name="discovery_apply_filters">Apply filters</string>
+    <string name="discovery_reset_filters">Reset filters</string>
+    <string name="discovery_date_note">Check-out must be after check-in. Results show campsites whose open dates overlap this range.</string>
+    <string name="discovery_chip_guests">%1$s guests</string>
     <string name="discovery_date_ok">OK</string>
     <string name="discovery_date_cancel">Cancel</string>
+
+    <!-- Summary preview (US 01.01.04) -->
+    <string name="discovery_view_details">View details</string>
+    <string name="discovery_lottery_note">Lottery entry, not a reservation</string>
 </resources>
