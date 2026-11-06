@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OWNER: Zainab (zsaghir) — Admin, Ratings & Policy — strings for ui/admin. -->
 <resources>
+    <!-- Admin Campsites screen (US 03.04.01) -->
+    <string name="admin_campsites_title">Campsites</string>
+    <string name="admin_campsites_back">Back</string>
+    <string name="admin_campsites_search_hint">Search campsites or owners</string>
+    <string name="admin_campsites_empty">No campsites yet</string>
+    <string name="admin_campsites_no_match">No campsites match your search</string>
 </resources>
