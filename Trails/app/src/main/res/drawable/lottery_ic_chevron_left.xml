@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Skanda (skandarajeev) — Lottery Setup. Back chevron from Figma "Navigation / Header". -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M13.75,16.5L8.25,11L13.75,5.5"
+        android:strokeWidth="1.8"
+        android:strokeColor="#22C55E"
+        android:strokeLineCap="round" />
+</vector>

@@ -1,4 +1,213 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- OWNER: Skanda (skandarajeev) — Lottery Setup — strings for ui/lottery. -->
+<!-- OWNER: Skanda (skandarajeev) — Lottery Setup — strings for ui/lottery. Wording follows the Figma mockups. -->
 <resources>
+    <!-- Shared -->
+    <string name="lottery_back">Back</string>
+    <string name="lottery_edit">Edit</string>
+    <string name="lottery_change">Change</string>
+    <string name="lottery_cancel">Cancel</string>
+    <string name="lottery_done">Done</string>
+    <string name="lottery_ok">OK</string>
+    <string name="lottery_auto">Auto</string>
+    <string name="lottery_decrease">Decrease</string>
+    <string name="lottery_increase">Increase</string>
+    <string name="lottery_not_found">This lottery no longer exists.</string>
+    <string name="lottery_range">%1$s  →  %2$s</string>
+    <string name="lottery_range_compact">%1$s → %2$s</string>
+    <string name="lottery_dot_join">%1$s · %2$s</string>
+    <string name="lottery_list_separator">, </string>
+    <plurals name="lottery_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="lottery_hours">%d h</string>
+    <string name="lottery_days_hours">%1$s %2$s</string>
+    <plurals name="lottery_count_campsites">
+        <item quantity="one">%d campsite</item>
+        <item quantity="other">%d campsites</item>
+    </plurals>
+    <plurals name="lottery_count_winners">
+        <item quantity="one">%d winner</item>
+        <item quantity="other">%d winners</item>
+    </plurals>
+    <plurals name="lottery_count_entrants">
+        <item quantity="one">%d entrant</item>
+        <item quantity="other">%d entrants</item>
+    </plurals>
+
+    <!-- New lottery wizard (Figma F07–F16) -->
+    <string name="lottery_new_title">New lottery</string>
+    <string name="lottery_step">Step %1$d of 3 · %2$s</string>
+    <string name="lottery_step_campsites">Campsites</string>
+    <string name="lottery_step_dates">Dates</string>
+    <string name="lottery_step_winners">Winners</string>
+    <string name="lottery_next">Next</string>
+    <plurals name="lottery_next_campsites">
+        <item quantity="one">Next · %d campsite</item>
+        <item quantity="other">Next · %d campsites</item>
+    </plurals>
+    <string name="lottery_to_review">Review</string>
+
+    <string name="lottery_campsites_heading">Which campsites are in this lottery?</string>
+    <string name="lottery_campsites_hint">Pick one or more. Winners choose from these when they book.</string>
+    <string name="lottery_campsites_required">Select at least one campsite to continue.</string>
+    <string name="lottery_campsites_none">You have no campsites yet. Add one on the Campsites tab first.</string>
+    <string name="lottery_campsite_location_guests">%1$s · Up to %2$d guests</string>
+    <string name="lottery_campsite_taken">Already in %1$s</string>
+
+    <string name="lottery_dates_heading">When does it run?</string>
+    <string name="lottery_dates_hint">People enter during registration. Winners are drawn automatically when it closes, then they book.</string>
+    <string name="lottery_timeline_registration">Registration</string>
+    <string name="lottery_timeline_draw">Draw</string>
+    <string name="lottery_timeline_booking">Booking</string>
+    <string name="lottery_not_set">Not set</string>
+    <string name="lottery_dash">—</string>
+    <string name="lottery_check_dates">Check dates</string>
+    <string name="lottery_registration_period">Registration period</string>
+    <string name="lottery_registration_choose">Choose when entries open and close</string>
+    <string name="lottery_registration_draw_note">Winners are drawn automatically at close · %1$s</string>
+    <string name="lottery_booking_period">Booking period</string>
+    <string name="lottery_booking_choose">Choose when winners can book</string>
+    <string name="lottery_booking_needs_registration">Set registration first.</string>
+    <string name="lottery_booking_hint">Opens when registration closes or later.</string>
+    <string name="lottery_booking_time_to_book">Winners have %1$s to book.</string>
+
+    <string name="lottery_sheet_opens">Opens</string>
+    <string name="lottery_sheet_closes">Closes</string>
+    <string name="lottery_sheet_pick_days">Tap the first day, then the last day.</string>
+    <string name="lottery_sheet_registration_summary">%1$s to enter · draw runs at close</string>
+    <string name="lottery_sheet_booking_summary_at_close">Starts when registration closes · %1$s to book</string>
+    <string name="lottery_sheet_booking_summary">%1$s to book</string>
+    <string name="lottery_sheet_end_before_start">Closing time must be after opening time.</string>
+    <string name="lottery_sheet_opens_locked">Registration is already open, so the opening time is fixed.</string>
+    <string name="lottery_set_registration">Set registration period</string>
+    <string name="lottery_set_booking">Set booking period</string>
+    <string name="lottery_previous_month">Previous month</string>
+    <string name="lottery_next_month">Next month</string>
+    <string name="lottery_pick_opening_time">Opening time</string>
+    <string name="lottery_pick_closing_time">Closing time</string>
+
+    <string name="lottery_winners_heading">How many winners?</string>
+    <string name="lottery_winners_hint">Winners are picked at random when registration closes.</string>
+    <plurals name="lottery_winners_unit">
+        <item quantity="one">winner</item>
+        <item quantity="other">winners</item>
+    </plurals>
+    <plurals name="lottery_winners_fewer">
+        <item quantity="one">One entrant is picked at random, so anyone who enters has a chance.</item>
+        <item quantity="other">If fewer than %d people enter, everyone who entered wins.</item>
+    </plurals>
+    <string name="lottery_limit_title">Limit the waiting list</string>
+    <string name="lottery_limit_off_hint">Optional. Off means anyone can join until registration closes.</string>
+    <string name="lottery_limit_on_hint">Joining closes once the list is full.</string>
+    <string name="lottery_limit_max">Maximum people</string>
+
+    <!-- Review (Figma F17) -->
+    <string name="lottery_review_title">Review</string>
+    <string name="lottery_review_heading">Ready to publish?</string>
+    <string name="lottery_review_hint">Check it once. You can still edit after publishing, until the draw.</string>
+    <string name="lottery_name_label">Lottery name</string>
+    <string name="lottery_name_hint">e.g. May long weekend</string>
+    <string name="lottery_row_campsites">Campsites</string>
+    <string name="lottery_row_registration">Registration</string>
+    <string name="lottery_row_draw">Draw</string>
+    <string name="lottery_row_booking">Booking</string>
+    <string name="lottery_row_winners">Winners</string>
+    <string name="lottery_row_waitlist">Waiting list</string>
+    <string name="lottery_draw_automatic">%1$s · automatic</string>
+    <string name="lottery_waitlist_up_to">Up to %1$d people</string>
+    <string name="lottery_waitlist_up_to_short">Up to %1$d</string>
+    <string name="lottery_waitlist_no_limit">No limit</string>
+    <string name="lottery_publish">Publish lottery</string>
+    <string name="lottery_publishing">Publishing…</string>
+
+    <!-- Published dialog (Figma F18) -->
+    <string name="lottery_published_title">Lottery published</string>
+    <plurals name="lottery_published_winners">
+        <item quantity="one">%d winner is</item>
+        <item quantity="other">%d winners are</item>
+    </plurals>
+    <string name="lottery_published_body">Registration opens %1$s at %2$s. %3$s drawn automatically on %4$s.</string>
+    <string name="lottery_published_body_open">Registration is open now. %1$s drawn automatically on %2$s.</string>
+
+    <!-- Edit lottery (Figma F20, F21) -->
+    <string name="lottery_edit_title">Edit lottery</string>
+    <string name="lottery_edit_scheduled_note">Registration hasn’t opened yet, so everything can still change.</string>
+    <string name="lottery_edit_open_note">Registration is open. People who already joined will see your changes; the opening time is fixed.</string>
+    <string name="lottery_closed_note">Registration has closed, so this lottery can’t be edited.</string>
+    <string name="lottery_changed_from">Changed from %1$d</string>
+    <string name="lottery_save_changes">Save changes</string>
+    <string name="lottery_saving">Saving…</string>
+    <string name="lottery_save_failed_title">Couldn’t save changes</string>
+    <string name="lottery_publish_failed_title">Couldn’t publish</string>
+    <string name="lottery_save_failed_body">Check your connection and try again. Your edits are still here.</string>
+    <string name="lottery_try_again">Try again</string>
+
+    <!-- Problems shown on the form -->
+    <string name="lottery_problem_name">Give the lottery a name.</string>
+    <string name="lottery_problem_campsites">Pick at least one campsite.</string>
+    <string name="lottery_problem_registration_missing">Choose when registration opens and closes.</string>
+    <string name="lottery_problem_registration_order">Registration must close after it opens.</string>
+    <string name="lottery_problem_registration_past">Registration must close in the future.</string>
+    <string name="lottery_problem_registration_locked">Registration already opened, so its opening time can’t change.</string>
+    <string name="lottery_problem_booking_missing">Choose when winners can book.</string>
+    <string name="lottery_problem_booking_overlap">Booking must open after registration closes (%1$s).</string>
+    <string name="lottery_problem_booking_order">Booking must end after it starts.</string>
+    <string name="lottery_problem_waitlist_winners">The waiting list must fit at least %1$d people, one per winner.</string>
+    <string name="lottery_problem_waitlist_entrants">%1$d people already joined, so the limit can’t go below %1$d.</string>
+
+    <!-- "Changes saved" banner (Figma F22) -->
+    <string name="lottery_saved_general">Changes saved.</string>
+    <string name="lottery_saved_winners">Changes saved. Winners updated to %1$d.</string>
+    <string name="lottery_saved_waitlist">Changes saved. Waiting list now up to %1$d people.</string>
+    <string name="lottery_saved_waitlist_unlimited">Changes saved. The waiting list has no limit now.</string>
+    <string name="lottery_saved_name">Changes saved. Lottery renamed.</string>
+    <string name="lottery_saved_campsites">Changes saved. Campsites updated.</string>
+    <string name="lottery_saved_registration">Changes saved. Registration dates updated.</string>
+    <string name="lottery_saved_booking">Changes saved. Booking dates updated.</string>
+
+    <!-- Lotteries tab (Figma F06) -->
+    <string name="lottery_filter_all">All</string>
+    <string name="lottery_filter_scheduled">Scheduled</string>
+    <string name="lottery_filter_open">Open</string>
+    <string name="lottery_filter_done">Done</string>
+    <string name="lottery_badge_scheduled">Scheduled</string>
+    <string name="lottery_badge_open">Registration open</string>
+    <string name="lottery_badge_drawn">Draw complete</string>
+    <string name="lottery_badge_no_entrants">Closed · no entrants</string>
+    <string name="lottery_card_opens">Registration opens %1$s</string>
+    <string name="lottery_card_draw_runs">Draw runs %1$s · automatic</string>
+    <string name="lottery_card_drawn">%1$s drawn from %2$s</string>
+    <string name="lottery_card_no_entrants">No one entered</string>
+    <string name="lottery_create">Create a lottery</string>
+    <string name="lottery_list_empty_title">No lotteries yet</string>
+    <string name="lottery_list_empty_body">Create one to let campers enter for your campsites.</string>
+    <string name="lottery_list_no_match">No lotteries here yet.</string>
+
+    <!-- Lottery details (Figma F19, F22–F25) -->
+    <string name="lottery_details_title">Lottery</string>
+    <plurals name="lottery_opens_in">
+        <item quantity="one">Registration opens in %d day</item>
+        <item quantity="other">Registration opens in %d days</item>
+    </plurals>
+    <string name="lottery_opens_today">Registration opens today</string>
+    <string name="lottery_opens_tomorrow">Registration opens tomorrow</string>
+    <string name="lottery_opens_body">%1$s · share the campsite QR codes so campers find it</string>
+    <string name="lottery_stat_entrants">entrants</string>
+    <string name="lottery_stat_entrants_of">entrants · of %1$d</string>
+    <string name="lottery_stat_winners">winners to draw</string>
+    <plurals name="lottery_draw_in">
+        <item quantity="one">Draw runs automatically in %d day</item>
+        <item quantity="other">Draw runs automatically in %d days</item>
+    </plurals>
+    <string name="lottery_draw_today">Draw runs automatically today</string>
+    <string name="lottery_draw_tomorrow">Draw runs automatically tomorrow</string>
+    <string name="lottery_draw_body">%1$s · nothing for you to do. Winners are picked when registration closes and notified to book.</string>
+    <string name="lottery_drawn_title">%1$s drawn</string>
+    <string name="lottery_drawn_body">From %1$s · %2$s · booking open until %3$s</string>
+    <string name="lottery_no_one_title">No one entered</string>
+    <string name="lottery_no_one_body">Registration closed %1$s with 0 entrants, so no winners were drawn. Your campsites are free for those dates.</string>
+    <string name="lottery_try_longer_title">Try again with a longer registration period</string>
+    <string name="lottery_try_longer_body">Share each campsite’s QR code so campers can find the lottery.</string>
+    <string name="lottery_reuse">Reuse settings in a new lottery</string>
 </resources>
