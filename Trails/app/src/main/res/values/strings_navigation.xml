@@ -8,8 +8,13 @@
     <string name="nav_messages">Messages</string>
     <string name="nav_settings">Settings</string>
 
-    <!-- Notifications and Messages placeholders (ui/shell) -->
-    <string name="shell_coming_in_part_4">%1$s: Coming in Part 4</string>
+    <!-- Notifications and Messages empty states (ui/shell) -->
+    <string name="shell_notifications_title">Notifications</string>
+    <string name="shell_notifications_empty">No notifications yet</string>
+    <string name="shell_notifications_empty_hint">Lottery results and booking updates will appear here.</string>
+    <string name="shell_messages_title">Messages</string>
+    <string name="shell_messages_empty">No messages yet</string>
+    <string name="shell_messages_empty_hint">Messages from campsite owners will appear here.</string>
 
     <!-- Settings (ui/shell) -->
     <string name="shell_settings_title">Settings</string>
@@ -17,7 +22,7 @@
     <string name="shell_settings_policy">App policy &amp; guidelines</string>
 
     <!-- Admin home (ui/admin, US 03.04.01, 03.05.01) -->
-    <string name="admin_home_title">Admin</string>
-    <string name="admin_home_campsites">Campsites</string>
-    <string name="admin_home_profiles">Profiles</string>
+    <string name="admin_home_subtitle">Here\'s what needs your attention today.</string>
+    <string name="admin_home_campsites">Campsites ›</string>
+    <string name="admin_home_profiles">Profiles ›</string>
 </resources>
