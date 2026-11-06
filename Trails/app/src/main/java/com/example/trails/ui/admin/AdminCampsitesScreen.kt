@@ -1,7 +1,8 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.04.01
-// PURPOSE: Admin list of every campsite with search (Figma Scenario 8 · Campsites).
-// Outstanding issues: removing a campsite is US 03.01.01 (Part 4); no Published/Drafts filter yet.
+// USER STORIES: 03.04.01, 03.01.01
+// PURPOSE: Admin list of every campsite with search (Figma Scenario 8 · Campsites);
+//   tapping one opens the admin Campsite page, where it can be removed.
+// Outstanding issues: no Published/Drafts filter yet.
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -48,7 +49,6 @@ import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
-import com.example.trails.ui.discovery.DiscoveryRoutes
 import com.example.trails.ui.theme.TrailsTheme
 
 /** Connects [AdminCampsitesViewModel] to navigation and renders [AdminCampsitesContent]. */
@@ -63,8 +63,8 @@ fun AdminCampsitesScreen(
         state = state,
         onQueryChange = viewModel::onQueryChange,
         onBack = { navController.popBackStack() },
-        // Only the id is passed; the details screen loads the campsite itself.
-        onOpenCampsite = { id -> navController.navigate(DiscoveryRoutes.campsiteDetails(id)) },
+        // Only the id is passed; the admin Campsite page loads the campsite itself.
+        onOpenCampsite = { id -> navController.navigate(AdminRoutes.adminCampsite(id)) },
         modifier = modifier
     )
 }

@@ -68,7 +68,8 @@ import kotlinx.coroutines.flow.stateIn
  * Loads one campsite and shows its details to an entrant.
  *
  * The campsite comes from the repository in [AppContainer], so this keeps working when
- * Firestore is swapped in. The join and rating sections below the details belong to other owners.
+ * Firestore is swapped in. The join section is shown only when the campsite has an
+ * active lottery. The rating section below the details belongs to another owner.
  *
  * @param navController used to go back and to open the waitlist from the join section.
  * @param campsiteId the campsite to load.
@@ -189,8 +190,9 @@ private fun DetailsHeader(title: String, onBack: () -> Unit) {
 }
 
 /**
- * Scrollable campsite details, followed by the join and rating sections.
+ * Scrollable campsite details, followed by the rating section.
  *
+ * The join section is included only when [Campsite.activeLotteryId] is set.
  * The live map is skipped in the Compose preview, where osmdroid has no storage.
  * On an emulator or device the map is shown.
  *
@@ -294,8 +296,10 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: N
         Section(stringResource(R.string.discovery_section_cancellation)) { Body(campsite.cancellationPolicy) }
 
         Spacer(Modifier.height(24.dp))
-        // Owned by Chitkarsh, Neaz: leave this call here, don't edit inside it.
-        JoinLotterySection(navController = navController, campsiteId = campsiteId)
+        // No lottery means there is nothing to join. The section itself also checks.
+        if (!campsite.activeLotteryId.isNullOrBlank()) {
+            JoinLotterySection(navController = navController, campsiteId = campsiteId)
+        }
         Spacer(Modifier.height(16.dp))
         // Owned by Zainab. Leave this call as it is.
         RatingSection(campsiteId)

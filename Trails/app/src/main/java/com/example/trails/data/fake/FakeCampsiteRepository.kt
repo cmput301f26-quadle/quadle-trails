@@ -37,6 +37,10 @@ class FakeCampsiteRepository(initial: List<Campsite> = TestCampsites.all) : Camp
         return toSave.id
     }
 
+    override suspend fun delete(id: String) {
+        campsites.update { list -> list.filterNot { it.id == id } }
+    }
+
     /** No upload in the fake: the local URI works as the image URL for this app session. */
     override suspend fun uploadImage(localUri: String): String = localUri
 }

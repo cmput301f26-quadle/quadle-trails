@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // USER STORIES: 03.05.01
 // PURPOSE: Admin list of every user profile with search and role chips (Figma Scenario 8 · Profiles).
-// Outstanding issues: removing a profile is US 03.02.01 (Part 4).
+// Outstanding issues: none; profiles are removed from the Profile page (US 03.02.01).
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke

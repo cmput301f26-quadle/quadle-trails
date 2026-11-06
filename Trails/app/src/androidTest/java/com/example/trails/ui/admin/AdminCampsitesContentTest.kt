@@ -69,7 +69,7 @@ class AdminCampsitesContentTest {
         assertEquals("maya", query)
     }
 
-    // Tapping a card reports that campsite's id so the details screen can open it.
+    // Tapping a card reports that campsite's id so the admin Campsite page can open it.
     @Test
     fun tapCampsite_reportsItsId() {
         var opened: String? = null

@@ -17,7 +17,8 @@ object AppContainer {
     // User — Aarav swaps this for the Firestore version.
     val userRepository: UserRepository = FakeUserRepository()
 
-    // Campsite — Ibrahim swaps this for the Firestore version.
+    // Campsite — Ibrahim. FirestoreCampsiteRepository is ready; switch to it together with
+    // lotteries, since saved campsites point at lottery ids.
     val campsiteRepository: CampsiteRepository = FakeCampsiteRepository()
 
     // Lottery — Skanda swaps this for the Firestore version.

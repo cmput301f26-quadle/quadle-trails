@@ -31,6 +31,14 @@ interface CampsiteRepository {
     suspend fun save(campsite: Campsite): String
 
     /**
+     * Deletes the campsite with [id]; does nothing if it doesn't exist (US 03.01.01).
+     * Callers take it out of any lotteries first, so none are left pointing at it.
+     *
+     * @param id id of the campsite to delete.
+     */
+    suspend fun delete(id: String)
+
+    /**
      * Uploads a promo image the owner picked on the device (US 02.01.02).
      *
      * @param localUri the picked image, e.g. a "content://" URI as a string.

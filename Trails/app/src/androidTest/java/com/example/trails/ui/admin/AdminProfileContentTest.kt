@@ -1,13 +1,17 @@
-// UI (intent) tests for the admin's read-only Profile page, US 03.05.01.
+// UI (intent) tests for the admin's Profile page (US 03.05.01) and Remove profile dialog (US 03.02.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 package com.example.trails.ui.admin
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.ui.theme.TrailsTheme
@@ -29,8 +33,23 @@ class AdminProfileContentTest {
         phone = "780-555-0142"
     )
 
-    private fun show(state: AdminProfileUiState, onBack: () -> Unit = {}) =
-        composeRule.setContent { TrailsTheme { AdminProfileContent(state, onBack) } }
+    private fun show(
+        state: AdminProfileUiState,
+        onBack: () -> Unit = {},
+        onRemoveClick: () -> Unit = {},
+        onDismiss: () -> Unit = {},
+        onConfirmRemove: () -> Unit = {}
+    ) = composeRule.setContent {
+        TrailsTheme {
+            AdminProfileContent(
+                state, onBack,
+                onRemoveClick = onRemoveClick, onDismiss = onDismiss, onConfirmRemove = onConfirmRemove
+            )
+        }
+    }
+
+    private fun danielWith(removal: ProfileRemovalState) =
+        AdminProfileUiState.Loaded(daniel, 2, isSelf = false, lotteryEntryCount = 1, removal = removal)
 
     // This checks that a loaded profile shows the name, email and a chip for each role held.
     @Test
@@ -93,5 +112,79 @@ class AdminProfileContentTest {
         show(AdminProfileUiState.Loaded(priya, 0), onBack = { wentBack = true })
         composeRule.onNodeWithTag(AdminProfileTags.BACK).performClick()
         assertTrue(wentBack)
+    }
+
+    // This checks that someone else's profile shows the Remove profile button.
+    @Test
+    fun otherUser_showsRemoveButton() {
+        show(danielWith(ProfileRemovalState.Idle))
+        composeRule.onNodeWithTag(AdminProfileTags.REMOVE_BUTTON).assertIsDisplayed()
+        composeRule.onNodeWithText("Remove profile").assertIsDisplayed()
+    }
+
+    // This checks that the admin can't remove their own profile, so the button is hidden.
+    @Test
+    fun self_hidesRemoveButton() {
+        show(AdminProfileUiState.Loaded(daniel, 2, isSelf = true))
+        composeRule.onNodeWithTag(AdminProfileTags.REMOVE_BUTTON).assertDoesNotExist()
+    }
+
+    // This checks that tapping Remove profile asks to open the dialog, and the open dialog shows
+    // the title and what is removed.
+    @Test
+    fun tapRemove_showsDialogWithMessage() {
+        var state by mutableStateOf<AdminProfileUiState>(danielWith(ProfileRemovalState.Idle))
+        composeRule.setContent {
+            TrailsTheme {
+                AdminProfileContent(
+                    state, onBack = {},
+                    onRemoveClick = { state = danielWith(ProfileRemovalState.Confirming) }
+                )
+            }
+        }
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG).assertDoesNotExist()
+        composeRule.onNodeWithTag(AdminProfileTags.REMOVE_BUTTON).performClick()
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG).assertIsDisplayed()
+        composeRule.onNodeWithText("Remove profile?").assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG_MESSAGE).assertTextEquals(
+            "Daniel Whitehorse loses access to Quadle. Their 2 campsites and 1 lottery entry are removed. " +
+                "This can't be undone."
+        )
+    }
+
+    // This checks that Cancel in the dialog asks to close it.
+    @Test
+    fun dialogCancel_reportsDismiss() {
+        var dismissed = false
+        show(danielWith(ProfileRemovalState.Confirming), onDismiss = { dismissed = true })
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG_CANCEL).performClick()
+        assertTrue(dismissed)
+    }
+
+    // This checks that Remove in the dialog asks to remove the profile.
+    @Test
+    fun dialogRemove_reportsConfirm() {
+        var confirmed = false
+        show(danielWith(ProfileRemovalState.Confirming), onConfirmRemove = { confirmed = true })
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG_REMOVE).performClick()
+        assertTrue(confirmed)
+    }
+
+    // This checks that while the removal runs the dialog stays open with both buttons disabled.
+    @Test
+    fun removing_buttonsDisabled() {
+        show(danielWith(ProfileRemovalState.Removing))
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG).assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG_CANCEL).assertIsNotEnabled()
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG_REMOVE).assertIsNotEnabled()
+    }
+
+    // This checks that a failed removal closes the dialog and shows an error.
+    @Test
+    fun error_isShown() {
+        show(danielWith(ProfileRemovalState.Error))
+        composeRule.onNodeWithTag(AdminProfileTags.DIALOG).assertDoesNotExist()
+        composeRule.onNodeWithTag(AdminProfileTags.ERROR).assertIsDisplayed()
+        composeRule.onNodeWithText("Couldn't remove this profile. Please try again.").assertIsDisplayed()
     }
 }
