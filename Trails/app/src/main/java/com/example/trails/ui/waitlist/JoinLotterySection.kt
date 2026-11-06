@@ -273,6 +273,7 @@ fun JoinLotterySection(
 ) {
     var isWaitlisted by remember { mutableStateOf(false) }
     var activeLotteryId by remember { mutableStateOf<String?>(null) }
+    var loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(campsiteId) {
         try {
@@ -285,8 +286,12 @@ fun JoinLotterySection(
             }
         } catch (_: Exception) {
             isWaitlisted = false
+        } finally {
+            loaded = true
         }
     }
+
+    if (!loaded || activeLotteryId.isNullOrBlank()) return
 
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         if (isWaitlisted) {

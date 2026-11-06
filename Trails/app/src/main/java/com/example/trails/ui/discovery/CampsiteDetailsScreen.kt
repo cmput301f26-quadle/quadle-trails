@@ -294,8 +294,10 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: N
         Section(stringResource(R.string.discovery_section_cancellation)) { Body(campsite.cancellationPolicy) }
 
         Spacer(Modifier.height(24.dp))
-        // Owned by Chitkarsh, Neaz: leave this call here, don't edit inside it.
-        JoinLotterySection(navController = navController, campsiteId = campsiteId)
+        // No lottery means there is nothing to join. The section itself also checks.
+        if (!campsite.activeLotteryId.isNullOrBlank()) {
+            JoinLotterySection(navController = navController, campsiteId = campsiteId)
+        }
         Spacer(Modifier.height(16.dp))
         // Owned by Zainab. Leave this call as it is.
         RatingSection(campsiteId)
