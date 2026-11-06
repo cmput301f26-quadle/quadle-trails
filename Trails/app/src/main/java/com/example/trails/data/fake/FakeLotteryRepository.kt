@@ -20,7 +20,7 @@ class FakeLotteryRepository(initial: List<Lottery> = TestLotteries.all) : Lotter
     private val lotteries = MutableStateFlow(initial)
     private var nextId = 1
 
-    /** Set to make the next save throw, so tests can check the "Couldn't save" path. */
+    /** Set to make the next save or delete throw, so tests can check the failure paths. */
     var failure: Exception? = null
 
     override fun observeAll(): Flow<List<Lottery>> = lotteries
@@ -39,5 +39,10 @@ class FakeLotteryRepository(initial: List<Lottery> = TestLotteries.all) : Lotter
         val toSave = if (lottery.id.isBlank()) lottery.copy(id = "fake-lottery-${nextId++}") else lottery
         lotteries.update { list -> list.filterNot { it.id == toSave.id } + toSave }
         return toSave.id
+    }
+
+    override suspend fun delete(id: String) {
+        failure?.let { failure = null; throw it }
+        lotteries.update { list -> list.filterNot { it.id == id } }
     }
 }

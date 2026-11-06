@@ -75,4 +75,13 @@ class FakeLotteryRepositoryTest {
         assertTrue(repo.observeAll().first().isEmpty())
         assertTrue(repo.save(mayLongWeekend).isNotBlank())
     }
+
+    @Test
+    fun delete_removesOnlyThatLottery() = runBlocking {
+        val keep = repo.save(mayLongWeekend)
+        val gone = repo.save(mayLongWeekend.copy(name = "Summer weekends"))
+        repo.delete(gone)
+        assertNull(repo.getById(gone))
+        assertEquals(listOf(keep), repo.observeAll().first().map { it.id })
+    }
 }

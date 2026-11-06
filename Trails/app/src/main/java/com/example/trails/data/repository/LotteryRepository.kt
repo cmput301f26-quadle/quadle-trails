@@ -29,4 +29,10 @@ interface LotteryRepository {
      * @return the lottery's id, newly generated when it was created.
      */
     suspend fun save(lottery: Lottery): String
+
+    /**
+     * Deletes the lottery with [id]; does nothing if it doesn't exist. Callers make sure
+     * nobody is on its waiting list first, so no entries are left pointing at it.
+     */
+    suspend fun delete(id: String)
 }
