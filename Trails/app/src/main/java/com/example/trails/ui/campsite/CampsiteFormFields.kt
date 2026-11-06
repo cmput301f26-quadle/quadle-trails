@@ -2,6 +2,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Plain Kotlin with no Android or coroutine types, so it is unit-tested directly.
 // Outstanding issues: none.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.Campsite
@@ -9,6 +10,8 @@ import com.example.trails.data.model.Campsite
 /**
  * What the owner has typed into the campsite form. Numbers are kept as text
  * until saving so half-typed values like "6" or "$" don't get rejected while typing.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @property name campsite name.
  * @property locationName human-readable location, e.g. "Hinton, AB".
@@ -63,7 +66,11 @@ data class CampsiteFormFields(
     }
 }
 
-/** Outcome of turning [CampsiteFormFields] into a [Campsite]. */
+/**
+ * Outcome of turning [CampsiteFormFields] into a [Campsite].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 sealed interface CampsiteFormResult {
     /** The form is valid; [campsite] is ready to save. */
     data class Valid(val campsite: Campsite) : CampsiteFormResult
@@ -77,6 +84,8 @@ sealed interface CampsiteFormResult {
  *
  * When editing, fields the form doesn't show (id, owner,
  * rating, active lottery) are kept from [base].
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param base the campsite being edited, or null when registering a new one.
  * @param ownerId owner to assign when registering.
@@ -114,11 +123,17 @@ fun CampsiteFormFields.toCampsite(base: Campsite?, ownerId: String): CampsiteFor
     return if (errors.isEmpty()) CampsiteFormResult.Valid(candidate) else CampsiteFormResult.Invalid(errors)
 }
 
-/** True if [url] is a photo picked on this device that still needs uploading. */
+/**
+ * True if [url] is a photo picked on this device that still needs uploading.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 fun isLocalImage(url: String): Boolean = url.startsWith("content://") || url.startsWith("file://")
 
 /**
  * Adds a tag after trimming it. Blank tags and duplicates (ignoring case) are ignored.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @return the new tag list.
  */
@@ -128,7 +143,11 @@ fun addTag(tags: List<String>, raw: String): List<String> {
     return tags + tag
 }
 
-/** Field names whose value differs between [old] and this, used to clear their errors. */
+/**
+ * Field names whose value differs between [old] and this, used to clear their errors.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 fun CampsiteFormFields.changedFrom(old: CampsiteFormFields): Set<String> = buildSet {
     if (name != old.name) add("name")
     if (locationName != old.locationName) add("locationName")

@@ -3,9 +3,11 @@
 // Outstanding issues:
 //  - Read errors (e.g. PERMISSION_DENIED from the security rules) are logged and treated as
 //    "no data" so the app doesn't crash; screens don't show a dedicated error state yet.
-//  - Photo upload needs Firebase Storage enabled on the project.
+//  - Photo upload needs Firebase Storage, which isn't enabled on the project yet (Blaze plan),
+//    so uploadImage fails for now; deferred to the final part.
 //  - Needs a live Firestore, so it isn't unit-tested itself; the document mapping it relies
 //    on (CampsiteDocument.kt) is.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Campsite
@@ -27,6 +29,8 @@ import java.util.UUID
  *
  * Firebase is only touched on first use, so creating this class (e.g. as a default
  * argument in a ViewModel under a JVM unit test) never starts Firebase.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param db the Firestore instance; defaults to the app's default instance.
  * @param storage the Storage instance for promo photos; defaults to the app's default instance.

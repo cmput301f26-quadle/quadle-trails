@@ -2,6 +2,7 @@
 // USER STORIES: 02.03.01
 // PURPOSE: Owner's home screen listing the campsites they host (Figma F01 · My campsites).
 // Outstanding issues: the Owner pill is display-only; mode switching (US 03.11.01) is Aarav's.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.annotation.StringRes
@@ -62,13 +63,21 @@ import com.example.trails.data.model.Campsite
 import com.example.trails.ui.lottery.MyLotteriesScreen
 import com.example.trails.ui.theme.TrailsTheme
 
-/** The two sections of the Hosting home, as in Figma F01. */
+/**
+ * The two sections of the Hosting home, as in Figma F01.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 enum class HostingTab(@StringRes val label: Int) {
     CAMPSITES(R.string.campsite_tab_campsites),
     LOTTERIES(R.string.campsite_tab_lotteries)
 }
 
-/** Connects [HostingViewModel] to navigation and renders [HostingContent]. */
+/**
+ * Connects [HostingViewModel] to navigation and renders [HostingContent].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 fun HostingScreen(
     navController: NavController,
@@ -93,6 +102,8 @@ fun HostingScreen(
 
 /**
  * Stateless Hosting home UI, split out so UI tests can drive it directly.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param state what to show on the Campsites tab, or null while loading.
  * @param onQueryChange called with the new text when the search field changes.
@@ -148,7 +159,11 @@ fun HostingContent(
     }
 }
 
-/** Avatar, "Hosting" title and the role pill. */
+/**
+ * Avatar, "Hosting" title and the role pill.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun HostingHeader() {
     Row(
@@ -164,7 +179,11 @@ private fun HostingHeader() {
     }
 }
 
-/** Green circle with a simple person glyph, drawn so no icon library is needed. */
+/**
+ * Green circle with a simple person glyph, drawn so no icon library is needed.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Avatar() {
     val glyph = MaterialTheme.colorScheme.onPrimary
@@ -189,6 +208,8 @@ private fun Avatar() {
 /**
  * Shows the current role. Display only for now.
  * TODO: make this a role switcher (Entrant / Owner / Admin) once the team decides who owns it.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  */
 @Composable
 private fun RolePill(role: String) {
@@ -216,7 +237,11 @@ private fun RolePill(role: String) {
     }
 }
 
-/** Two-segment pill toggle between Campsites and Lotteries. */
+/**
+ * Two-segment pill toggle between Campsites and Lotteries.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun HostingTabs(selected: HostingTab, onSelect: (HostingTab) -> Unit) {
     val outer = RoundedCornerShape(14.dp)
@@ -251,7 +276,11 @@ private fun HostingTabs(selected: HostingTab, onSelect: (HostingTab) -> Unit) {
     }
 }
 
-/** Search, counts and the list of campsite cards. */
+/**
+ * Search, counts and the list of campsite cards.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun CampsitesTab(
     state: HostingUiState?,
@@ -308,7 +337,11 @@ private fun CampsitesTab(
     }
 }
 
-/** Card: thumbnail, name, "location · Up to N guests", lottery chip and chevron. */
+/**
+ * Card: thumbnail, name, "location · Up to N guests", lottery chip and chevron.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun CampsiteCard(item: HostingItem, onClick: () -> Unit) {
     val c = item.campsite
@@ -344,7 +377,11 @@ private fun CampsiteCard(item: HostingItem, onClick: () -> Unit) {
     }
 }
 
-/** 64dp rounded promo photo, or a plain tile when the campsite has none. */
+/**
+ * 64dp rounded promo photo, or a plain tile when the campsite has none.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Thumbnail(url: String?) {
     val shape = RoundedCornerShape(8.dp)
@@ -358,7 +395,11 @@ private fun Thumbnail(url: String?) {
     }
 }
 
-/** Green "In lottery · <name>" when in a lottery, grey "Not in a lottery" otherwise. */
+/**
+ * Green "In lottery · <name>" when in a lottery, grey "Not in a lottery" otherwise.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun LotteryChip(lotteryName: String?) {
     val inLottery = lotteryName != null
@@ -374,7 +415,11 @@ private fun LotteryChip(lotteryName: String?) {
     )
 }
 
-/** Centred message used for the empty and no-match states. */
+/**
+ * Centred message used for the empty and no-match states.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Message(text: String, tag: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -382,7 +427,11 @@ private fun Message(text: String, tag: String) {
     }
 }
 
-/** Test tags used by UI tests to find elements on this screen. */
+/**
+ * Test tags used by UI tests to find elements on this screen.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 object HostingTags {
     const val ADD_BUTTON = "hosting_add_button"
     const val SEARCH = "hosting_search"
@@ -396,7 +445,11 @@ object HostingTags {
     fun tab(tab: HostingTab) = "hosting_tab_${tab.name.lowercase()}"
 }
 
-/** Design-time preview with the Figma sample data, for comparing against F01 · My campsites. */
+/**
+ * Design-time preview with the Figma sample data, for comparing against F01 · My campsites.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Preview(showBackground = true, heightDp = 800)
 @Composable
 private fun HostingContentPreview() {

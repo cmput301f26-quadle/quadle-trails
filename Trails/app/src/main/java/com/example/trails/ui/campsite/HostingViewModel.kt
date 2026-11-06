@@ -1,6 +1,7 @@
 // Controller for the owner's My Campsites screen (US 02.03.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Outstanding issues: Firestore listener errors are not surfaced to the screen yet.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 /**
  * One row on the My Campsites list.
  *
+ * Written in assistance with Claude AI by Anthropic.
+ *
  * @property campsite the campsite shown.
  * @property lotteryName name of the lottery it is in, or null if it is not in one.
  */
@@ -25,6 +28,8 @@ data class HostingItem(val campsite: Campsite, val lotteryName: String?)
 
 /**
  * Everything [HostingContent] needs to draw.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @property items campsites matching [query], sorted by name.
  * @property query the current search text.
@@ -41,6 +46,8 @@ data class HostingUiState(
 /**
  * Pairs each campsite with its lottery, applies the search, and counts.
  * Kept free of coroutines so it can be unit-tested directly.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param campsites the owner's campsites.
  * @param lotteries the owner's lotteries.
@@ -70,6 +77,8 @@ fun buildHostingState(
 
 /**
  * Controller for [HostingScreen]: combines the owner's campsites and lotteries with the search text.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param campsiteRepository where campsites are stored.
  * @param lotteryRepository where lotteries are stored, used for each campsite's lottery status.

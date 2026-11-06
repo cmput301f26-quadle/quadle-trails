@@ -2,6 +2,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Reusable: the entrant-side map view can call CampsiteMap with interactive = false.
 // Outstanding issues: tiles need internet and MAPTILER_KEY in local.properties; without either the map is a blank grid.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import android.content.Context
@@ -49,13 +50,19 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.io.File
 
-/** Identifies the app to the tile servers. */
+/**
+ * Identifies the app to the tile servers.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 private const val USER_AGENT =
     "QuadleTrails/0.1 (CMPUT 301 student project; +https://github.com/cmput301f26-quadle/quadle-trails)"
 
 /**
  * URL of one MapTiler map tile, e.g. ".../streets-v2-dark/256/6/11/21.png?key=KEY".
  * Plain function so it can be unit-tested.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param key the MapTiler API key.
  * @param zoom zoom level (0 = whole world).
@@ -68,6 +75,8 @@ fun mapTilerTileUrl(key: String, zoom: Int, x: Int, y: Int): String =
 /**
  * MapTiler's dark street map (OpenStreetMap data). openstreetmap.org's own tile servers
  * block this app, so tiles come from MapTiler's free plan, which needs an API key.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param key the MapTiler key from local.properties (R.string.maptiler_key).
  */
@@ -84,12 +93,18 @@ private class MapTilerTileSource(private val key: String) : OnlineTileSourceBase
     )
 }
 
-/** Where the map starts when there is no pin yet: central Alberta. */
+/**
+ * Where the map starts when there is no pin yet: central Alberta.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 private val ALBERTA = GeoPoint(53.5, -116.0)
 
 /**
  * One-time osmdroid setup: identify the app to the tile server and keep the tile cache
  * in app storage so no storage permission is needed.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  */
 private fun configureOsmdroid(context: Context) {
     val config = Configuration.getInstance()
@@ -102,6 +117,8 @@ private fun configureOsmdroid(context: Context) {
 
 /**
  * An OpenStreetMap map showing an optional pin.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param latitude pin latitude, or null for no pin.
  * @param longitude pin longitude, or null for no pin.
@@ -185,6 +202,8 @@ fun CampsiteMap(
 /**
  * Full-screen map: tap to drop or move the pin, then confirm.
  *
+ * Written in assistance with Claude AI by Anthropic.
+ *
  * @param initialLatitude the current pin, or null if none.
  * @param initialLongitude the current pin, or null if none.
  * @param onConfirm called with the chosen latitude and longitude.
@@ -235,7 +254,11 @@ fun MapPinPickerDialog(
     }
 }
 
-/** Test tags for the map and picker. */
+/**
+ * Test tags for the map and picker.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 object MapTags {
     const val PICKER_MAP = "map_picker_map"
     const val CONFIRM = "map_confirm"

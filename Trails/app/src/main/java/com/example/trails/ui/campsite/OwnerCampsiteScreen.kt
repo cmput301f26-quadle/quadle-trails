@@ -4,6 +4,7 @@
 // Outstanding issues: booked days aren't shown on the calendar (no reservations yet); the
 //  "Published" chip is always shown (no published flag in the model); the QR code card is
 //  US 02.02.01, final part.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.compose.foundation.background
@@ -55,7 +56,11 @@ import com.example.trails.data.fake.TestCampsites
 import com.example.trails.ui.lottery.LotteryRoutes
 import com.example.trails.ui.theme.TrailsTheme
 
-/** Connects [OwnerCampsiteViewModel] to navigation and renders [OwnerCampsiteContent]. */
+/**
+ * Connects [OwnerCampsiteViewModel] to navigation and renders [OwnerCampsiteContent].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 fun OwnerCampsiteScreen(
     navController: NavController,
@@ -80,6 +85,8 @@ fun OwnerCampsiteScreen(
 
 /**
  * Stateless campsite page, split out so previews and UI tests can drive it directly.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param state what to show.
  * @param showPublishedDialog true to show "Campsite published" on top.
@@ -120,7 +127,11 @@ fun OwnerCampsiteContent(
     }
 }
 
-/** The scrolling details, top to bottom as in Figma. */
+/**
+ * The scrolling details, top to bottom as in Figma.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CampsiteDetails(
@@ -244,7 +255,11 @@ private fun CampsiteDetails(
     }
 }
 
-/** Full-width promo photo with a green border, or a dark tile when there's none. */
+/**
+ * Full-width promo photo with a green border, or a dark tile when there's none.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Banner(url: String?) {
     val shape = RoundedCornerShape(12.dp)
@@ -260,7 +275,11 @@ private fun Banner(url: String?) {
     }
 }
 
-/** A titled block, e.g. "Rules" with its text underneath. */
+/**
+ * A titled block, e.g. "Rules" with its text underneath.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.padding(top = 20.dp)) {
@@ -270,13 +289,21 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
     }
 }
 
-/** Normal body text. */
+/**
+ * Normal body text.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Body(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** Greyed-out text for empty sections. */
+/**
+ * Greyed-out text for empty sections.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Muted(text: String) {
     Text(
@@ -287,7 +314,11 @@ private fun Muted(text: String) {
     )
 }
 
-/** Outlined pill: green when [highlighted], grey otherwise. */
+/**
+ * Outlined pill: green when [highlighted], grey otherwise.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun Chip(text: String, highlighted: Boolean) {
     val colour = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -301,7 +332,11 @@ private fun Chip(text: String, highlighted: Boolean) {
     )
 }
 
-/** Value over label in a green-bordered tile, e.g. "8" over "Max guests". */
+/**
+ * Value over label in a green-bordered tile, e.g. "8" over "Max guests".
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(12.dp)
@@ -318,7 +353,11 @@ private fun StatTile(value: String, label: String, modifier: Modifier = Modifier
     }
 }
 
-/** Box showing the pin's coordinates, or that there's no pin yet. */
+/**
+ * Box showing the pin's coordinates, or that there's no pin yet.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun LocationBox(text: String) {
     val shape = RoundedCornerShape(12.dp)
@@ -333,7 +372,11 @@ private fun LocationBox(text: String) {
     ) { Body(text) }
 }
 
-/** "Campsite published" confirmation, shown once right after registering. */
+/**
+ * "Campsite published" confirmation, shown once right after registering.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun PublishedDialog(name: String, onDismiss: () -> Unit) {
     AlertDialog(
@@ -349,7 +392,11 @@ private fun PublishedDialog(name: String, onDismiss: () -> Unit) {
     )
 }
 
-/** Test tags used by UI tests to find elements on this screen. */
+/**
+ * Test tags used by UI tests to find elements on this screen.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 object OwnerCampsiteTags {
     const val EDIT = "owner_campsite_edit"
     const val CREATE_LOTTERY = "owner_campsite_create_lottery"
@@ -357,7 +404,11 @@ object OwnerCampsiteTags {
     const val VIEW_BUTTON = "owner_campsite_view_button"
 }
 
-/** Design-time preview with the Hinton sample campsite. */
+/**
+ * Design-time preview with the Hinton sample campsite.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Preview(showBackground = true, heightDp = 1500)
 @Composable
 private fun OwnerCampsitePreview() {

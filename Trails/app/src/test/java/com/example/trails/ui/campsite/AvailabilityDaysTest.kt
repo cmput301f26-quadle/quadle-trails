@@ -1,5 +1,6 @@
 // Unit tests for the availability calendar's date logic.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.fake.dateOf

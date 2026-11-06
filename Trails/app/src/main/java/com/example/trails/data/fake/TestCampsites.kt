@@ -4,8 +4,8 @@
 //  sample_campsite_banff  — "Reflection at Two Jack Lake", Wing-Chi Poon, CC BY-SA 2.5
 //  sample_campsite_jasper — "Basecamp", Nicole Bratt, CC BY-SA 2.0
 //  sample_campsite_hinton — "Peace ^ Quiet", Tiomax80, CC BY 4.0
-// Extend with the methods your stories need, and write the Firestore
-//  implementation. Others: open a small PR and tag the owner.
+// Outstanding issues: none.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.fake
 
 import com.example.trails.R

@@ -1,5 +1,6 @@
 // Unit tests for buildHostingState(), the My Campsites controller logic (US 02.03.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.Campsite

@@ -1,5 +1,6 @@
 // Unit tests for converting campsites to and from Firestore documents.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.fake.dateOf

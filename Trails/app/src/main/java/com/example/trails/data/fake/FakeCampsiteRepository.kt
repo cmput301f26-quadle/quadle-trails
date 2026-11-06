@@ -1,7 +1,8 @@
 // In-memory CampsiteRepository seeded from TestCampsites.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// Extend with the methods your stories need, and write the Firestore
-//  implementation. Others: open a small PR and tag the owner.
+// Used by unit tests and previews; the app uses FirestoreCampsiteRepository (see AppContainer).
+// Outstanding issues: none.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Campsite
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * In-memory [CampsiteRepository] for tests and for teammates before Firestore is wired in.
+ * In-memory [CampsiteRepository] for unit tests and previews.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param initial campsites to start with; defaults to [TestCampsites.all].
  */

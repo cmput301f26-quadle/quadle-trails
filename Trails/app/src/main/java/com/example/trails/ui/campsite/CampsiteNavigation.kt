@@ -2,6 +2,7 @@
 // USER STORIES: 02.01.01–02.01.04, 02.03.01
 // PURPOSE: Routes and nav graph for the owner's campsite screens.
 // Outstanding issues: none.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.navigation.NavController

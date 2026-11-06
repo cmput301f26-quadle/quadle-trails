@@ -2,6 +2,7 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Editable in the Register/Edit form, read-only on the campsite page.
 // Outstanding issues: booked days (red in Figma) need reservations, which aren't modelled yet.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.compose.foundation.background
@@ -45,6 +46,8 @@ import java.util.Locale
 
 /**
  * A month grid with available days filled green and arrows to change month.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param availableDays the selected day keys (see [dayKey]).
  * @param onToggleDay called with a day key when it's tapped; null makes the calendar read-only.
@@ -125,7 +128,11 @@ fun AvailabilityCalendar(
     }
 }
 
-/** One day: green with dark text when available, dimmed when it's in the past and editable. */
+/**
+ * One day: green with dark text when available, dimmed when it's in the past and editable.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun DayCell(key: Long, isAvailable: Boolean, today: Long, onToggleDay: ((Long) -> Unit)?) {
     val canTap = onToggleDay != null && key >= today
@@ -148,7 +155,11 @@ private fun DayCell(key: Long, isAvailable: Boolean, today: Long, onToggleDay: (
     }
 }
 
-/** A ‹ or › button for changing month. */
+/**
+ * A ‹ or › button for changing month.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun MonthArrow(glyph: String, description: String, tag: String, onClick: () -> Unit) {
     Text(
@@ -164,15 +175,27 @@ private fun MonthArrow(glyph: String, description: String, tag: String, onClick:
     )
 }
 
-/** "May 2027" in the phone's language. */
+/**
+ * "May 2027" in the phone's language.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 private fun monthLabel(month: CalendarMonth): String =
     SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(GregorianCalendar(month.year, month.month - 1, 1).time)
 
-/** "S M T W T F S" in the phone's language, starting on Sunday. */
+/**
+ * "S M T W T F S" in the phone's language, starting on Sunday.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 private fun weekdayInitials(): List<String> =
     DateFormatSymbols.getInstance(Locale.getDefault()).shortWeekdays.drop(1).map { it.take(1) }
 
-/** Test tags for the calendar. */
+/**
+ * Test tags for the calendar.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 object CalendarTags {
     const val MONTH = "calendar_month"
     const val PREV = "calendar_prev"
