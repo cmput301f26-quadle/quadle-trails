@@ -2,7 +2,9 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Outstanding issues:
 //  - A listener error closes the flow; screens should show an error state.
-//  - Not unit-tested (needs a live Firestore); covered by UI tests on the campsite screens.
+//  - Photo upload needs Firebase Storage enabled on the project.
+//  - Needs a live Firestore, so it isn't unit-tested itself; the document mapping it relies
+//    on (CampsiteDocument.kt) is.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Campsite
@@ -22,6 +24,7 @@ import java.util.UUID
  * Reads and writes [Campsite]s in the [Collections.CAMPSITES] Firestore collection.
  *
  * @param db the Firestore instance; defaults to the app's default instance.
+ * @param storage the Storage instance for promo photos; defaults to the app's default instance.
  */
 class FirestoreCampsiteRepository(
     db: FirebaseFirestore = FirebaseFirestore.getInstance(),
@@ -41,17 +44,19 @@ class FirestoreCampsiteRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            trySend(snapshot?.toObject(Campsite::class.java))
+            trySend(snapshot?.takeIf { it.exists() }?.let { campsiteFromDocument(it.id, it.data.orEmpty()) })
         }
         awaitClose { registration.remove() }
     }
 
-    override suspend fun getById(id: String): Campsite? =
-        campsites.document(id).get().await().toObject(Campsite::class.java)
+    override suspend fun getById(id: String): Campsite? {
+        val snapshot = campsites.document(id).get().await()
+        return if (snapshot.exists()) campsiteFromDocument(snapshot.id, snapshot.data.orEmpty()) else null
+    }
 
     override suspend fun save(campsite: Campsite): String {
         val doc = if (campsite.id.isBlank()) campsites.document() else campsites.document(campsite.id)
-        doc.set(campsite).await() // the @DocumentId field is not written into the document
+        doc.set(campsiteToDocument(campsite)).await()
         return doc.id
     }
 
@@ -69,7 +74,7 @@ class FirestoreCampsiteRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            trySend(snapshot?.toObjects(Campsite::class.java).orEmpty())
+            trySend(snapshot?.documents.orEmpty().map { campsiteFromDocument(it.id, it.data.orEmpty()) })
         }
         awaitClose { registration.remove() }
     }
