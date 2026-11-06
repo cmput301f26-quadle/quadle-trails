@@ -61,6 +61,9 @@ fun campsiteOptions(campsites: List<Campsite>, lotteries: List<Lottery>, editing
  * @property saveFailed true if the last save failed; the screen offers "Try again".
  * @property savedId the lottery's id once saved; the screen moves on when this is set.
  * @property savedChange what an edit changed, for the "Changes saved" banner.
+ * @property isDeleting true while deleting.
+ * @property deleted true once the lottery is deleted; the screen leaves.
+ * @property deleteFailed true if the last delete failed.
  */
 data class LotteryFormUiState(
     val draft: LotteryDraft = LotteryDraft(),
@@ -76,7 +79,10 @@ data class LotteryFormUiState(
     val isSaving: Boolean = false,
     val saveFailed: Boolean = false,
     val savedId: String? = null,
-    val savedChange: LotteryChange? = null
+    val savedChange: LotteryChange? = null,
+    val isDeleting: Boolean = false,
+    val deleted: Boolean = false,
+    val deleteFailed: Boolean = false
 ) {
     /** Status of the lottery being edited; null for a new one. */
     val status: LotteryStatus? get() = original?.let { lotteryStatus(it, entrantCount, now) }
@@ -101,6 +107,9 @@ data class LotteryFormUiState(
 
     /** True if Publish / Save changes can be tapped. */
     val canSave: Boolean get() = problems.isEmpty() && !isSaving && !isLoading && !notFound && !isLocked
+
+    /** True if Delete lottery can be offered: editing, and nobody has joined the waiting list. */
+    val canDelete: Boolean get() = original != null && entrantCount == 0 && !isLocked && !isSaving && !isDeleting
 
     /** Names of the picked campsites, in the order picked. */
     val campsiteNames: List<String>
@@ -272,6 +281,33 @@ class LotteryFormViewModel(
                 _state.update { it.copy(isSaving = false, saveFailed = true) }
             }
         }
+    }
+
+    /**
+     * Deletes the lottery being edited if nobody has joined its waiting list, and frees its
+     * campsites. If someone joined since the screen loaded, nothing is deleted and the
+     * entrant count is updated so the screen explains why.
+     */
+    fun onDelete() {
+        val current = _state.value
+        val id = current.original?.id ?: return
+        if (!current.canDelete) return
+        _state.update { it.copy(isDeleting = true, deleteFailed = false) }
+        viewModelScope.launch {
+            try {
+                when (val result = deleteLotteryIfEmpty(id, lotteryRepository, campsiteRepository, waitlistRepository)) {
+                    DeleteResult.Deleted -> _state.update { it.copy(isDeleting = false, deleted = true) }
+                    is DeleteResult.HasEntrants -> _state.update { it.copy(isDeleting = false, entrantCount = result.entrants) }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isDeleting = false, deleteFailed = true) }
+            }
+        }
+    }
+
+    /** Hides the "Couldn't delete" message. */
+    fun onDismissDeleteError() {
+        _state.update { it.copy(deleteFailed = false) }
     }
 
     private suspend fun linkCampsites(lotteryId: String, now: List<String>, before: List<String>) {

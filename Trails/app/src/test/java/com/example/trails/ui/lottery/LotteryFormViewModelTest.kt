@@ -250,4 +250,57 @@ class LotteryFormViewModelTest {
         assertNull(draft.registrationStart)
         assertNull(draft.bookingEnd)
     }
+
+    // Delete lottery: allowed while nobody has joined, and frees the campsites.
+    @Test
+    fun delete_withNoEntrants_removesLotteryAndFreesCampsites() = runTest(dispatcher) {
+        val vm = viewModel(lotteryId = summer.id)
+        assertTrue(vm.state.value.canDelete)
+        vm.onDelete()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.deleted)
+        assertNull(lotteries.getById(summer.id))
+        assertNull(campsites.getById("jasper")?.activeLotteryId)
+    }
+
+    @Test
+    fun delete_withEntrants_isNotOffered() = runTest(dispatcher) {
+        waitlist = FakeWaitlistRepository(listOf(WaitlistEntry(userId = "u1", lotteryId = summer.id)))
+        val vm = viewModel(lotteryId = summer.id)
+        assertFalse(vm.state.value.canDelete)
+        vm.onDelete()
+        advanceUntilIdle()
+        assertNotNull(lotteries.getById(summer.id))
+    }
+
+    // Someone joins after the screen loaded: nothing is deleted and the screen learns the new count.
+    @Test
+    fun delete_someoneJoinedMeanwhile_keepsLottery() = runTest(dispatcher) {
+        val vm = viewModel(lotteryId = summer.id)
+        waitlist.save(WaitlistEntry(userId = "u1", lotteryId = summer.id, rulesAccepted = true))
+        vm.onDelete()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.deleted)
+        assertEquals(1, vm.state.value.entrantCount)
+        assertNotNull(lotteries.getById(summer.id))
+        assertEquals(summer.id, campsites.getById("jasper")?.activeLotteryId)
+    }
+
+    @Test
+    fun delete_failure_showsErrorAndRetryWorks() = runTest(dispatcher) {
+        val vm = viewModel(lotteryId = summer.id)
+        lotteries.failure = IllegalStateException("offline")
+        vm.onDelete()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.deleteFailed)
+        assertNotNull(lotteries.getById(summer.id))
+        vm.onDelete()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.deleted)
+    }
+
+    @Test
+    fun newLottery_cantBeDeleted() = runTest(dispatcher) {
+        assertFalse(viewModel().state.value.canDelete)
+    }
 }
