@@ -1,6 +1,7 @@
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
 // USER STORIES: 01.01.04
 // PURPOSE: Reusable campsite summary card for entrants.
+// Outstanding issues: none.
 package com.example.trails.ui.discovery
 
 import androidx.compose.foundation.BorderStroke
@@ -38,10 +39,11 @@ import com.example.trails.ui.campsite.formatRating
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
- * Summary of one campsite: name, location, capacity, rating, price and amenities.
+ * Summary of one campsite: photo, name, location, capacity, price, rating, and amenities.
  *
  * @param campsite the site to show.
  * @param onClick called when the card is tapped.
+ * @param modifier applied to the card.
  */
 @Composable
 fun CampsiteSummaryCard(
@@ -126,7 +128,11 @@ fun CampsiteSummaryCard(
     }
 }
 
-/** Square promo photo, or a plain tile when the campsite has none. */
+/**
+ * Square promo photo, or a plain tile when the campsite has none.
+ *
+ * @param url the photo address, or null when the campsite has no photo.
+ */
 @Composable
 private fun Thumbnail(url: String?) {
     val shape = RoundedCornerShape(8.dp)
@@ -147,6 +153,12 @@ private fun Thumbnail(url: String?) {
 
 /** Test tags for the summary card. */
 object CampsiteSummaryCardTags {
+    /**
+     * Tag for one campsite card.
+     *
+     * @param id the campsite id.
+     * @return a tag unique to that card.
+     */
     fun card(id: String) = "discovery_card_$id"
 }
 

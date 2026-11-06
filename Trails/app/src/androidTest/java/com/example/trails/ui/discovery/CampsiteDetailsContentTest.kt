@@ -1,5 +1,7 @@
-// UI tests for the entrant campsite details screen (US 01.01.05).
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
+// USER STORIES: 01.01.05
+// PURPOSE: UI tests for the entrant campsite details screen.
+// Outstanding issues: none.
 package com.example.trails.ui.discovery
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,6 +18,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Checks that [CampsiteDetailsContent] shows a loaded campsite, a missing one, a loading spinner, and the back arrow.
+ */
 class CampsiteDetailsContentTest {
 
     @get:Rule
@@ -66,6 +71,14 @@ class CampsiteDetailsContentTest {
         )
         composeRule.onNodeWithText("No ratings yet").assertIsDisplayed()
         composeRule.onNodeWithText("No map pin yet").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun loading_showsSpinnerWithoutDetails() {
+        show(CampsiteDetailsUiState.Loading)
+        composeRule.onNodeWithTag(CampsiteDetailsTags.LOADING).assertIsDisplayed()
+        composeRule.onNodeWithText("Tunnel Mountain Site 14").assertDoesNotExist()
+        composeRule.onNodeWithText("Join Lottery").assertDoesNotExist()
     }
 
     @Test
