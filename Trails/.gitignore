@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Team guide, kept locally and not committed
+/Trails Project Skeleton Guide.pdf
