@@ -21,10 +21,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -561,4 +566,39 @@ internal fun waitlistText(capacity: Int?, short: Boolean = false): String = when
     capacity == null -> stringResource(R.string.lottery_waitlist_no_limit)
     short -> stringResource(R.string.lottery_waitlist_up_to_short, capacity)
     else -> stringResource(R.string.lottery_waitlist_up_to, capacity)
+}
+
+/** Bottom sheet in the lottery style: dark green, rounded top, small handle (Figma "Date range sheet"). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun LotterySheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = LotteryColors.Sheet,
+        scrimColor = Color.Black.copy(alpha = 0.62f),
+        shape = shape,
+        modifier = Modifier.border(1.dp, LotteryColors.Line, shape),
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 10.dp)
+                    .size(width = 40.dp, height = 5.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(LotteryColors.Line)
+            )
+        }
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 34.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            if (title != null) Text(title, style = LotteryType.Header)
+            content()
+        }
+    }
 }
