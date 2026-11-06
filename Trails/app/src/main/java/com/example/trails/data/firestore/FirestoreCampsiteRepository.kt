@@ -14,7 +14,6 @@ import com.example.trails.data.repository.CampsiteRepository
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
@@ -26,15 +25,19 @@ import java.util.UUID
 /**
  * Reads and writes [Campsite]s in the [Collections.CAMPSITES] Firestore collection.
  *
+ * Firebase is only touched on first use, so creating this class (e.g. as a default
+ * argument in a ViewModel under a JVM unit test) never starts Firebase.
+ *
  * @param db the Firestore instance; defaults to the app's default instance.
  * @param storage the Storage instance for promo photos; defaults to the app's default instance.
  */
 class FirestoreCampsiteRepository(
-    db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance() },
+    storage: Lazy<FirebaseStorage> = lazy { FirebaseStorage.getInstance() }
 ) : CampsiteRepository {
 
-    private val campsites = db.collection(Collections.CAMPSITES)
+    private val campsites by lazy { db.value.collection(Collections.CAMPSITES) }
+    private val storage by storage
 
     override fun observeAll(): Flow<List<Campsite>> = observe(campsites)
 
@@ -57,7 +60,7 @@ class FirestoreCampsiteRepository(
     override suspend fun getById(id: String): Campsite? = try {
         val snapshot = campsites.document(id).get().await()
         if (snapshot.exists()) campsiteFromDocument(snapshot.id, snapshot.data.orEmpty()) else null
-    } catch (e: FirebaseFirestoreException) {
+    } catch (e: Exception) { // denied by rules, offline, or Firebase not available
         Log.w(TAG, "Couldn't read campsite $id", e)
         null
     }
