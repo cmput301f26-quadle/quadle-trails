@@ -1,5 +1,7 @@
-// UI (intent) tests for the empty Notifications tab.
 // OWNER: Zainab (zsaghir) — App shell
+// PURPOSE: UI (intent) tests for the empty Notifications tab.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.shell
 
 import androidx.compose.ui.test.assertIsDisplayed

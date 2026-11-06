@@ -1,5 +1,8 @@
-// Unit tests for the fixed App policy and Camping guidelines cards (US 01.11.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 01.11.01
+// PURPOSE: Unit tests for the fixed App policy and Camping guidelines cards.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import org.junit.Assert.assertEquals

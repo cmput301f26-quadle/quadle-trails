@@ -1,5 +1,8 @@
-// Unit tests for buildAdminHomeState() and greeting() on the admin home (US 03.04.01, 03.05.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 03.04.01, 03.05.01
+// PURPOSE: Unit tests for buildAdminHomeState() and greeting() on the admin home.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite

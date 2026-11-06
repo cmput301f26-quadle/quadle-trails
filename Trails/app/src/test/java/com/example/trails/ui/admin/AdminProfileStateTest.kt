@@ -1,5 +1,8 @@
-// Unit tests for buildAdminProfileState() and the admin Profile page text helpers (US 03.05.01, 03.02.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 03.05.01, 03.02.01
+// PURPOSE: Unit tests for buildAdminProfileState() and the admin Profile page text helpers.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite

@@ -1,5 +1,7 @@
 // Temporary centred-text screen used until each real screen is built.
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help add the outstanding issues line to this header.
 package com.example.trails.ui.common
 
 import androidx.compose.foundation.layout.Box

@@ -1,5 +1,7 @@
 // A user profile, keyed by device id, stored in the users collection.
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help add the outstanding issues line to this header.
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp

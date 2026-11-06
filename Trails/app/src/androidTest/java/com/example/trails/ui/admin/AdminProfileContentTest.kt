@@ -1,5 +1,8 @@
-// UI (intent) tests for the admin's Profile page (US 03.05.01) and Remove profile dialog (US 03.02.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 03.05.01, 03.02.01
+// PURPOSE: UI (intent) tests for the admin's Profile page and its Remove profile dialog.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import androidx.compose.ui.test.assertIsDisplayed

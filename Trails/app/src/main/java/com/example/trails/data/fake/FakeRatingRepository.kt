@@ -1,7 +1,8 @@
-// In-memory RatingRepository seeded from TestRatings.
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// Extend with the methods your stories need, and write the Firestore
-//  implementation. Others: open a small PR and tag the owner.
+// USER STORIES: 01.13.01
+// PURPOSE: In-memory RatingRepository seeded from TestRatings.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Rating
@@ -11,6 +12,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
+/**
+ * In-memory [RatingRepository] for previews and tests. Changes are lost when the app closes.
+ *
+ * @param initial ratings to start with; defaults to [TestRatings.all].
+ */
 class FakeRatingRepository(initial: List<Rating> = TestRatings.all) : RatingRepository {
     private val ratings = MutableStateFlow(initial)
 
