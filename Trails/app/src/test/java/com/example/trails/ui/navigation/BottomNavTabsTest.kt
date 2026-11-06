@@ -1,5 +1,7 @@
-// Unit tests for homeRouteFor(), routeFor() and selectedTab(), the bottom-nav logic.
 // OWNER: Zainab (zsaghir) — App shell
+// PURPOSE: Unit tests for homeRouteFor(), routeFor() and selectedTab(), the bottom-nav logic.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.navigation
 
 import com.example.trails.data.model.Role

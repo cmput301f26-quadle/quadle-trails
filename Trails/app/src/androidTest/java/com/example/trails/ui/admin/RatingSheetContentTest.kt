@@ -1,5 +1,8 @@
-// UI (intent) tests for the "Rate campsite" bottom sheet, US 01.13.01.
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 01.13.01
+// PURPOSE: UI (intent) tests for the "Rate campsite" bottom sheet.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import androidx.compose.ui.test.assertIsDisplayed

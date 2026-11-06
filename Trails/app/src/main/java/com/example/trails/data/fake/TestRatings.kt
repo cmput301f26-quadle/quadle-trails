@@ -1,12 +1,15 @@
-// Sample campsite ratings, matching the rating averages in TestCampsites.
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// Extend with the methods your stories need, and write the Firestore
-//  implementation. Others: open a small PR and tag the owner.
+// USER STORIES: 01.13.01
+// PURPOSE: Sample campsite ratings, matching the rating averages in TestCampsites.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Rating
 
+/** Sample ratings used to seed [FakeRatingRepository]. */
 object TestRatings {
+    /** Every sample rating: two of Banff and one of Jasper. */
     val all = listOf(
         Rating(
             userId = TestUsers.ENTRANT_ID,

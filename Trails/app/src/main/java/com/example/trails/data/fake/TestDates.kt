@@ -1,5 +1,7 @@
 // Date helpers for the sample data; relative dates keep the sample lottery open whenever the app is run.
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help add the outstanding issues line to this header.
 package com.example.trails.data.fake
 
 import com.google.firebase.Timestamp

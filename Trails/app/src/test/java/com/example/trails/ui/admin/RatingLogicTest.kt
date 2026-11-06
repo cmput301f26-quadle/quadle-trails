@@ -1,5 +1,8 @@
-// Unit tests for the rating rules and average calculation (US 01.13.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
+// USER STORIES: 01.13.01
+// PURPOSE: Unit tests for the rating rules and average calculation.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
