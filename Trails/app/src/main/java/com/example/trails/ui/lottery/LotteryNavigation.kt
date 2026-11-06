@@ -9,6 +9,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.trails.ui.navigation.optionalArg
 import com.example.trails.ui.navigation.optionalId
+import com.example.trails.ui.navigation.requireArg
+import com.example.trails.ui.navigation.requiredId
 
 /** Key the edit screen uses to hand the "Changes saved" text back to the details page. */
 const val LOTTERY_SAVED_MESSAGE = "lottery_saved_message"
@@ -51,4 +53,7 @@ fun NavGraphBuilder.lotteryGraph(navController: NavController) {
         )
     }
     composable(LotteryRoutes.MY_LOTTERIES) { MyLotteriesScreen(navController) }
+    composable(LotteryRoutes.LOTTERY_DETAILS, arguments = listOf(requiredId("lotteryId"))) { entry ->
+        LotteryDetailsScreen(navController, lotteryId = entry.requireArg("lotteryId"), savedState = entry.savedStateHandle)
+    }
 }
