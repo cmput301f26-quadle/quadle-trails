@@ -12,8 +12,9 @@ import java.util.GregorianCalendar
 import java.util.TimeZone
 
 /**
- * The keyword and filters currently applied on the browse screen.
+ * The keyword and filters for the browse list.
  *
+ * The same shape is used for the filters on the list and for the draft on the filters page.
  * A blank field means that filter is not applied.
  *
  * @property query keyword matched against the name, location, description, and tags.

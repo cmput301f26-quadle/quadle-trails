@@ -606,6 +606,12 @@ private fun FilterChips(filters: BrowseFilters) {
     }
 }
 
+/**
+ * The date chip text for the applied check-in and check-out.
+ *
+ * @param filters the filters currently applied to the list.
+ * @return the formatted range, a single day, or null when neither date is set.
+ */
 private fun dateChipLabel(filters: BrowseFilters): String? {
     val arrive = filters.arriveMillis?.let(::formatBrowseDate)
     val leave = filters.leaveMillis?.let(::formatBrowseDate)
@@ -701,6 +707,13 @@ fun formatBrowseDate(millis: Long): String =
         .apply { timeZone = TimeZone.getTimeZone("UTC") }
         .format(Date(millis))
 
+/**
+ * Whether a location, guest count, or date is applied.
+ *
+ * The keyword alone does not count. The results page is used when this is true.
+ *
+ * @return true when one of those filters is set.
+ */
 private fun BrowseFilters.hasDetailFilters(): Boolean =
     location.isNotBlank() || guestsText.isNotBlank() || arriveMillis != null || leaveMillis != null
 
