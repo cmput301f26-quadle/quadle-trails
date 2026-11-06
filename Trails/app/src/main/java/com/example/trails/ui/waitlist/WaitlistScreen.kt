@@ -140,11 +140,13 @@ fun WaitlistContent(
             val campsite: Campsite? = when (state) {
                 is WaitlistUiState.NotWaitlisted -> state.campsite
                 is WaitlistUiState.Waitlisted -> state.campsite
+                is WaitlistUiState.Error -> state.campsite
                 else -> null
             }
             val lottery: Lottery? = when (state) {
                 is WaitlistUiState.NotWaitlisted -> state.lottery
                 is WaitlistUiState.Waitlisted -> state.lottery
+                is WaitlistUiState.Error -> state.lottery
                 else -> null
             }
             val isRulesAccepted = (state as? WaitlistUiState.NotWaitlisted)?.isRulesAccepted ?: false
@@ -248,41 +250,41 @@ fun WaitlistContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // information card 1: lottery registrations open
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Forest, RoundedCornerShape(8.dp))
-                        .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = "Lottery Registrations Open",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TrailGreen,
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = lottery?.name.orEmpty(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Entry closes soon. Dates are subject to availability if selected.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
-                    if (campsite != null) {
+                // information card 1: lottery registrations open or no active lottery notice
+                if (lottery != null && lottery.id.isNotBlank()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Forest, RoundedCornerShape(8.dp))
+                            .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Lottery Registrations Open",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TrailGreen,
+                            fontSize = 11.sp
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Your Preference: Up to ${campsite.maxOccupancy} Guests",
+                            text = lottery.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Entry closes soon. Dates are subject to availability if selected.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Mist
                         )
-                    }
-                    if (lottery != null && lottery.id.isNotBlank()) {
+                        if (campsite != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Your Preference: Up to ${campsite.maxOccupancy} Guests",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Mist
+                            )
+                        }
                         val entrantCount = when (state) {
                             is WaitlistUiState.NotWaitlisted -> state.entrantCount
                             is WaitlistUiState.Waitlisted -> state.entrantCount
@@ -299,6 +301,27 @@ fun WaitlistContent(
                                 style = MaterialTheme.typography.labelMedium
                             )
                         }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NightSurface, RoundedCornerShape(8.dp))
+                            .border(1.dp, Moss, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                            .testTag("no_active_lottery_card")
+                    ) {
+                        Text(
+                            text = "No Active Lottery",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "There is currently no scheduled lottery draw for this campsite. Check back soon for upcoming registration dates.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
                     }
                 }
 
@@ -336,6 +359,7 @@ fun WaitlistContent(
                 // embedded rules agreement section (story 02.11.01)
                 RulesAgreementSection(
                     rulesText = campsite?.rules.orEmpty(),
+                    cancellationPolicy = campsite?.cancellationPolicy.orEmpty(),
                     isChecked = isRulesAccepted,
                     onCheckedChange = onRulesCheckedChange
                 )

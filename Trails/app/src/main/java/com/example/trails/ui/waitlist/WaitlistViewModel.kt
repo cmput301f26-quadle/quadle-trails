@@ -60,10 +60,13 @@ sealed interface WaitlistUiState {
     ) : WaitlistUiState
 
     // error state with user facing message
+    // retains campsite and lottery details to prevent ui state loss
     data class Error(
         val message: String,
         val isFull: Boolean = false,
-        val entries: List<WaitlistEntry> = emptyList()
+        val entries: List<WaitlistEntry> = emptyList(),
+        val campsite: Campsite? = null,
+        val lottery: Lottery? = null
     ) : WaitlistUiState
 }
 
@@ -191,7 +194,9 @@ class WaitlistViewModel(
                 }
             }.catch { e ->
                 _uiState.value = WaitlistUiState.Error(
-                    message = e.message ?: "Network error: Failed to load waitlist data."
+                    message = e.message ?: "Network error: Failed to load waitlist data.",
+                    campsite = _campsite.value,
+                    lottery = _lottery.value
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -213,7 +218,9 @@ class WaitlistViewModel(
             WaitlistUiState.Error(
                 message = error,
                 isFull = isFull,
-                entries = allEntries
+                entries = allEntries,
+                campsite = info.campsite,
+                lottery = info.lottery
             )
         } else if (userEntry != null) {
             WaitlistUiState.Waitlisted(
@@ -260,6 +267,11 @@ class WaitlistViewModel(
                 val targetLotteryId = _activeLotteryId.value.ifBlank {
                     _lottery.value?.id?.ifBlank { null } ?: lotteryId
                 }
+                // guard against joining when no active lottery exists for the campsite
+                if (targetLotteryId.isBlank()) {
+                    _errorMessage.value = "This campsite does not currently have an active lottery."
+                    return@launch
+                }
                 val currentLottery = _lottery.value ?: if (targetLotteryId.isNotBlank()) lotteryRepository.getById(targetLotteryId) else null
                 val maxCapacity = currentLottery?.waitlistCapacity
 
@@ -295,6 +307,10 @@ class WaitlistViewModel(
                 _errorMessage.value = null
                 val targetLotteryId = _activeLotteryId.value.ifBlank {
                     _lottery.value?.id?.ifBlank { null } ?: lotteryId
+                }
+                if (targetLotteryId.isBlank()) {
+                    _errorMessage.value = "This campsite does not currently have an active lottery."
+                    return@launch
                 }
                 waitlistRepository.leaveWaitlist(targetLotteryId, userId)
             } catch (e: Exception) {
