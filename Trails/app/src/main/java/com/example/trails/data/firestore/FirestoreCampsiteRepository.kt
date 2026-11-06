@@ -1,7 +1,8 @@
 // Firestore-backed CampsiteRepository for the campsites collection.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Outstanding issues:
-//  - A listener error closes the flow; screens should show an error state.
+//  - Read errors (e.g. PERMISSION_DENIED from the security rules) are logged and treated as
+//    "no data" so the app doesn't crash; screens don't show a dedicated error state yet.
 //  - Photo upload needs Firebase Storage enabled on the project.
 //  - Needs a live Firestore, so it isn't unit-tested itself; the document mapping it relies
 //    on (CampsiteDocument.kt) is.
@@ -11,7 +12,9 @@ import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Collections
 import com.example.trails.data.repository.CampsiteRepository
 import android.net.Uri
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
@@ -41,7 +44,9 @@ class FirestoreCampsiteRepository(
     override fun observeById(id: String): Flow<Campsite?> = callbackFlow {
         val registration = campsites.document(id).addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error)
+                Log.w(TAG, "Couldn't read campsite $id", error)
+                trySend(null)
+                close()
                 return@addSnapshotListener
             }
             trySend(snapshot?.takeIf { it.exists() }?.let { campsiteFromDocument(it.id, it.data.orEmpty()) })
@@ -49,9 +54,12 @@ class FirestoreCampsiteRepository(
         awaitClose { registration.remove() }
     }
 
-    override suspend fun getById(id: String): Campsite? {
+    override suspend fun getById(id: String): Campsite? = try {
         val snapshot = campsites.document(id).get().await()
-        return if (snapshot.exists()) campsiteFromDocument(snapshot.id, snapshot.data.orEmpty()) else null
+        if (snapshot.exists()) campsiteFromDocument(snapshot.id, snapshot.data.orEmpty()) else null
+    } catch (e: FirebaseFirestoreException) {
+        Log.w(TAG, "Couldn't read campsite $id", e)
+        null
     }
 
     override suspend fun save(campsite: Campsite): String {
@@ -67,11 +75,17 @@ class FirestoreCampsiteRepository(
         return ref.downloadUrl.await().toString()
     }
 
+    private companion object {
+        const val TAG = "FirestoreCampsiteRepo"
+    }
+
     /** Turns a Firestore query into a Flow that re-emits on every change. */
     private fun observe(query: Query): Flow<List<Campsite>> = callbackFlow {
         val registration = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error)
+                Log.w(TAG, "Couldn't read campsites", error)
+                trySend(emptyList())
+                close()
                 return@addSnapshotListener
             }
             trySend(snapshot?.documents.orEmpty().map { campsiteFromDocument(it.id, it.data.orEmpty()) })
