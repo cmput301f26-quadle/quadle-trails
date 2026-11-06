@@ -1,5 +1,7 @@
-// UI tests for the campsite summary card (US 01.01.04).
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
+// USER STORIES: 01.01.04
+// PURPOSE: UI tests for the campsite summary card.
+// Outstanding issues: none.
 package com.example.trails.ui.discovery
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,6 +14,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Checks that [CampsiteSummaryCard] shows a rated campsite, an unrated campsite, at most three amenities, and a tap.
+ */
 class CampsiteSummaryCardTest {
 
     @get:Rule
@@ -41,6 +46,16 @@ class CampsiteSummaryCardTest {
         composeRule.onNodeWithText("Hinton-Grande Cache, AB · Up to 8 guests").assertIsDisplayed()
         composeRule.onNodeWithText("$65 / night").assertIsDisplayed()
         composeRule.onNodeWithText("No ratings yet").assertIsDisplayed()
+    }
+
+    @Test
+    fun moreThanThreeTags_showsOnlyTheFirstThree() {
+        val hinton = TestCampsites.all.first { it.id == TestCampsites.HINTON_ID }
+        composeRule.setContent {
+            TrailsTheme { CampsiteSummaryCard(hinton, onClick = {}) }
+        }
+        composeRule.onNodeWithText("Lakefront · Boat launch · Pet friendly").assertIsDisplayed()
+        composeRule.onNodeWithText("Tennis court").assertDoesNotExist()
     }
 
     @Test

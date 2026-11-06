@@ -1,7 +1,7 @@
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
 // USER STORIES: 01.01.01, 01.01.02, 01.01.03, 01.01.04
 // PURPOSE: Scrollable campsite list with keyword search and filters.
-// Keep a title whose text is exactly "Browse": TrailsAppTest looks for it.
+// Outstanding issues: the title text must stay "Browse" because TrailsAppTest looks for it.
 package com.example.trails.ui.discovery
 
 import androidx.compose.foundation.clickable
@@ -55,6 +55,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+/**
+ * Entrant home screen: a scrollable list of campsite cards with search and filters.
+ *
+ * The title text is "Browse" so the app-shell test can find this screen.
+ * Tapping a card opens that campsite's details.
+ *
+ * @param navController used to open a campsite's details.
+ * @param modifier applied to the screen.
+ * @param viewModel supplies the list and records what the user types.
+ */
 @Composable
 fun BrowseScreen(
     navController: NavController,
@@ -169,6 +179,14 @@ fun BrowseScreen(
     }
 }
 
+/**
+ * A read-only field that opens a date picker.
+ *
+ * @param label text shown above the field.
+ * @param millis the currently picked day, or null when the field is empty. UTC midnight.
+ * @param onPick called with the confirmed day, or null when the picker has no selection.
+ * @param modifier applied to the field.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateField(
@@ -214,17 +232,32 @@ private fun DateField(
     }
 }
 
-/** Date-picker value shown on the field. The picker stores UTC midnight. */
+/**
+ * Formats a date-picker value for the Arrive and Leave fields.
+ *
+ * The picker stores UTC midnight, so the calendar day is formatted in UTC.
+ *
+ * @param millis UTC midnight of the picked day, in milliseconds.
+ * @return the date as text, for example "May 8, 2027".
+ */
 fun formatBrowseDate(millis: Long): String =
     SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
         .apply { timeZone = TimeZone.getTimeZone("UTC") }
         .format(Date(millis))
 
+/**
+ * Holds the browse filters and the campsite list that matches them.
+ *
+ * The list updates whenever the repository changes or the user edits a filter.
+ *
+ * @param campsiteRepository where the campsites are loaded from.
+ */
 class BrowseViewModel(
     campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository
 ) : ViewModel() {
     private val filters = MutableStateFlow(BrowseFilters())
 
+    /** The list, filters, and total campsite count currently shown. */
     val uiState: StateFlow<BrowseUiState> = combine(
         campsiteRepository.observeAll(),
         filters
@@ -232,14 +265,55 @@ class BrowseViewModel(
         BrowseUiState(buildBrowseList(campsites, current), current, campsites.size)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowseUiState())
 
+    /**
+     * Sets the keyword search.
+     *
+     * @param value the text in the search field.
+     */
     fun onQueryChange(value: String) = filters.update { it.copy(query = value) }
+
+    /**
+     * Sets the location filter.
+     *
+     * @param value the text in the location field.
+     */
     fun onLocationChange(value: String) = filters.update { it.copy(location = value) }
+
+    /**
+     * Sets the guest filter, keeping digits only.
+     *
+     * @param value the text in the guests field.
+     */
     fun onGuestsChange(value: String) = filters.update { it.copy(guestsText = value.filter { ch -> ch.isDigit() }) }
+
+    /**
+     * Sets the arrival date.
+     *
+     * @param millis the picked day, or null to clear it. UTC midnight from the date picker.
+     */
     fun onArriveChange(millis: Long?) = filters.update { it.copy(arriveMillis = millis) }
+
+    /**
+     * Sets the leaving date.
+     *
+     * @param millis the picked day, or null to clear it. UTC midnight from the date picker.
+     */
     fun onLeaveChange(millis: Long?) = filters.update { it.copy(leaveMillis = millis) }
+
+    /** Clears both the arrival and leaving dates. */
     fun onClearDates() = filters.update { it.copy(arriveMillis = null, leaveMillis = null) }
 }
 
+/**
+ * Test tags for the browse screen.
+ *
+ * @property LIST the scrollable campsite list.
+ * @property SEARCH the keyword field.
+ * @property LOCATION the location filter.
+ * @property GUESTS the guest filter.
+ * @property ARRIVE the arrival date field.
+ * @property LEAVE the leaving date field.
+ */
 object BrowseTags {
     const val LIST = "discovery_list"
     const val SEARCH = "discovery_search"

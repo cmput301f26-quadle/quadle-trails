@@ -1,11 +1,16 @@
-// Unit tests for the entrant campsite page state (US 01.01.05).
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
+// USER STORIES: 01.01.05
+// PURPOSE: Unit tests for the entrant campsite page state.
+// Outstanding issues: none.
 package com.example.trails.ui.discovery
 
 import com.example.trails.data.fake.TestCampsites
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Checks that [buildCampsiteDetailsState] reports a missing campsite and a loaded one.
+ */
 class CampsiteDetailsUiStateTest {
 
     @Test
