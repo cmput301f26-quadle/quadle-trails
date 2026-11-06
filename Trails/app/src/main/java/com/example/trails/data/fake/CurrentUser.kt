@@ -3,5 +3,5 @@
 package com.example.trails.data.fake
 
 object CurrentUser {
-    fun id(): String = TestUsers.OWNER_ID
+    fun id(): String = TestUsers.ENTRANT_ID
 }
