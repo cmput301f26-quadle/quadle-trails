@@ -272,7 +272,7 @@ private fun NotWaitlistedContent(
     }
 }
 
-// campsite details integration overload called by campsite details screen
+// campsite details button hidden when the campsite has no active lottery
 @Composable
 fun JoinLotterySection(
     navController: NavController,
@@ -281,7 +281,7 @@ fun JoinLotterySection(
 ) {
     var isWaitlisted by remember { mutableStateOf(false) }
     var activeLotteryId by remember { mutableStateOf<String?>(null) }
-    var isLoaded by remember { mutableStateOf(false) }
+    var loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(campsiteId) {
         try {
@@ -295,14 +295,14 @@ fun JoinLotterySection(
         } catch (_: Exception) {
             isWaitlisted = false
         } finally {
-            isLoaded = true
+            loaded = true
         }
     }
 
+    if (!loaded || activeLotteryId.isNullOrBlank()) return
+
     Column(modifier = modifier.padding(vertical = 8.dp)) {
-        if (!isLoaded) {
-            // briefly waiting for campsite active lottery check
-        } else if (isWaitlisted) {
+        if (isWaitlisted) {
             Button(
                 onClick = {
                     navController.navigate(WaitlistRoutes.waitlistScreen(campsiteId))
@@ -314,18 +314,6 @@ fun JoinLotterySection(
                 )
             ) {
                 Text("View My Waitlist Status")
-            }
-        } else if (activeLotteryId.isNullOrBlank()) {
-            Button(
-                onClick = {},
-                enabled = false,
-                modifier = Modifier.testTag("campsite_no_lottery_button"),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = Forest,
-                    disabledContentColor = Mist
-                )
-            ) {
-                Text("No Active Lottery")
             }
         } else {
             Button(

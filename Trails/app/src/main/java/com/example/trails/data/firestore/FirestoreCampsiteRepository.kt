@@ -1,14 +1,18 @@
 // Firestore-backed CampsiteRepository for the campsites collection.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Outstanding issues:
-//  - A listener error closes the flow; screens should show an error state.
-//  - Not unit-tested (needs a live Firestore); covered by UI tests on the campsite screens.
+//  - Read errors (e.g. PERMISSION_DENIED from the security rules) are logged and treated as
+//    "no data" so the app doesn't crash; screens don't show a dedicated error state yet.
+//  - Photo upload needs Firebase Storage enabled on the project.
+//  - Needs a live Firestore, so it isn't unit-tested itself; the document mapping it relies
+//    on (CampsiteDocument.kt) is.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Collections
 import com.example.trails.data.repository.CampsiteRepository
 import android.net.Uri
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
@@ -21,14 +25,19 @@ import java.util.UUID
 /**
  * Reads and writes [Campsite]s in the [Collections.CAMPSITES] Firestore collection.
  *
+ * Firebase is only touched on first use, so creating this class (e.g. as a default
+ * argument in a ViewModel under a JVM unit test) never starts Firebase.
+ *
  * @param db the Firestore instance; defaults to the app's default instance.
+ * @param storage the Storage instance for promo photos; defaults to the app's default instance.
  */
 class FirestoreCampsiteRepository(
-    db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance() },
+    storage: Lazy<FirebaseStorage> = lazy { FirebaseStorage.getInstance() }
 ) : CampsiteRepository {
 
-    private val campsites = db.collection(Collections.CAMPSITES)
+    private val campsites by lazy { db.value.collection(Collections.CAMPSITES) }
+    private val storage by storage
 
     override fun observeAll(): Flow<List<Campsite>> = observe(campsites)
 
@@ -38,21 +47,33 @@ class FirestoreCampsiteRepository(
     override fun observeById(id: String): Flow<Campsite?> = callbackFlow {
         val registration = campsites.document(id).addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error)
+                Log.w(TAG, "Couldn't read campsite $id", error)
+                trySend(null)
+                close()
                 return@addSnapshotListener
             }
-            trySend(snapshot?.toObject(Campsite::class.java))
+            trySend(snapshot?.takeIf { it.exists() }?.let { campsiteFromDocument(it.id, it.data.orEmpty()) })
         }
         awaitClose { registration.remove() }
     }
 
-    override suspend fun getById(id: String): Campsite? =
-        campsites.document(id).get().await().toObject(Campsite::class.java)
+    override suspend fun getById(id: String): Campsite? = try {
+        val snapshot = campsites.document(id).get().await()
+        if (snapshot.exists()) campsiteFromDocument(snapshot.id, snapshot.data.orEmpty()) else null
+    } catch (e: Exception) { // denied by rules, offline, or Firebase not available
+        Log.w(TAG, "Couldn't read campsite $id", e)
+        null
+    }
 
     override suspend fun save(campsite: Campsite): String {
         val doc = if (campsite.id.isBlank()) campsites.document() else campsites.document(campsite.id)
-        doc.set(campsite).await() // the @DocumentId field is not written into the document
+        doc.set(campsiteToDocument(campsite)).await()
         return doc.id
+    }
+
+    /** Firestore's delete already succeeds when the document doesn't exist. */
+    override suspend fun delete(id: String) {
+        campsites.document(id).delete().await()
     }
 
     /** Uploads to Firebase Storage under campsite-images/ and returns the download URL. */
@@ -62,14 +83,20 @@ class FirestoreCampsiteRepository(
         return ref.downloadUrl.await().toString()
     }
 
+    private companion object {
+        const val TAG = "FirestoreCampsiteRepo"
+    }
+
     /** Turns a Firestore query into a Flow that re-emits on every change. */
     private fun observe(query: Query): Flow<List<Campsite>> = callbackFlow {
         val registration = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error)
+                Log.w(TAG, "Couldn't read campsites", error)
+                trySend(emptyList())
+                close()
                 return@addSnapshotListener
             }
-            trySend(snapshot?.toObjects(Campsite::class.java).orEmpty())
+            trySend(snapshot?.documents.orEmpty().map { campsiteFromDocument(it.id, it.data.orEmpty()) })
         }
         awaitClose { registration.remove() }
     }

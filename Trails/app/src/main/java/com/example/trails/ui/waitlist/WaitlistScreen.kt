@@ -149,6 +149,7 @@ fun WaitlistContent(
                 is WaitlistUiState.Error -> state.lottery
                 else -> null
             }
+            val hasLottery = lottery != null && lottery.id.isNotBlank()
             val isRulesAccepted = (state as? WaitlistUiState.NotWaitlisted)?.isRulesAccepted ?: false
 
             // based on android developer guide for scrollable columns
@@ -251,7 +252,7 @@ fun WaitlistContent(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // information card 1: lottery registrations open or no active lottery notice
-                if (lottery != null && lottery.id.isNotBlank()) {
+                if (hasLottery) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -302,6 +303,56 @@ fun WaitlistContent(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // information card 2: before you join disclaimer
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NightSurface, RoundedCornerShape(8.dp))
+                            .border(1.dp, Moss, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Before You Join",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Joining adds you to this lottery pool, not a booking. Selection does not guarantee any requested dates.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "If selected, continue to choose available dates and confirm your reservation.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // embedded rules agreement section (story 02.11.01)
+                    RulesAgreementSection(
+                        rulesText = campsite?.rules.orEmpty(),
+                        cancellationPolicy = campsite?.cancellationPolicy.orEmpty(),
+                        isChecked = isRulesAccepted,
+                        onCheckedChange = onRulesCheckedChange
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // embedded join and leave action section (stories 01.02.01 and 01.02.02)
+                    JoinLotterySection(
+                        uiState = state,
+                        onJoinClick = onJoinClick,
+                        onLeaveClick = onLeaveClick
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 } else {
                     Column(
                         modifier = Modifier
@@ -318,62 +369,14 @@ fun WaitlistContent(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "There is currently no scheduled lottery draw for this campsite. Check back soon for upcoming registration dates.",
+                            text = "This campsite is not in a lottery right now.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Mist
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // information card 2: before you join disclaimer
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NightSurface, RoundedCornerShape(8.dp))
-                        .border(1.dp, Moss, RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = "Before You Join",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Joining adds you to this lottery pool, not a booking. Selection does not guarantee any requested dates.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "If selected, continue to choose available dates and confirm your reservation.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // embedded rules agreement section (story 02.11.01)
-                RulesAgreementSection(
-                    rulesText = campsite?.rules.orEmpty(),
-                    cancellationPolicy = campsite?.cancellationPolicy.orEmpty(),
-                    isChecked = isRulesAccepted,
-                    onCheckedChange = onRulesCheckedChange
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // embedded join and leave action section (stories 01.02.01 and 01.02.02)
-                JoinLotterySection(
-                    uiState = state,
-                    onJoinClick = onJoinClick,
-                    onLeaveClick = onLeaveClick
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 // secondary cancel action
                 OutlinedButton(

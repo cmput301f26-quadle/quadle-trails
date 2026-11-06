@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Zainab (zsaghir) — Admin, Ratings & Policy — strings for the App policy & guidelines screens (US 01.11.01). -->
+<resources>
+    <!-- App policy screen -->
+    <string name="policy_title">App policy</string>
+    <string name="policy_back">Back</string>
+    <string name="policy_breadcrumb">Settings / App policy &amp; guidelines</string>
+    <string name="policy_heading">Using Quadle</string>
+    <string name="policy_intro">Understand lottery entry, reservations and the profile associated with your device.</string>
+    <string name="policy_guidelines_button">Read camping guidelines</string>
+    <string name="policy_back_to_settings">Back to settings</string>
+
+    <!-- App policy cards -->
+    <string name="policy_card_lottery_title">Lottery entry ≠ reservation</string>
+    <string name="policy_card_lottery_body">Joining a lottery pool expresses interest in a date block. It does not reserve a campsite or require payment. Entry does not guarantee selection.</string>
+    <string name="policy_card_selected_title">If you are selected</string>
+    <string name="policy_card_selected_body">Selection gives you a next step, not confirmed dates. Choose from available dates and complete the reservation process. Your preferred dates may no longer be available.</string>
+    <string name="policy_card_device_title">Your device-linked profile</string>
+    <string name="policy_card_device_body">Quadle recognizes your device without a password. Profile details and entries are associated with that device identity. Access on a new device or after clearing data is not assured.</string>
+    <string name="policy_card_rules_title">Campsite rules &amp; cancellation</string>
+    <string name="policy_card_rules_body">Read the owner\'s rules before confirming a stay. Cancellation terms appear on each listing and apply to confirmed reservations, not lottery entries.</string>
+</resources>

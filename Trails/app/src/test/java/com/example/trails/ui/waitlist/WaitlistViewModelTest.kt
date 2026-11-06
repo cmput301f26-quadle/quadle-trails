@@ -416,7 +416,7 @@ class WaitlistViewModelTest {
         val state = vm.uiState.value
         assertTrue(state is WaitlistUiState.Error)
         val error = state as WaitlistUiState.Error
-        assertEquals("This campsite does not currently have an active lottery.", error.message)
+        assertEquals("This campsite is not in a lottery right now.", error.message)
         assertEquals("Two jack lakeside", error.campsite?.name)
         // ensure no entrants are present
         assertEquals(0, vm.entrants.value.size)
@@ -448,6 +448,6 @@ class WaitlistViewModelTest {
         val state = vm.uiState.value
         assertTrue(state is WaitlistUiState.Error)
         val error = state as WaitlistUiState.Error
-        assertEquals("This campsite does not currently have an active lottery.", error.message)
+        assertEquals("This campsite is not in a lottery right now.", error.message)
     }
 }

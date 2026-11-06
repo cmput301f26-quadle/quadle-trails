@@ -59,8 +59,7 @@ sealed interface WaitlistUiState {
         val entry: WaitlistEntry? = null
     ) : WaitlistUiState
 
-    // error state with user facing message
-    // retains campsite and lottery details to prevent ui state loss
+    // error state with user facing message; keeps the campsite and lottery so the screen does not go blank
     data class Error(
         val message: String,
         val isFull: Boolean = false,
@@ -269,10 +268,10 @@ class WaitlistViewModel(
                 }
                 // guard against joining when no active lottery exists for the campsite
                 if (targetLotteryId.isBlank()) {
-                    _errorMessage.value = "This campsite does not currently have an active lottery."
+                    _errorMessage.value = "This campsite is not in a lottery right now."
                     return@launch
                 }
-                val currentLottery = _lottery.value ?: if (targetLotteryId.isNotBlank()) lotteryRepository.getById(targetLotteryId) else null
+                val currentLottery = _lottery.value ?: lotteryRepository.getById(targetLotteryId)
                 val maxCapacity = currentLottery?.waitlistCapacity
 
                 // resolve user display name from user repository or param
@@ -309,7 +308,7 @@ class WaitlistViewModel(
                     _lottery.value?.id?.ifBlank { null } ?: lotteryId
                 }
                 if (targetLotteryId.isBlank()) {
-                    _errorMessage.value = "This campsite does not currently have an active lottery."
+                    _errorMessage.value = "This campsite is not in a lottery right now."
                     return@launch
                 }
                 waitlistRepository.leaveWaitlist(targetLotteryId, userId)
