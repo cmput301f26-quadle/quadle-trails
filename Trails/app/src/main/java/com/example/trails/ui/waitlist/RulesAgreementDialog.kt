@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -29,13 +28,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +52,7 @@ import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.model.WaitlistStatus
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
 import com.example.trails.ui.theme.Moss
@@ -230,21 +227,10 @@ fun ConfirmReservationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Confirm Reservation", color = Color.White) },
-                navigationIcon = {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        modifier = Modifier.testTag("confirm_reservation_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Night)
+            TrailsTopBar(
+                title = "Confirm Reservation",
+                onBack = { navController.popBackStack() },
+                backTestTag = "confirm_reservation_back_button"
             )
         },
         bottomBar = {
