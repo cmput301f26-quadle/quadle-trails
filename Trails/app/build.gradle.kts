@@ -28,8 +28,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Map tiles for campsite pins (US 02.01.02). Add MAPTILER_KEY=... to local.properties.
-        resValue("string", "maptiler_key", localProps.getProperty("MAPTILER_KEY", ""))
+        // Map tiles for campsite pins (US 02.01.02). Uses the team's course key from
+        // gradle.properties; a MAPTILER_KEY=... in local.properties overrides it.
+        resValue(
+            "string", "maptiler_key",
+            localProps.getProperty("MAPTILER_KEY") ?: (project.findProperty("MAPTILER_KEY") as String? ?: "")
+        )
     }
 
     buildTypes {
