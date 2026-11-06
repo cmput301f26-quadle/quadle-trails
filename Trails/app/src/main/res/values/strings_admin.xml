@@ -18,12 +18,34 @@
     <string name="admin_profile_not_found">This profile no longer exists</string>
     <string name="admin_profile_phone">Phone</string>
     <string name="admin_profile_campsites_owned">Campsites owned</string>
+
+    <!-- Remove profile button and dialog (US 03.02.01) -->
+    <string name="admin_profile_remove">Remove profile</string>
+    <string name="admin_profile_remove_title">Remove profile?</string>
+    <string name="admin_profile_remove_error">Couldn\'t remove this profile. Please try again.</string>
+
+    <!-- Shared Remove dialog buttons (US 03.01.01, 03.02.01) -->
+    <string name="admin_remove_cancel">Cancel</string>
+    <string name="admin_remove_confirm">Remove</string>
+
     <!-- Admin Campsites screen (US 03.04.01) -->
     <string name="admin_campsites_title">Campsites</string>
     <string name="admin_campsites_back">Back</string>
     <string name="admin_campsites_search_hint">Search campsites or owners</string>
     <string name="admin_campsites_empty">No campsites yet</string>
     <string name="admin_campsites_no_match">No campsites match your search</string>
+
+    <!-- Admin Campsite page and Remove campsite dialog (US 03.01.01) -->
+    <string name="admin_campsite_title">Campsite</string>
+    <string name="admin_campsite_not_found">This campsite no longer exists</string>
+    <string name="admin_campsite_owner">Owner: %1$s</string>
+    <string name="admin_campsite_lotteries">Lotteries</string>
+    <string name="admin_campsite_entries">Lottery entries</string>
+    <string name="admin_campsite_rating">Rating</string>
+    <string name="admin_campsite_open_public">Open public page</string>
+    <string name="admin_campsite_remove">Remove campsite</string>
+    <string name="admin_campsite_remove_title">Remove campsite?</string>
+    <string name="admin_campsite_remove_error">Couldn\'t remove this campsite. Please try again.</string>
 
     <!-- Rating section and Rate campsite sheet (US 01.13.01) -->
     <string name="rating_rate_button">Rate this campsite</string>

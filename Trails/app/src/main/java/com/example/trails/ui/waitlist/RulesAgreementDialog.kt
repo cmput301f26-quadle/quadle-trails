@@ -68,6 +68,7 @@ import java.util.Date
 @Composable
 fun RulesAgreementSection(
     rulesText: String,
+    cancellationPolicy: String = "",
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
@@ -82,7 +83,7 @@ fun RulesAgreementSection(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // scrollable card displaying house rules
+        // scrollable card displaying house rules and cancellation policy
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,31 +96,24 @@ fun RulesAgreementSection(
             Column {
                 if (rulesText.isNotBlank()) {
                     RuleRow(
-                        icon = Icons.Default.AccessTime,
-                        title = "Quiet Hours",
-                        detail = "10 PM – 7 AM. Keep noise low for nearby sites."
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    RuleRow(
-                        icon = Icons.Default.Block,
-                        title = "No Generators",
-                        detail = "Generators aren't allowed anywhere on the site."
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    RuleRow(
-                        icon = Icons.Default.LocalFireDepartment,
-                        title = "Campfires",
-                        detail = "Only in provided fire pits and follow posted fire bans."
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    RuleRow(
                         icon = Icons.Default.Policy,
-                        title = "House Rules",
+                        title = "Campsite Rules",
                         detail = rulesText
                     )
-                } else {
+                }
+                if (cancellationPolicy.isNotBlank()) {
+                    if (rulesText.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    RuleRow(
+                        icon = Icons.Default.AccessTime,
+                        title = "Cancellation Policy",
+                        detail = cancellationPolicy
+                    )
+                }
+                if (rulesText.isBlank() && cancellationPolicy.isBlank()) {
                     Text(
-                        text = "Standard park rules apply. Treat the campsite with care.",
+                        text = "Standard park guidelines apply. Treat the campsite with care and respect fellow campers.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Mist
                     )
@@ -214,14 +208,17 @@ fun ConfirmReservationScreen(
     var isChecked by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
     var campsiteRules by remember { mutableStateOf("Loading rules...") }
+    var campsiteCancellation by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(campsiteId) {
         try {
             val campsite = AppContainer.campsiteRepository.getById(campsiteId)
             campsiteRules = campsite?.rules ?: "No rules available."
+            campsiteCancellation = campsite?.cancellationPolicy ?: ""
         } catch (_: Exception) {
             campsiteRules = "No rules available."
+            campsiteCancellation = ""
         }
     }
 
@@ -302,6 +299,7 @@ fun ConfirmReservationScreen(
             // embedded rules section instead of dialog popup
             RulesAgreementSection(
                 rulesText = campsiteRules,
+                cancellationPolicy = campsiteCancellation,
                 isChecked = isChecked,
                 onCheckedChange = { isChecked = it }
             )
@@ -315,7 +313,8 @@ fun ConfirmReservationScreen(
 private fun RulesAgreementSectionPreview() {
     TrailsTheme {
         RulesAgreementSection(
-            rulesText = "Quiet hours 10pm-7am. No generators allowed. Keep all food stored in vehicles.",
+            rulesText = "Quiet hours 10pm-7am. No generators allowed.",
+            cancellationPolicy = "Free cancellation up to 7 days before arrival.",
             isChecked = false,
             onCheckedChange = {},
             modifier = Modifier.padding(16.dp)

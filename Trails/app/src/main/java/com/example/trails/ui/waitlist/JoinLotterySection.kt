@@ -92,10 +92,12 @@ fun JoinLotterySection(
 
             is WaitlistUiState.NotWaitlisted -> {
                 // story 01.02.01: join the waiting list
+                val hasLottery = uiState.lottery != null && uiState.lottery.id.isNotBlank()
                 NotWaitlistedContent(
                     isFull = uiState.isFull,
                     isRulesAccepted = uiState.isRulesAccepted,
                     entrantCount = uiState.entrantCount,
+                    hasActiveLottery = hasLottery,
                     onJoinClick = onJoinClick
                 )
             }
@@ -122,7 +124,7 @@ fun JoinLotterySection(
                         .background(NightSurface, RoundedCornerShape(8.dp))
                         .border(1.dp, Ember, RoundedCornerShape(8.dp))
                         .padding(12.dp)
-                        .testTag("waitlist_error_banner")
+                        .testTag("join_section_error_banner")
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Ember)
@@ -214,6 +216,7 @@ private fun NotWaitlistedContent(
     isFull: Boolean,
     isRulesAccepted: Boolean,
     entrantCount: Int,
+    hasActiveLottery: Boolean = true,
     onJoinClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -248,7 +251,7 @@ private fun NotWaitlistedContent(
 
         Button(
             onClick = onJoinClick,
-            enabled = !isFull && isRulesAccepted,
+            enabled = hasActiveLottery && !isFull && isRulesAccepted,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("join_lottery_button"),
@@ -259,12 +262,17 @@ private fun NotWaitlistedContent(
                 disabledContentColor = Mist
             )
         ) {
-            Text(if (isFull) "Waitlist Full" else "Join Lottery Pool")
+            val label = when {
+                !hasActiveLottery -> "No Active Lottery"
+                isFull -> "Waitlist Full"
+                else -> "Join Lottery Pool"
+            }
+            Text(label)
         }
     }
 }
 
-// campsite details integration overload called by campsite details screen
+// campsite details button hidden when the campsite has no active lottery
 @Composable
 fun JoinLotterySection(
     navController: NavController,
@@ -273,6 +281,7 @@ fun JoinLotterySection(
 ) {
     var isWaitlisted by remember { mutableStateOf(false) }
     var activeLotteryId by remember { mutableStateOf<String?>(null) }
+    var loaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(campsiteId) {
         try {
@@ -285,8 +294,12 @@ fun JoinLotterySection(
             }
         } catch (_: Exception) {
             isWaitlisted = false
+        } finally {
+            loaded = true
         }
     }
+
+    if (!loaded || activeLotteryId.isNullOrBlank()) return
 
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         if (isWaitlisted) {

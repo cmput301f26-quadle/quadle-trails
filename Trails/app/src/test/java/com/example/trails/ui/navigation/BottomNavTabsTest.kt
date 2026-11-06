@@ -77,13 +77,17 @@ class BottomNavTabsTest {
         assertEquals(BottomNavTab.SETTINGS, selectedTab(ShellRoutes.SETTINGS))
     }
 
-    // This checks that profile and app policy, which are opened from Settings, keep Settings highlighted.
+    // This checks that profile, app policy and camping guidelines, which are opened from Settings,
+    // keep Settings highlighted.
     @Test
     fun profileAndPolicyRoutes_selectSettings() {
-        assertEquals(
-            listOf(BottomNavTab.SETTINGS, BottomNavTab.SETTINGS, BottomNavTab.SETTINGS),
-            listOf(ProfileRoutes.PROFILE, ProfileRoutes.EDIT_PROFILE, AdminRoutes.POLICY).map(::selectedTab)
+        val routes = listOf(
+            ProfileRoutes.PROFILE,
+            ProfileRoutes.EDIT_PROFILE,
+            AdminRoutes.POLICY,
+            AdminRoutes.GUIDELINES
         )
+        assertEquals(List(routes.size) { BottomNavTab.SETTINGS }, routes.map(::selectedTab))
     }
 
     // This checks that a screen opened from a home screen (the campsite form) keeps Home highlighted.

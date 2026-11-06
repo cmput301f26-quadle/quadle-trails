@@ -1,13 +1,16 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.05.01
-// PURPOSE: Admin's read-only view of one user profile, opened from the Profiles list (Figma Scenario 8 · Profile).
-// Outstanding issues: no reservation, lottery-entry or report rows and no Remove profile button yet (Part 4, US 03.02.01).
+// USER STORIES: 03.05.01, 03.02.01
+// PURPOSE: Admin's view of one user profile, opened from the Profiles list, with a Remove profile
+//   button and confirmation dialog (Figma Scenario 8 · Profile, Remove profile?).
+// Outstanding issues:
+//   - No reservation, lottery-entry or report rows yet (Part 4).
+//   - Guests of the removed owner's campsites aren't notified, since reservations and
+//     notifications don't exist yet (Part 4).
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +33,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,8 +42,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.trails.R
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
@@ -70,9 +72,15 @@ fun AdminProfileScreen(
     viewModel: AdminProfileViewModel = viewModel(key = userId) { AdminProfileViewModel(userId) }
 ) {
     val state by viewModel.state.collectAsState()
+    LaunchedEffect(viewModel) {
+        viewModel.removed.collect { navController.popBackStack() }
+    }
     AdminProfileContent(
         state = state,
         onBack = { navController.popBackStack() },
+        onRemoveClick = viewModel::onRemoveClick,
+        onDismiss = viewModel::onDismiss,
+        onConfirmRemove = viewModel::onConfirmRemove,
         modifier = modifier
     )
 }
@@ -80,18 +88,31 @@ fun AdminProfileScreen(
 /**
  * Stateless admin Profile UI, split out so UI tests can drive it directly.
  *
- * @param state what to show: a spinner, a not-found message, or the profile.
+ * @param state what to show: a spinner, a not-found message, or the profile with its removal state.
  * @param onBack called when the back arrow is tapped.
+ * @param onRemoveClick called when "Remove profile" is tapped.
+ * @param onDismiss called when Cancel is tapped or the dialog is dismissed.
+ * @param onConfirmRemove called when Remove is tapped in the dialog.
  */
 @Composable
 fun AdminProfileContent(
     state: AdminProfileUiState,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRemoveClick: () -> Unit = {},
+    onDismiss: () -> Unit = {},
+    onConfirmRemove: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { AdminProfileHeader(onBack) }
+        topBar = {
+            TrailsTopBar(
+                title = stringResource(R.string.admin_profile_title),
+                onBack = onBack,
+                backTestTag = AdminProfileTags.BACK,
+                backContentDescription = stringResource(R.string.admin_profiles_back)
+            )
+        }
     ) { padding ->
         Box(
             Modifier
@@ -108,69 +129,82 @@ fun AdminProfileContent(
                         modifier = Modifier.testTag(AdminProfileTags.NOT_FOUND)
                     )
                 }
-                is AdminProfileUiState.Loaded -> ProfileDetails(state)
+                is AdminProfileUiState.Loaded -> {
+                    ProfileDetails(state, onRemoveClick)
+                    val removing = state.removal == ProfileRemovalState.Removing
+                    if (state.removal == ProfileRemovalState.Confirming || removing) {
+                        AdminRemoveDialog(
+                            title = stringResource(R.string.admin_profile_remove_title),
+                            message = removeProfileMessage(
+                                adminProfileDisplayName(state.user), state.campsiteCount, state.lotteryEntryCount
+                            ),
+                            removing = removing,
+                            tags = AdminProfileTags.dialogTags,
+                            onCancel = onDismiss,
+                            onRemove = onConfirmRemove
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-/** Green back arrow and the "Profile" title, matching the Profiles list header. */
+/**
+ * Avatar, name, email/joined line, role chips, the info card and, unless it's the admin's own
+ * profile, the Remove profile button with any error above it.
+ */
 @Composable
-private fun AdminProfileHeader(onBack: () -> Unit) {
-    val backLabel = stringResource(R.string.admin_profiles_back)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack)
-                .semantics { contentDescription = backLabel }
-                .testTag(AdminProfileTags.BACK),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("‹", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.admin_profile_title), style = MaterialTheme.typography.titleLarge)
-    }
-}
-
-/** Avatar, name, email/joined line, role chips and the info card. */
-@Composable
-private fun ProfileDetails(state: AdminProfileUiState.Loaded) {
+private fun ProfileDetails(state: AdminProfileUiState.Loaded, onRemoveClick: () -> Unit) {
     val user = state.user
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        LargeAvatar(user)
-        Spacer(Modifier.height(12.dp))
-        Text(
-            adminProfileDisplayName(user),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.testTag(AdminProfileTags.NAME)
-        )
-        val subLine = emailAndJoinedLine(user)
-        if (subLine.isNotEmpty()) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LargeAvatar(user)
+            Spacer(Modifier.height(12.dp))
             Text(
-                subLine,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                adminProfileDisplayName(user),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.testTag(AdminProfileTags.NAME)
+            )
+            val subLine = emailAndJoinedLine(user)
+            if (subLine.isNotEmpty()) {
+                Text(
+                    subLine,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            RoleChips(roleLabels(user))
+            Spacer(Modifier.height(24.dp))
+            InfoCard(user, state.campsiteCount)
+        }
+        if (!state.isSelf) {
+            if (state.removal == ProfileRemovalState.Error) {
+                Text(
+                    stringResource(R.string.admin_profile_remove_error),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                        .testTag(AdminProfileTags.ERROR)
+                )
+            }
+            AdminRemoveButton(
+                label = stringResource(R.string.admin_profile_remove),
+                tag = AdminProfileTags.REMOVE_BUTTON,
+                onClick = onRemoveClick
             )
         }
-        Spacer(Modifier.height(12.dp))
-        RoleChips(roleLabels(user))
-        Spacer(Modifier.height(24.dp))
-        InfoCard(user, state.campsiteCount)
     }
 }
 
@@ -262,6 +296,15 @@ object AdminProfileTags {
     const val ROLES = "admin_profile_roles"
     const val PHONE = "admin_profile_phone"
     const val CAMPSITES = "admin_profile_campsites"
+    const val REMOVE_BUTTON = "admin_profile_remove"
+    const val ERROR = "admin_profile_error"
+    const val DIALOG = "admin_profile_dialog"
+    const val DIALOG_MESSAGE = "admin_profile_dialog_message"
+    const val DIALOG_CANCEL = "admin_profile_dialog_cancel"
+    const val DIALOG_REMOVE = "admin_profile_dialog_remove"
+
+    /** The dialog's tags, bundled for [AdminRemoveDialog]. */
+    internal val dialogTags = AdminRemoveDialogTags(DIALOG, DIALOG_MESSAGE, DIALOG_CANCEL, DIALOG_REMOVE)
 }
 
 /** Design-time preview of the sample owner, for comparing against Scenario 8. */
@@ -273,6 +316,38 @@ private fun AdminProfileOwnerPreview() {
             state = buildAdminProfileState(
                 TestUsers.all.first { it.deviceId == TestUsers.OWNER_ID },
                 TestCampsites.all
+            ),
+            onBack = {}
+        )
+    }
+}
+
+/** Design-time preview of the "Remove profile?" dialog for the sample owner. */
+@Preview(showBackground = true, heightDp = 800)
+@Composable
+private fun AdminProfileRemoveDialogPreview() {
+    TrailsTheme {
+        AdminProfileContent(
+            state = buildAdminProfileState(
+                TestUsers.all.first { it.deviceId == TestUsers.OWNER_ID },
+                TestCampsites.all,
+                removal = ProfileRemovalState.Confirming
+            ),
+            onBack = {}
+        )
+    }
+}
+
+/** Design-time preview of a removal that failed. */
+@Preview(showBackground = true, heightDp = 800)
+@Composable
+private fun AdminProfileRemoveErrorPreview() {
+    TrailsTheme {
+        AdminProfileContent(
+            state = buildAdminProfileState(
+                TestUsers.all.first { it.deviceId == TestUsers.OWNER_ID },
+                TestCampsites.all,
+                removal = ProfileRemovalState.Error
             ),
             onBack = {}
         )

@@ -1,7 +1,8 @@
 // State and list-building logic for the admin's Campsites screen (US 03.04.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // Outstanding issues: no Published/Drafts filter or newest-first sort; the
-//   Campsite model has no status or created date.
+//   Campsite model has no status or created date. Removing a campsite is done
+//   from the admin Campsite page (US 03.01.01).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
@@ -43,11 +44,7 @@ fun buildAdminCampsitesState(
     query: String
 ): AdminCampsitesUiState {
     val all = campsites.map { campsite ->
-        val ownerName = users.find { it.deviceId == campsite.ownerId }
-            ?.name
-            ?.takeIf { it.isNotBlank() }
-            ?: "Unknown owner"
-        AdminCampsiteItem(campsite, ownerName)
+        AdminCampsiteItem(campsite, ownerName(campsite.ownerId, users))
     }
     val q = query.trim()
     val shown = all
