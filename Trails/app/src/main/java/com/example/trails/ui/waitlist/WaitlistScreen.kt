@@ -1,5 +1,7 @@
-// main waitlist screen matching story 01.01.06
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// UI Controller composable displaying waitlist status, rules agreement, and join/leave lottery actions (UI Controller in MVVM).
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.11.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -62,6 +64,19 @@ import com.google.firebase.Timestamp
 import java.util.Date
 
 // entry point connecting navigation and view model to content
+/**
+ * Root screen destination for viewing waitlist details, agreeing to campsite rules, and entering the lottery.
+ *
+ * Observes [WaitlistViewModel.uiState] via StateFlow collection.
+ * Triggers actions on [viewModel] (rules agreement, joining, leaving, clearing errors)
+ * and navigates using [navController] (back stack navigation, navigating to entrants list).
+ *
+ * @param navController controller for navigating between destinations.
+ * @param campsiteId identifier of the campsite.
+ * @param modifier optional [Modifier] for screen styling.
+ * @param lotteryId optional lottery identifier override.
+ * @param viewModel scoped [WaitlistViewModel] instance managing screen state and logic.
+ */
 @Composable
 fun WaitlistScreen(
     navController: NavController,
@@ -96,6 +111,22 @@ fun WaitlistScreen(
 }
 
 // pure layout composable testable with static states
+/**
+ * Stateless layout displaying the waitlist screen content, rules, and entry actions.
+ *
+ * Observes [state] to render loading indicators, campsite information,
+ * rules agreement sections, lottery registration banners, entrant status, or errors.
+ * Triggers callbacks when rules checkboxes are clicked, actions are tapped, or navigation is requested.
+ *
+ * @param state the current UI state to render.
+ * @param onRulesCheckedChange callback triggered when the rules agreement checkbox is toggled.
+ * @param onJoinClick callback triggered when the join lottery button is clicked.
+ * @param onLeaveClick callback triggered when the leave waitlist button is clicked.
+ * @param onBack callback triggered when the back navigation button is clicked.
+ * @param onClearError callback triggered when dismissing an error banner.
+ * @param onViewEntrants callback triggered to view all entrants enrolled in the lottery.
+ * @param modifier optional [Modifier] for layout adjustments.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaitlistContent(

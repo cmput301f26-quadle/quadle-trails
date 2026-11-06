@@ -1,5 +1,7 @@
-// compose ui tests for the shared trails top bar
-// owner: shared — tests created by chitkarsh
+// Compose UI test suite validating shared TrailsTopBar component navigation and slots (UI Component pattern).
+// implements US 01.01.06, US 01.02.01
+// Outstanding issues: None
+// OWNER: shared — created by Chitkarsh (chitkarshrathi)
 package com.example.trails.ui.common
 
 import androidx.compose.material.icons.Icons
@@ -21,6 +23,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Compose UI test suite validating [TrailsTopBar] title rendering, subtitles,
+ * back button clicks, chevron icons, and custom action slots.
+ */
 class TrailsTopBarTest {
 
     @get:Rule

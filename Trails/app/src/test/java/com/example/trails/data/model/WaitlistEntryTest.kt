@@ -1,6 +1,7 @@
-// unit tests for waitlist entry data model and validation
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate these validation test cases
+// Unit test suite for WaitlistEntry domain model validation and defaults (Model in MVVM).
+// implements US 01.02.01, US 01.02.02
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
@@ -10,6 +11,9 @@ import org.junit.Before
 import org.junit.Test
 import java.util.Date
 
+/**
+ * Unit test suite for [WaitlistEntry] data model validation rules, default values, and status transitions.
+ */
 class WaitlistEntryTest {
 
     private lateinit var validEntry: WaitlistEntry

@@ -1,5 +1,7 @@
-// embedded rules agreement section and confirm reservation screen
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// UI Controller component displaying campsite rules and cancellation policy agreement (UI Controller in MVVM).
+// implements US 02.11.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -65,6 +67,18 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 // standard embedded scrollable rules section matching story 02.11.01
+/**
+ * Scrollable card and agreement checkbox presenting campsite rules and cancellation policy.
+ *
+ * Observes [rulesText], [cancellationPolicy], and [isChecked].
+ * Triggers [onCheckedChange] when the user toggles the acceptance checkbox.
+ *
+ * @param rulesText rules text retrieved from the campsite document.
+ * @param cancellationPolicy cancellation policy text from the campsite.
+ * @param isChecked whether the user has checked the agreement checkbox.
+ * @param onCheckedChange callback triggered when the checkbox state changes.
+ * @param modifier optional [Modifier] for layout adjustments.
+ */
 @Composable
 fun RulesAgreementSection(
     rulesText: String,
@@ -198,6 +212,16 @@ private fun RuleRow(
 }
 
 // screen for confirming reservation with embedded rules agreement section
+/**
+ * Screen enabling an entrant to review campsite rules and confirm their reservation.
+ *
+ * Observes asynchronous retrieval of campsite rules and cancellation policy, as well as submission state.
+ * Triggers back navigation via [navController] upon cancellation or successful confirmation.
+ *
+ * @param navController navigation controller for screen transitions.
+ * @param campsiteId identifier of the campsite being reserved.
+ * @param modifier optional [Modifier] for screen styling.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmReservationScreen(

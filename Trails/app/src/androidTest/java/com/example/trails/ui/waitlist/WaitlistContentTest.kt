@@ -1,6 +1,7 @@
-// compose ui tests for waitlist content matching stories 01.01.06 01.02.01 and 01.02.02
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate compose ui test suite
+// Compose UI test suite validating waitlist screen rendering, status banners, and join/leave buttons (UI Controller tests).
+// implements US 01.01.06, US 01.02.01, US 01.02.02
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -20,6 +21,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Compose UI test suite validating [WaitlistContent] interaction states,
+ * capacity alerts, rules checkboxes, and lottery join/leave flows.
+ */
 class WaitlistContentTest {
 
     @get:Rule

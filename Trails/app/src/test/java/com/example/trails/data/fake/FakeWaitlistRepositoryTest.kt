@@ -1,5 +1,7 @@
-// unit tests for fake waitlist repository
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// Unit test suite verifying in-memory fake waitlist repository logic (Repository pattern test double).
+// implements US 01.02.01, US 01.02.02, US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.WaitlistEntry
@@ -18,6 +20,9 @@ import org.junit.Test
 import java.io.IOException
 import java.util.Date
 
+/**
+ * Unit test suite verifying the in-memory behaviors of [FakeWaitlistRepository].
+ */
 class FakeWaitlistRepositoryTest {
 
     private lateinit var repo: FakeWaitlistRepository

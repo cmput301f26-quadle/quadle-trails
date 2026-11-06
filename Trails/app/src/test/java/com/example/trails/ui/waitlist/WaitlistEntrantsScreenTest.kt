@@ -1,5 +1,7 @@
-// unit tests for waitlist entrants screen state and helpers
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// Unit test suite for WaitlistEntrantsScreen UI controller entrant list state (UI Controller in MVVM).
+// implements US 02.09.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -20,6 +22,9 @@ import org.junit.Before
 import org.junit.Test
 import java.util.Date
 
+/**
+ * Unit test suite for waitlist entrants screen state bindings and entrant list flows.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WaitlistEntrantsScreenTest {
 

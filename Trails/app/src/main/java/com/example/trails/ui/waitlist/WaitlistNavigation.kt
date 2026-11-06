@@ -1,6 +1,7 @@
-// routes and nav graph for the waitlist screens
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// ai helped scaffold navigation route boilerplate
+// Navigation routing and graph builder for waitlist destinations (Navigation Graph pattern).
+// implements US 01.01.06, US 01.02.01, US 02.09.01, US 02.11.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.navigation.NavController
@@ -9,6 +10,9 @@ import androidx.navigation.compose.composable
 import com.example.trails.ui.navigation.requireArg
 import com.example.trails.ui.navigation.requiredId
 
+/**
+ * Navigation route constants and route builder helpers for the waitlist flow.
+ */
 object WaitlistRoutes {
     const val LOTTERY_WAITLIST = "lottery_waitlist/{lotteryId}"
     const val CONFIRM_RESERVATION = "confirm_reservation/{campsiteId}"
@@ -22,6 +26,11 @@ object WaitlistRoutes {
 }
 
 // based on android developer guide for compose navigation graph
+/**
+ * Registers waitlist screen destinations into the app's navigation graph.
+ *
+ * @param navController controller for navigating across destinations.
+ */
 fun NavGraphBuilder.waitlistGraph(navController: NavController) {
     composable(WaitlistRoutes.LOTTERY_WAITLIST, arguments = listOf(requiredId("lotteryId"))) { entry ->
         LotteryWaitlistScreen(navController, lotteryId = entry.requireArg("lotteryId"))

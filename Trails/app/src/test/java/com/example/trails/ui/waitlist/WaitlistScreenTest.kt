@@ -1,6 +1,7 @@
-// unit tests for waitlist screen logic and state bindings
-// owner: chitkarsh (chitkarshrathi) - waitlist
-// used antigravity to generate these screen test cases
+// Unit test suite for WaitlistScreen UI controller state bindings and flows (UI Controller in MVVM).
+// implements US 01.01.06, US 01.02.01, US 01.02.02
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -24,6 +25,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Unit test suite for waitlist screen view model state observation and interactions.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WaitlistScreenTest {
 

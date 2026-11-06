@@ -1,5 +1,7 @@
-// Lifecycle states of a waitlist entry, from joining through the draw to booking.
-// OWNER: shared — anyone can add via a small PR reviewed by any teammate.
+// Enum model representing lifecycle states of a waitlist entry from enrollment to reservation (Model in MVVM).
+// implements US 01.02.01, US 01.02.02
+// Outstanding issues: None
+// OWNER: shared — Waitlist domain
 package com.example.trails.data.model
 
 /** Where a waitlist entry stands in its lottery. */

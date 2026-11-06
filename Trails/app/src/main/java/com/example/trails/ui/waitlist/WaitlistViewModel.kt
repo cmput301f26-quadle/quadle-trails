@@ -1,5 +1,7 @@
-// controller for waitlist screens and operations
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// ViewModel controller orchestrating waitlist state streams, rules acceptance, and entry operations (MVVM pattern).
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01, US 02.11.01
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
 package com.example.trails.ui.waitlist
 
 import androidx.lifecycle.ViewModel
@@ -30,11 +32,27 @@ import kotlinx.coroutines.launch
 
 // ui states for the waitlist screens
 // ai helped scaffold this boilerplate ui state
+/**
+ * UI states rendered by waitlist screens.
+ */
 sealed interface WaitlistUiState {
     // initial loading state
+    /**
+     * Initial loading state while campsite and lottery metadata are being retrieved.
+     */
     data object Loading : WaitlistUiState
 
     // entrant is not on the waitlist yet
+    /**
+     * State when the user is not currently enrolled in the waitlist.
+     *
+     * @property lottery the associated lottery details, or null if not in a lottery.
+     * @property campsite the campsite information.
+     * @property isFull whether the waitlist has reached its maximum capacity.
+     * @property entrantCount number of entrants currently on the waitlist.
+     * @property isRulesAccepted whether the user has toggled acceptance of campsite rules.
+     * @property entries list of all active waitlist entries.
+     */
     data class NotWaitlisted(
         val lottery: Lottery? = null,
         val campsite: Campsite? = null,
@@ -45,6 +63,15 @@ sealed interface WaitlistUiState {
     ) : WaitlistUiState
 
     // entrant has an active waitlist entry
+    /**
+     * State when the user has an active waitlist entry in the lottery.
+     *
+     * @property entry the user's personal [WaitlistEntry].
+     * @property lottery the associated lottery details.
+     * @property campsite the campsite information.
+     * @property entrantCount total number of entrants enrolled.
+     * @property entries list of all active waitlist entries.
+     */
     data class Waitlisted(
         val entry: WaitlistEntry,
         val lottery: Lottery? = null,
@@ -54,12 +81,27 @@ sealed interface WaitlistUiState {
     ) : WaitlistUiState
 
     // transient success state after an action
+    /**
+     * Transient success state emitted following a user action.
+     *
+     * @property message description of the completed action.
+     * @property entry the resulting [WaitlistEntry], if applicable.
+     */
     data class Success(
         val message: String,
         val entry: WaitlistEntry? = null
     ) : WaitlistUiState
 
     // error state with user facing message; keeps the campsite and lottery so the screen does not go blank
+    /**
+     * Error state conveying a user-facing failure message while retaining screen context.
+     *
+     * @property message description of the error encountered.
+     * @property isFull whether the error resulted from reaching waitlist capacity.
+     * @property entries list of active waitlist entries.
+     * @property campsite retained campsite metadata to prevent UI blanking.
+     * @property lottery retained lottery metadata to prevent UI blanking.
+     */
     data class Error(
         val message: String,
         val isFull: Boolean = false,
@@ -75,6 +117,20 @@ private data class LotteryInfo(
     val campsite: Campsite? = null
 )
 
+/**
+ * ViewModel controller coordinating waitlist screen UI states and actions.
+ *
+ * Combines lottery, campsite, and waitlist streams into a single [uiState]
+ * flow and exposes methods to agree to rules, join, and leave waitlists.
+ *
+ * @param lotteryId optional initial lottery identifier.
+ * @param userId the device-based user identifier of the current entrant.
+ * @param waitlistRepository repository providing waitlist read/write operations.
+ * @param lotteryRepository repository providing lottery lookup.
+ * @param campsiteRepository repository providing campsite lookup.
+ * @param userRepository repository providing user profile lookup.
+ * @param campsiteId optional initial campsite identifier.
+ */
 class WaitlistViewModel(
     private val lotteryId: String = "",
     private val userId: String = CurrentUser.id(),
@@ -242,6 +298,11 @@ class WaitlistViewModel(
     }
 
     // toggles the campsite rules acceptance checkbox
+    /**
+     * Updates the user's rules agreement checkbox selection.
+     *
+     * @param accepted true if the user accepts the campsite rules, false otherwise.
+     */
     fun onRulesAgreementChanged(accepted: Boolean) {
         _userRulesAccepted.value = accepted
         if (accepted && _errorMessage.value?.contains("rules", ignoreCase = true) == true) {
@@ -250,6 +311,13 @@ class WaitlistViewModel(
     }
 
     // joins the waitlist
+    /**
+     * Enrolls the current user onto the active lottery's waitlist.
+     *
+     * @param userName optional display name for the entrant.
+     * @param partySize number of guests in the party.
+     * @param rulesAccepted whether the entrant has agreed to campsite rules.
+     */
     fun joinWaitlist(
         userName: String? = null,
         partySize: Int = 1,
@@ -300,6 +368,9 @@ class WaitlistViewModel(
     }
 
     // leaves the waitlist
+    /**
+     * Removes the current user from the active lottery's waitlist.
+     */
     fun leaveWaitlist() {
         viewModelScope.launch {
             try {
@@ -319,11 +390,17 @@ class WaitlistViewModel(
     }
 
     // clears current error message
+    /**
+     * Clears any active error message surfaced in the UI state.
+     */
     fun clearError() {
         _errorMessage.value = null
     }
 
     // reloads lottery details and state
+    /**
+     * Reloads campsite and lottery data from repositories.
+     */
     fun refresh() {
         _errorMessage.value = null
         loadData()
