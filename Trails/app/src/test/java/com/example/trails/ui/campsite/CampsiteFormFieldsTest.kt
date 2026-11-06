@@ -1,5 +1,6 @@
 // Unit tests for the campsite form logic (US 02.01.01, 02.01.02 tags, 02.01.03).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.Campsite

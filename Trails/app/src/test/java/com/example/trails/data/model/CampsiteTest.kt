@@ -1,5 +1,6 @@
 // Unit tests for Campsite.validate().
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.model
 
 import org.junit.Assert.assertEquals

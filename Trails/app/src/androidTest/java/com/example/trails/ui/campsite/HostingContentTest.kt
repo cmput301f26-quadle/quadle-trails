@@ -1,5 +1,6 @@
 // UI (intent) tests for the My Campsites screen, US 02.03.01.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.compose.material3.Text

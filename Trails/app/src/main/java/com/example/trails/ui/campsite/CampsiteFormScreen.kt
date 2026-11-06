@@ -1,8 +1,9 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03
 // PURPOSE: Register a campsite, or edit one when campsiteId is set (Figma · Register Campsite).
-// Outstanding issues: none. Figma has one "Rules & cancellation policy" box; the model has two
-//  fields, so the form has two boxes.
+// Outstanding issues: none. Rules and cancellation policy are separate boxes, matching the
+//  model and the updated Figma.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -63,7 +64,11 @@ import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.ui.theme.TrailsTheme
 
-/** Connects [CampsiteFormViewModel] to navigation and renders [CampsiteFormContent]. */
+/**
+ * Connects [CampsiteFormViewModel] to navigation and renders [CampsiteFormContent].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 fun CampsiteFormScreen(
     navController: NavController,
@@ -98,6 +103,8 @@ fun CampsiteFormScreen(
 
 /**
  * Stateless form UI, split out so UI tests can drive it directly.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param state what to show.
  * @param onFieldsChange called with the updated fields whenever the owner types or edits tags.
@@ -155,7 +162,11 @@ fun CampsiteFormContent(
     }
 }
 
-/** Back arrow and title. */
+/**
+ * Back arrow and title.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 internal fun FormHeader(title: String, onBack: () -> Unit) {
     Row(
@@ -177,7 +188,11 @@ internal fun FormHeader(title: String, onBack: () -> Unit) {
     }
 }
 
-/** The scrolling list of inputs. */
+/**
+ * The scrolling list of inputs.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun FormFields(
     state: CampsiteFormUiState,
@@ -240,7 +255,11 @@ private fun FormFields(
     }
 }
 
-/** Dashed "Add promo photo" box, or the chosen photo with Change and Remove (US 02.01.02). */
+/**
+ * Dashed "Add promo photo" box, or the chosen photo with Change and Remove (US 02.01.02).
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
@@ -284,7 +303,11 @@ private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> U
     }
 }
 
-/** "Availability *" label, editable calendar, and the error if no day is picked. */
+/**
+ * "Availability *" label, editable calendar, and the error if no day is picked.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun AvailabilityField(days: Set<Long>, error: String?, onToggleDay: (Long) -> Unit) {
     Column(Modifier.padding(bottom = 12.dp)) {
@@ -306,7 +329,11 @@ private fun AvailabilityField(days: Set<Long>, error: String?, onToggleDay: (Lon
     }
 }
 
-/** "Map location *" box: shows the pin's coordinates, or prompts to drop one. Tapping opens the picker. */
+/**
+ * "Map location *" box: shows the pin's coordinates, or prompts to drop one. Tapping opens the picker.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun MapPinField(latitude: Double?, longitude: Double?, error: String?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
@@ -352,7 +379,11 @@ private fun MapPinField(latitude: Double?, longitude: Double?, error: String?, o
     }
 }
 
-/** A label above an outlined text field, with the error underneath if there is one. */
+/**
+ * A label above an outlined text field, with the error underneath if there is one.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun LabeledField(
     label: String,
@@ -385,7 +416,11 @@ private fun LabeledField(
     }
 }
 
-/** Tag chips with remove buttons, and "+ Add tag" which opens an inline input (US 02.01.02). */
+/**
+ * Tag chips with remove buttons, and "+ Add tag" which opens an inline input (US 02.01.02).
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TagsSection(tags: List<String>, onTagsChange: (List<String>) -> Unit) {
@@ -433,7 +468,11 @@ private fun TagsSection(tags: List<String>, onTagsChange: (List<String>) -> Unit
     }
 }
 
-/** One tag with a × to remove it. */
+/**
+ * One tag with a × to remove it.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Composable
 private fun TagChip(tag: String, onRemove: () -> Unit) {
     val shape = RoundedCornerShape(8.dp)
@@ -456,7 +495,11 @@ private fun TagChip(tag: String, onRemove: () -> Unit) {
     }
 }
 
-/** Test tags used by UI tests to find elements on this screen. */
+/**
+ * Test tags used by UI tests to find elements on this screen.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 object FormTags {
     const val BACK = "form_back"
     const val PHOTO = "form_photo"
@@ -478,7 +521,11 @@ object FormTags {
     fun removeTag(tag: String) = "form_remove_tag_$tag"
 }
 
-/** Design-time preview of the empty Register form. */
+/**
+ * Design-time preview of the empty Register form.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
 @Preview(showBackground = true, heightDp = 1200)
 @Composable
 private fun CampsiteFormPreview() {

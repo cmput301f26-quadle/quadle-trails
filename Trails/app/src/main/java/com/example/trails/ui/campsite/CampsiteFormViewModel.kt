@@ -1,6 +1,8 @@
 // Controller for the Register / Edit campsite form (US 02.01.01, 02.01.03).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// Outstanding issues: none.
+// Outstanding issues: picking a photo makes the save fail until Firebase Storage is enabled
+//  (see FirestoreCampsiteRepository); saving without a photo works.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.lifecycle.ViewModel
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Everything [CampsiteFormContent] needs to draw.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @property fields what the owner has typed.
  * @property errors field name to error message, shown under each field.
@@ -38,6 +42,8 @@ data class CampsiteFormUiState(
 
 /**
  * Controller for [CampsiteFormScreen]: loads the campsite when editing, validates, and saves.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param repository where campsites are stored.
  * @param ownerId owner assigned to newly registered campsites.

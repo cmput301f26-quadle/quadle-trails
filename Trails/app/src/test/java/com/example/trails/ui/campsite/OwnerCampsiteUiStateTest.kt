@@ -1,5 +1,6 @@
 // Unit tests for the owner campsite page logic (US 02.01.04).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.fake.dateOf

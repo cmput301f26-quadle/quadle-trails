@@ -1,5 +1,6 @@
 // Unit tests for FakeCampsiteRepository, which screens and tests rely on.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Campsite

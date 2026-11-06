@@ -4,6 +4,7 @@
 // shared models use `val` (no setters), so automatic mapping would load blank campsites.
 // Doing it by hand keeps the models unchanged and makes the mapping unit-testable.
 // Outstanding issues: none.
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Campsite
@@ -12,6 +13,8 @@ import com.google.firebase.Timestamp
 
 /**
  * The Firestore fields for [campsite]. The id is not stored; it is the document id.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @return field name to value, ready for `DocumentReference.set(...)`.
  */
@@ -38,6 +41,8 @@ fun campsiteToDocument(campsite: Campsite): Map<String, Any?> = mapOf(
  * Rebuilds a campsite from a document. Missing or wrongly typed fields fall back to the
  * model's defaults, so a half-written or hand-edited document never crashes the app.
  * Numbers are read as [Number] because Firestore returns whole numbers as Long.
+ *
+ * Written in assistance with Claude AI by Anthropic.
  *
  * @param id the document id.
  * @param data the document's fields (DocumentSnapshot.data).

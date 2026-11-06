@@ -1,5 +1,6 @@
 // Unit tests for the map tile URL (US 02.01.02).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
+// AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import org.junit.Assert.assertEquals
