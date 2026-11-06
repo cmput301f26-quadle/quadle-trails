@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.compose.NavHost
@@ -49,10 +50,10 @@ class BrowseScreenTest {
     fun list_showsEveryCampsiteAndScrollsToTheLast() {
         show()
         composeRule.onNodeWithText("Browse").assertIsDisplayed()
-        composeRule.onNodeWithText("Tunnel Mountain Site 14").assertIsDisplayed()
+        composeRule.onNodeWithText("Tunnel Mountain Site 14").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(BrowseTags.LIST)
             .performScrollToNode(hasText("Wildhorse Lake Site 3"))
-        composeRule.onNodeWithText("Wildhorse Lake Site 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Wildhorse Lake Site 3").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -66,7 +67,7 @@ class BrowseScreenTest {
     fun keyword_keepsTheMatchAndDropsTheOthers() {
         show()
         composeRule.onNodeWithTag(BrowseTags.SEARCH).performTextInput("tunnel")
-        composeRule.onNodeWithText("Tunnel Mountain Site 14").assertIsDisplayed()
+        composeRule.onNodeWithText("Tunnel Mountain Site 14").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Whistlers Riverside Site 7").assertDoesNotExist()
         composeRule.onNodeWithText("Wildhorse Lake Site 3").assertDoesNotExist()
     }
@@ -82,16 +83,20 @@ class BrowseScreenTest {
     @Test
     fun location_keepsCampsitesInThatPlace() {
         show()
+        composeRule.onNodeWithText("Filters").performClick()
         composeRule.onNodeWithTag(BrowseTags.LOCATION).performTextInput("jasper")
-        composeRule.onNodeWithText("Whistlers Riverside Site 7").assertIsDisplayed()
+        composeRule.onNodeWithText("Apply filters").performScrollTo().performClick()
+        composeRule.onNodeWithText("Whistlers Riverside Site 7").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Tunnel Mountain Site 14").assertDoesNotExist()
     }
 
     @Test
     fun guests_keepsCampsitesThatCanSleepThatMany() {
         show()
-        composeRule.onNodeWithTag(BrowseTags.GUESTS).performTextInput("7")
-        composeRule.onNodeWithText("Wildhorse Lake Site 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Filters").performClick()
+        composeRule.onNodeWithTag(BrowseTags.GUESTS).performScrollTo().performTextInput("7")
+        composeRule.onNodeWithText("Apply filters").performScrollTo().performClick()
+        composeRule.onNodeWithText("Wildhorse Lake Site 3").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Whistlers Riverside Site 7").assertDoesNotExist()
         composeRule.onNodeWithText("Tunnel Mountain Site 14").assertDoesNotExist()
     }
@@ -102,10 +107,12 @@ class BrowseScreenTest {
         val day = utcMidnight(2027, 5, 8)
         viewModel.onArriveChange(day)
         viewModel.onLeaveChange(day)
-        composeRule.onNodeWithText("Wildhorse Lake Site 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Wildhorse Lake Site 3").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Tunnel Mountain Site 14").assertDoesNotExist()
-        composeRule.onNodeWithText("Clear dates").performClick()
-        composeRule.onNodeWithText("Tunnel Mountain Site 14").assertIsDisplayed()
+        composeRule.onNodeWithText("Edit filters").performClick()
+        composeRule.onNodeWithText("Reset filters").performScrollTo().performClick()
+        composeRule.onNodeWithText("Apply filters").performScrollTo().performClick()
+        composeRule.onNodeWithText("Tunnel Mountain Site 14").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -127,7 +134,8 @@ class BrowseScreenTest {
                 }
             }
         }
-        composeRule.onNodeWithText("Tunnel Mountain Site 14").performClick()
+        composeRule.onNodeWithText("Tunnel Mountain Site 14").performScrollTo().performClick()
+        composeRule.onNodeWithText("View details").performClick()
         composeRule.onNodeWithText("opened ${TestCampsites.BANFF_ID}").assertIsDisplayed()
     }
 

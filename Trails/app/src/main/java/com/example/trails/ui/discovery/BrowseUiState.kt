@@ -34,13 +34,15 @@ data class BrowseFilters(
  * Everything the browse screen needs to draw.
  *
  * @property shown campsites that match [filters], sorted by name.
- * @property filters the keyword and filters currently entered.
+ * @property filters the keyword and filters currently applied to the list.
  * @property totalCount how many campsites exist before any keyword or filter is applied.
+ * @property places location names of [shown], with duplicates removed, sorted.
  */
 data class BrowseUiState(
     val shown: List<Campsite> = emptyList(),
     val filters: BrowseFilters = BrowseFilters(),
-    val totalCount: Int = 0
+    val totalCount: Int = 0,
+    val places: List<String> = emptyList()
 )
 
 /**
