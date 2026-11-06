@@ -136,3 +136,19 @@ fun adminProfileDisplayName(user: User): String =
  */
 fun adminProfileCountLine(totalCount: Int): String =
     if (totalCount == 1) "1 profile" else "$totalCount profiles"
+
+/**
+ * Up to two initials for an avatar with no photo, e.g. "Priya Sharma" -> "PS".
+ * Shared by the Profiles list and the Profile page.
+ *
+ * @param name the user's display name.
+ * @return the uppercase first letters of the first and last words, one letter for a
+ *   one-word name, or "?" if the name is blank.
+ */
+fun profileInitials(name: String): String {
+    val words = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (words.isEmpty()) return "?"
+    val first = words.first().first()
+    val last = if (words.size > 1) words.last().first().toString() else ""
+    return (first + last).uppercase()
+}

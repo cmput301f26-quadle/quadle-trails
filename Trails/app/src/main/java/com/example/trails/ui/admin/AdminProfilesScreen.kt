@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // USER STORIES: 03.05.01
 // PURPOSE: Admin list of every user profile with search and role chips (Figma Scenario 8 · Profiles).
-// Outstanding issues: the profile page opened from a row is a placeholder; removing a profile is US 03.02.01 (Part 4).
+// Outstanding issues: removing a profile is US 03.02.01 (Part 4).
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -291,26 +291,12 @@ private fun Avatar(user: User) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                initials(user.name),
+                profileInitials(user.name),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
         }
     }
-}
-
-/**
- * Up to two initials from a name, e.g. "Priya Sharma" -> "PS".
- *
- * @param name the user's display name.
- * @return the first letter of the first and last words, or "?" if the name is blank.
- */
-private fun initials(name: String): String {
-    val words = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
-    if (words.isEmpty()) return "?"
-    val first = words.first().first()
-    val last = if (words.size > 1) words.last().first().toString() else ""
-    return (first + last).uppercase()
 }
 
 /** Centred message used for the empty and no-match states. */

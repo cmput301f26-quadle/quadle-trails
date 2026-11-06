@@ -12,4 +12,10 @@
     <string name="admin_profiles_sort_az">A–Z</string>
     <string name="admin_profiles_empty">No profiles yet</string>
     <string name="admin_profiles_no_match">No profiles match</string>
+
+    <!-- Admin Profile page (US 03.05.01) -->
+    <string name="admin_profile_title">Profile</string>
+    <string name="admin_profile_not_found">This profile no longer exists</string>
+    <string name="admin_profile_phone">Phone</string>
+    <string name="admin_profile_campsites_owned">Campsites owned</string>
 </resources>
