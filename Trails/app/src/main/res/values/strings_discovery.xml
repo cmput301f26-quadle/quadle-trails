@@ -30,4 +30,22 @@
     <string name="discovery_section_rules">Rules</string>
     <string name="discovery_section_cancellation">Cancellation policy</string>
     <string name="discovery_photo_desc">Campsite photo</string>
+
+    <!-- Results list (US 01.01.03) -->
+    <string name="discovery_no_campsites">No campsites to show.</string>
+    <string name="discovery_no_match">No campsites match.</string>
+
+    <!-- Keyword search (US 01.01.01) -->
+    <string name="discovery_search_hint">Search campsites</string>
+
+    <!-- Filters (US 01.01.02) -->
+    <string name="discovery_filter_location">Location</string>
+    <string name="discovery_filter_location_hint">City or park</string>
+    <string name="discovery_filter_guests">Guests</string>
+    <string name="discovery_filter_guests_hint">At least</string>
+    <string name="discovery_filter_arrive">Arrive</string>
+    <string name="discovery_filter_leave">Leave</string>
+    <string name="discovery_filter_clear_dates">Clear dates</string>
+    <string name="discovery_date_ok">OK</string>
+    <string name="discovery_date_cancel">Cancel</string>
 </resources>

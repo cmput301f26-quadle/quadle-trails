@@ -1,6 +1,7 @@
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
 // USER STORIES: 01.01.05
 // PURPOSE: Shows a campsite's details to an entrant.
+// Outstanding issues: the Compose preview skips the live map because osmdroid has no storage there.
 package com.example.trails.ui.discovery
 
 import androidx.compose.foundation.background
@@ -64,8 +65,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Loads one campsite and renders [CampsiteDetailsContent].
- * The repository is the one in [AppContainer], so this keeps working when Firestore is swapped in.
+ * Loads one campsite and shows its details to an entrant.
+ *
+ * The campsite comes from the repository in [AppContainer], so this keeps working when
+ * Firestore is swapped in. The join and rating sections below the details belong to other owners.
+ *
+ * @param navController used to go back and to open the waitlist from the join section.
+ * @param campsiteId the campsite to load.
+ * @param modifier applied to the screen.
+ * @param viewModel loads the campsite and exposes the page state.
  */
 @Composable
 fun CampsiteDetailsScreen(
@@ -87,6 +95,8 @@ fun CampsiteDetailsScreen(
 /**
  * Watches one campsite and exposes the page state.
  *
+ * The state starts as loading, then becomes loaded or not found as the repository reports.
+ *
  * @param campsiteId the campsite to show.
  * @param campsiteRepository where campsites are stored.
  */
@@ -95,6 +105,7 @@ class CampsiteDetailsViewModel(
     campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository
 ) : ViewModel() {
 
+    /** Loading, not found, or the loaded campsite. */
     val uiState: StateFlow<CampsiteDetailsUiState> =
         campsiteRepository.observeById(campsiteId)
             .map(::buildCampsiteDetailsState)
@@ -108,9 +119,14 @@ class CampsiteDetailsViewModel(
 /**
  * Stateless details page, split out so previews and UI tests can drive it directly.
  *
+ * Shows a spinner while loading, a not-found message when the id is missing, and the
+ * campsite body once it is loaded.
+ *
  * @param state what to show.
  * @param campsiteId id passed through to the join and rating sections.
  * @param onBack called when the back arrow is tapped.
+ * @param navController passed to the join section so it can open the waitlist.
+ * @param modifier applied to the page.
  */
 @Composable
 fun CampsiteDetailsContent(
@@ -145,7 +161,12 @@ fun CampsiteDetailsContent(
     }
 }
 
-/** Back arrow and title. */
+/**
+ * Back arrow and title.
+ *
+ * @param title text shown beside the arrow.
+ * @param onBack called when the arrow is tapped.
+ */
 @Composable
 private fun DetailsHeader(title: String, onBack: () -> Unit) {
     Row(
@@ -167,6 +188,17 @@ private fun DetailsHeader(title: String, onBack: () -> Unit) {
     }
 }
 
+/**
+ * Scrollable campsite details, followed by the join and rating sections.
+ *
+ * The live map is skipped in the Compose preview, where osmdroid has no storage.
+ * On an emulator or device the map is shown.
+ *
+ * @param campsite the loaded campsite.
+ * @param campsiteId id passed through to the join and rating sections.
+ * @param navController passed to the join section so it can open the waitlist.
+ * @param modifier applied to the scrollable column.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: NavController, modifier: Modifier = Modifier) {
@@ -271,6 +303,11 @@ private fun DetailsBody(campsite: Campsite, campsiteId: String, navController: N
     }
 }
 
+/**
+ * Wide promo photo, or a plain tile when the campsite has none.
+ *
+ * @param url the photo address, or null when the campsite has no photo.
+ */
 @Composable
 private fun Banner(url: String?) {
     val shape = RoundedCornerShape(12.dp)
@@ -291,6 +328,12 @@ private fun Banner(url: String?) {
     }
 }
 
+/**
+ * A titled block on the details page.
+ *
+ * @param title heading for the block.
+ * @param content body drawn under the heading.
+ */
 @Composable
 private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.padding(top = 20.dp)) {
@@ -300,11 +343,21 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
     }
 }
 
+/**
+ * Ordinary body text under a section heading.
+ *
+ * @param text the text to show.
+ */
 @Composable
 private fun Body(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
+/**
+ * Italic note used when a section has nothing to show.
+ *
+ * @param text the note to show.
+ */
 @Composable
 private fun Muted(text: String) {
     Text(
@@ -315,6 +368,11 @@ private fun Muted(text: String) {
     )
 }
 
+/**
+ * One amenity label.
+ *
+ * @param text the amenity name.
+ */
 @Composable
 private fun Chip(text: String) {
     Text(
@@ -327,6 +385,13 @@ private fun Chip(text: String) {
     )
 }
 
+/**
+ * One highlighted number, such as capacity, price, or rating.
+ *
+ * @param value the number or amount.
+ * @param label what the number means.
+ * @param modifier applied to the tile.
+ */
 @Composable
 private fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(12.dp)
@@ -343,6 +408,14 @@ private fun StatTile(value: String, label: String, modifier: Modifier = Modifier
     }
 }
 
+/**
+ * Test tags for the details screen.
+ *
+ * @property BACK the back arrow.
+ * @property LOADING the spinner shown while the campsite loads.
+ * @property NOT_FOUND the message shown when the campsite id does not exist.
+ * @property CONTENT the loaded campsite body.
+ */
 object CampsiteDetailsTags {
     const val BACK = "discovery_details_back"
     const val LOADING = "discovery_details_loading"
