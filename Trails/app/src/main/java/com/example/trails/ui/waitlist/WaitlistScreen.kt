@@ -140,13 +140,16 @@ fun WaitlistContent(
             val campsite: Campsite? = when (state) {
                 is WaitlistUiState.NotWaitlisted -> state.campsite
                 is WaitlistUiState.Waitlisted -> state.campsite
+                is WaitlistUiState.Error -> state.campsite
                 else -> null
             }
             val lottery: Lottery? = when (state) {
                 is WaitlistUiState.NotWaitlisted -> state.lottery
                 is WaitlistUiState.Waitlisted -> state.lottery
+                is WaitlistUiState.Error -> state.lottery
                 else -> null
             }
+            val hasLottery = lottery != null && lottery.id.isNotBlank()
             val isRulesAccepted = (state as? WaitlistUiState.NotWaitlisted)?.isRulesAccepted ?: false
 
             // based on android developer guide for scrollable columns
@@ -248,6 +251,13 @@ fun WaitlistContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                if (!hasLottery) {
+                    Text(
+                        text = "This campsite is not in a lottery right now.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Mist
+                    )
+                } else {
                 // information card 1: lottery registrations open
                 Column(
                     modifier = Modifier
@@ -350,6 +360,7 @@ fun WaitlistContent(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 // secondary cancel action
                 OutlinedButton(
