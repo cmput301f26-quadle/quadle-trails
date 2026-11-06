@@ -251,48 +251,41 @@ fun WaitlistContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (!hasLottery) {
-                    Text(
-                        text = "This campsite is not in a lottery right now.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Mist
-                    )
-                } else {
-                // information card 1: lottery registrations open
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Forest, RoundedCornerShape(8.dp))
-                        .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = "Lottery Registrations Open",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TrailGreen,
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = lottery?.name.orEmpty(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Entry closes soon. Dates are subject to availability if selected.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
-                    if (campsite != null) {
+                // information card 1: lottery registrations open or no active lottery notice
+                if (hasLottery) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Forest, RoundedCornerShape(8.dp))
+                            .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Lottery Registrations Open",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TrailGreen,
+                            fontSize = 11.sp
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Your Preference: Up to ${campsite.maxOccupancy} Guests",
+                            text = lottery.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Entry closes soon. Dates are subject to availability if selected.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Mist
                         )
-                    }
-                    if (lottery != null && lottery.id.isNotBlank()) {
+                        if (campsite != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Your Preference: Up to ${campsite.maxOccupancy} Guests",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Mist
+                            )
+                        }
                         val entrantCount = when (state) {
                             is WaitlistUiState.NotWaitlisted -> state.entrantCount
                             is WaitlistUiState.Waitlisted -> state.entrantCount
@@ -310,56 +303,79 @@ fun WaitlistContent(
                             )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // information card 2: before you join disclaimer
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NightSurface, RoundedCornerShape(8.dp))
-                        .border(1.dp, Moss, RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = "Before You Join",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White
+                    // information card 2: before you join disclaimer
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NightSurface, RoundedCornerShape(8.dp))
+                            .border(1.dp, Moss, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Before You Join",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Joining adds you to this lottery pool, not a booking. Selection does not guarantee any requested dates.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "If selected, continue to choose available dates and confirm your reservation.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // embedded rules agreement section (story 02.11.01)
+                    RulesAgreementSection(
+                        rulesText = campsite?.rules.orEmpty(),
+                        cancellationPolicy = campsite?.cancellationPolicy.orEmpty(),
+                        isChecked = isRulesAccepted,
+                        onCheckedChange = onRulesCheckedChange
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Joining adds you to this lottery pool, not a booking. Selection does not guarantee any requested dates.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // embedded join and leave action section (stories 01.02.01 and 01.02.02)
+                    JoinLotterySection(
+                        uiState = state,
+                        onJoinClick = onJoinClick,
+                        onLeaveClick = onLeaveClick
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "If selected, continue to choose available dates and confirm your reservation.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Mist
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NightSurface, RoundedCornerShape(8.dp))
+                            .border(1.dp, Moss, RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                            .testTag("no_active_lottery_card")
+                    ) {
+                        Text(
+                            text = "No Active Lottery",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "This campsite is not in a lottery right now.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                    }
 
-                // embedded rules agreement section (story 02.11.01)
-                RulesAgreementSection(
-                    rulesText = campsite?.rules.orEmpty(),
-                    isChecked = isRulesAccepted,
-                    onCheckedChange = onRulesCheckedChange
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // embedded join and leave action section (stories 01.02.01 and 01.02.02)
-                JoinLotterySection(
-                    uiState = state,
-                    onJoinClick = onJoinClick,
-                    onLeaveClick = onLeaveClick
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 // secondary cancel action

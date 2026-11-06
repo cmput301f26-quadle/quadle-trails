@@ -353,4 +353,101 @@ class WaitlistViewModelTest {
         assertEquals(1, vm.entrants.value.size)
         assertEquals("user-campsite", vm.entrants.value.first().userId)
     }
+
+    // error state successfully retains campsite and lottery data to prevent ui state loss
+    // used antigravity to generate these test cases
+    @Test
+    fun uiStateError_retainsCampsiteAndLotteryData_preventsUiStateLoss() {
+        val campsite = Campsite(
+            id = "campsite-1",
+            name = "Grande Cache Ridge",
+            activeLotteryId = lotteryId
+        )
+        val campsiteRepo = FakeCampsiteRepository(initial = listOf(campsite))
+        val vm = WaitlistViewModel(
+            lotteryId = lotteryId,
+            campsiteId = "campsite-1",
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo,
+            campsiteRepository = campsiteRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // trigger error via network failure
+        waitlistRepo.failure = IOException("firestore network timeout")
+        vm.onRulesAgreementChanged(true)
+        vm.joinWaitlist(userName = "Chitkarsh", partySize = 2)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val errorState = state as WaitlistUiState.Error
+        assertEquals("Grande Cache Ridge", errorState.campsite?.name)
+        assertEquals(lotteryId, errorState.lottery?.id)
+        assertTrue(errorState.message.contains("network", ignoreCase = true) || errorState.message.contains("timeout", ignoreCase = true))
+    }
+
+    // join waitlist guards against execution when active lottery id is null or empty
+    @Test
+    fun joinWaitlist_campsiteWithNoActiveLottery_setsErrorMessageAndGuardsExecution() {
+        val campsiteWithNoLottery = Campsite(
+            id = "campsite-no-lottery",
+            name = "Two jack lakeside",
+            activeLotteryId = null
+        )
+        val campsiteRepo = FakeCampsiteRepository(initial = listOf(campsiteWithNoLottery))
+
+        val vm = WaitlistViewModel(
+            lotteryId = "",
+            campsiteId = "campsite-no-lottery",
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo,
+            campsiteRepository = campsiteRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // user agrees to rules and tries to join
+        vm.onRulesAgreementChanged(true)
+        vm.joinWaitlist(userName = "Chitkarsh", partySize = 2)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertEquals("This campsite is not in a lottery right now.", error.message)
+        assertEquals("Two jack lakeside", error.campsite?.name)
+        // ensure no entrants are present
+        assertEquals(0, vm.entrants.value.size)
+    }
+
+    // leave waitlist guards against execution when active lottery id is empty
+    @Test
+    fun leaveWaitlist_noActiveLottery_setsErrorMessage() {
+        val campsiteWithNoLottery = Campsite(
+            id = "campsite-no-lottery-2",
+            name = "Two jack lakeside",
+            activeLotteryId = ""
+        )
+        val campsiteRepo = FakeCampsiteRepository(initial = listOf(campsiteWithNoLottery))
+
+        val vm = WaitlistViewModel(
+            lotteryId = "",
+            campsiteId = "campsite-no-lottery-2",
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo,
+            campsiteRepository = campsiteRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.leaveWaitlist()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertEquals("This campsite is not in a lottery right now.", error.message)
+    }
 }
