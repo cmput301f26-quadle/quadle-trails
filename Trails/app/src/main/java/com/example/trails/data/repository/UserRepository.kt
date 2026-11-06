@@ -66,7 +66,7 @@ interface UserRepository {
     suspend fun updateActiveMode(deviceId: String, mode: Role)
 
     /**
-     * Removes a profile (US 01.08.01). Removing a profile that does not exist
+     * Removes a profile (US 01.08.01, 03.02.01). Removing a profile that does not exist
      * succeeds and changes nothing.
      *
      * @param deviceId the profile to remove.

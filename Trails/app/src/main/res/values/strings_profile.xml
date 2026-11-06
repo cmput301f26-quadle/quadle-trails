@@ -89,6 +89,8 @@
     <string name="profile_switch_to">Switch to %1$s</string>
     <string name="profile_mode_footer">Admin tools only appear in Admin mode. Your campsites, bookings and entries are the same in every mode.</string>
     <string name="profile_error_mode">Couldn\'t switch mode. Try again.</string>
+    <string name="profile_sample_users_title">Testing: run as a sample user</string>
+    <string name="profile_sample_users_body">Pick which sample user the app runs as. Only shown while the app uses sample users instead of real device sign-in.</string>
     <string name="profile_mode_pill_description">Mode: %1$s. Tap to switch mode.</string>
 
 </resources>

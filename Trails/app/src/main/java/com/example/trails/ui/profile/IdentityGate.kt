@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trails.R
+import com.example.trails.data.fake.CurrentUser
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -68,6 +69,7 @@ private fun GreetingThenApp(id: String, content: @Composable () -> Unit) {
     val profile: ProfileViewModel = viewModel(key = "greeting-$id") { ProfileViewModel(deviceId = id) }
     var showingDeviceProfile by rememberSaveable { mutableStateOf(false) }
     val state by profile.uiState.collectAsState()
+    val useSampleUser: ((String) -> Unit)? = if (CurrentUser.canUseSampleUsers) CurrentUser::useSampleUser else null
 
     when (val current = state) {
         ProfileUiState.Loading -> ProfileLoadingContent()
@@ -77,7 +79,9 @@ private fun GreetingThenApp(id: String, content: @Composable () -> Unit) {
             onContinue = {
                 profile.ensureProfileExists()
                 entered = true
-            }
+            },
+            currentId = id,
+            onUseSampleUser = useSampleUser
         )
         is ProfileUiState.Loaded -> if (showingDeviceProfile) {
             DeviceProfileContent(
@@ -85,7 +89,8 @@ private fun GreetingThenApp(id: String, content: @Composable () -> Unit) {
                 deviceIdLabel = profile.deviceIdLabel,
                 onBack = { showingDeviceProfile = false },
                 onManageProfile = { entered = true },
-                onPolicy = { entered = true }
+                onPolicy = { entered = true },
+                onUseSampleUser = useSampleUser
             )
         } else {
             WelcomeBackContent(
@@ -93,7 +98,8 @@ private fun GreetingThenApp(id: String, content: @Composable () -> Unit) {
                 deviceIdLabel = profile.deviceIdLabel,
                 onContinue = { entered = true },
                 onOpenDeviceProfile = { showingDeviceProfile = true },
-                pill = { ModePill(navController = null, viewModel = profile) }
+                pill = { ModePill(navController = null, viewModel = profile) },
+                onUseSampleUser = useSampleUser
             )
         }
     }

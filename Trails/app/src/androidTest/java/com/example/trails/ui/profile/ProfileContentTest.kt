@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.ui.theme.TrailsTheme
@@ -85,6 +86,29 @@ class ProfileContentTest {
         }
         composeRule.onNodeWithTag(ProfileTags.CONTINUE_EXPLORING).performScrollTo().performClick()
         assertEquals(1, taps)
+    }
+
+    @Test
+    fun welcomeBack_sampleUserSwitcherReportsTheChosenUser() {
+        var chosen: String? = null
+        composeRule.setContent {
+            TrailsTheme {
+                WelcomeBackContent(
+                    alex, "QD-••••-7A2F", onContinue = {}, onOpenDeviceProfile = {},
+                    onUseSampleUser = { chosen = it }
+                )
+            }
+        }
+        composeRule.onNodeWithTag(ProfileTags.sampleUser(TestUsers.ADMIN_ID)).performScrollTo().performClick()
+        assertEquals(TestUsers.ADMIN_ID, chosen)
+    }
+
+    @Test
+    fun welcomeBack_withoutSampleUsers_hidesTheSwitcher() {
+        composeRule.setContent {
+            TrailsTheme { WelcomeBackContent(alex, "QD-••••-7A2F", onContinue = {}, onOpenDeviceProfile = {}) }
+        }
+        composeRule.onNodeWithTag(ProfileTags.SAMPLE_USERS).assertDoesNotExist()
     }
 
     // Device profile

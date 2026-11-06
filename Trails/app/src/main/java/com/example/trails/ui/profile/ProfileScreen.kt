@@ -3,6 +3,10 @@
 // Outstanding issues: Welcome back has no "View my entries" button because there is no entries screen yet.
 package com.example.trails.ui.profile
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +35,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +60,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.trails.R
+import com.example.trails.data.fake.CurrentUser
+import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.ui.admin.AdminRoutes
@@ -86,7 +94,8 @@ fun DeviceProfileScreen(
             onBack = { navController.popBackStack() },
             onManageProfile = { navController.navigate(ProfileRoutes.EDIT_PROFILE) },
             onPolicy = { navController.navigate(AdminRoutes.POLICY) },
-            modifier = modifier
+            modifier = modifier,
+            onUseSampleUser = rememberSampleUserSwitch()
         )
         ProfileUiState.Loading -> ProfileLoadingContent(modifier)
         else -> ProfileErrorContent(viewModel::retry, modifier)
@@ -100,9 +109,17 @@ fun DeviceProfileScreen(
  * @param deviceIdLabel the masked device id.
  * @param onContinue called from "Continue to explore".
  * @param modifier modifier for the screen.
+ * @param currentId the device id the app runs as, to mark it in the sample user list.
+ * @param onUseSampleUser switches to a sample user, or null to hide that list.
  */
 @Composable
-fun WelcomeContent(deviceIdLabel: String, onContinue: () -> Unit, modifier: Modifier = Modifier) {
+fun WelcomeContent(
+    deviceIdLabel: String,
+    onContinue: () -> Unit,
+    modifier: Modifier = Modifier,
+    currentId: String? = null,
+    onUseSampleUser: ((String) -> Unit)? = null
+) {
     ProfilePage(
         title = stringResource(R.string.profile_welcome_screen_title),
         tag = ProfileTags.WELCOME,
@@ -127,6 +144,7 @@ fun WelcomeContent(deviceIdLabel: String, onContinue: () -> Unit, modifier: Modi
         Text(stringResource(R.string.profile_device_bound_title), style = MaterialTheme.typography.titleSmall)
         Text(stringResource(R.string.profile_device_bound_body), style = MaterialTheme.typography.bodySmall, color = Mist)
         PrimaryButton(stringResource(R.string.profile_continue), onContinue, ProfileTags.CONTINUE)
+        if (onUseSampleUser != null) SampleUserSwitcher(currentId, onUseSampleUser)
     }
 }
 
@@ -139,6 +157,7 @@ fun WelcomeContent(deviceIdLabel: String, onContinue: () -> Unit, modifier: Modi
  * @param onOpenDeviceProfile called from the profile row.
  * @param modifier modifier for the screen.
  * @param pill the mode pill shown in the top bar.
+ * @param onUseSampleUser switches to a sample user, or null to hide that list.
  */
 @Composable
 fun WelcomeBackContent(
@@ -147,7 +166,8 @@ fun WelcomeBackContent(
     onContinue: () -> Unit,
     onOpenDeviceProfile: () -> Unit,
     modifier: Modifier = Modifier,
-    pill: @Composable () -> Unit = { ModePillChip(effectiveMode(user), onClick = {}) }
+    pill: @Composable () -> Unit = { ModePillChip(effectiveMode(user), onClick = {}) },
+    onUseSampleUser: ((String) -> Unit)? = null
 ) {
     ProfilePage(
         title = stringResource(R.string.profile_welcome_back_screen_title),
@@ -174,6 +194,7 @@ fun WelcomeBackContent(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
+        if (onUseSampleUser != null) SampleUserSwitcher(user.deviceId, onUseSampleUser)
     }
 }
 
@@ -186,6 +207,7 @@ fun WelcomeBackContent(
  * @param onManageProfile opens Edit profile.
  * @param onPolicy opens the app policy.
  * @param modifier modifier for the screen.
+ * @param onUseSampleUser switches to a sample user, or null to hide that list.
  */
 @Composable
 fun DeviceProfileContent(
@@ -194,7 +216,8 @@ fun DeviceProfileContent(
     onBack: () -> Unit,
     onManageProfile: () -> Unit,
     onPolicy: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onUseSampleUser: ((String) -> Unit)? = null
 ) {
     ProfilePage(
         title = stringResource(R.string.profile_device_profile_title),
@@ -219,6 +242,73 @@ fun DeviceProfileContent(
             Text(stringResource(R.string.profile_policy))
         }
         Text(stringResource(R.string.profile_breadcrumb), style = MaterialTheme.typography.labelSmall, color = Mist)
+        if (onUseSampleUser != null) SampleUserSwitcher(user.deviceId, onUseSampleUser)
+    }
+}
+
+/**
+ * Switches the app to a sample user and restarts the screen stack, so every screen
+ * loads again as that user.
+ *
+ * @return the switch action, or null when the app does not use sample users.
+ */
+@Composable
+fun rememberSampleUserSwitch(): ((String) -> Unit)? {
+    if (!CurrentUser.canUseSampleUsers) return null
+    val context = LocalContext.current
+    return { id ->
+        CurrentUser.useSampleUser(id)
+        context.findActivity()?.let { activity ->
+            activity.startActivity(Intent(activity, activity.javaClass))
+            activity.finish()
+        }
+    }
+}
+
+private fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+/**
+ * Lets a tester run the app as one of the sample users in [TestUsers], so every
+ * role can be tried without changing code.
+ *
+ * @param currentId the device id the app runs as, or null if unknown.
+ * @param onUseSampleUser called with the chosen sample user's device id.
+ */
+@Composable
+fun SampleUserSwitcher(currentId: String?, onUseSampleUser: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, Moss, RoundedCornerShape(12.dp))
+            .padding(12.dp)
+            .testTag(ProfileTags.SAMPLE_USERS),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(stringResource(R.string.profile_sample_users_title), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.profile_sample_users_body), style = MaterialTheme.typography.bodySmall, color = Mist)
+        TestUsers.all.forEach { sample ->
+            FilterChip(
+                selected = sample.deviceId == currentId,
+                onClick = { onUseSampleUser(sample.deviceId) },
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.profile_sheet_subtitle,
+                            sample.name,
+                            stringResource(modeName(effectiveMode(sample)))
+                        )
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(ProfileTags.sampleUser(sample.deviceId))
+            )
+        }
     }
 }
 
@@ -486,6 +576,10 @@ object ProfileTags {
     const val DELETED = "profile_deleted"
     const val BROWSE = "profile_browse"
     const val SET_UP_NEW = "profile_set_up_new"
+    const val SAMPLE_USERS = "profile_sample_users"
+
+    /** Tag of the sample user option for [deviceId]. */
+    fun sampleUser(deviceId: String): String = "profile_sample_user_$deviceId"
 }
 
 private val previewUser = User(
