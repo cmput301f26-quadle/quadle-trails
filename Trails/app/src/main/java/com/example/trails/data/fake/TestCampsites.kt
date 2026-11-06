@@ -76,7 +76,8 @@ object TestCampsites {
             // Each Fri-Sun weekend in May 2027.
             availability = listOf(7, 14, 21, 28).map { fri ->
                 DateRange(dateOf(2027, 5, fri), dateOf(2027, 5, fri + 2))
-            }
+            },
+            activeLotteryId = TestLotteries.SCHEDULED_LOTTERY_ID
         )
     )
 }
