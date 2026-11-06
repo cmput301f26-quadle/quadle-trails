@@ -8,9 +8,31 @@ package com.example.trails.data.repository
 import com.example.trails.data.model.Lottery
 import kotlinx.coroutines.flow.Flow
 
+/** Storage for [Lottery] records. Screens depend on this, never on Firestore directly. */
 interface LotteryRepository {
+    /** Emits every lottery, and again whenever any of them changes. */
     fun observeAll(): Flow<List<Lottery>>
+
+    /** Emits the lotteries run by [ownerId], and again on every change (US 02.04.06). */
     fun observeByOwner(ownerId: String): Flow<List<Lottery>>
+
+    /** Emits the lottery with [id] (null if it doesn't exist), and again on every change (US 02.04.06). */
+    fun observeById(id: String): Flow<Lottery?>
+
+    /** Returns the lottery with [id], or null if it does not exist. */
     suspend fun getById(id: String): Lottery?
-    suspend fun save(lottery: Lottery)
+
+    /**
+     * Creates the lottery if [Lottery.id] is blank (US 02.04.01), otherwise overwrites
+     * the existing one (US 02.04.06).
+     *
+     * @return the lottery's id, newly generated when it was created.
+     */
+    suspend fun save(lottery: Lottery): String
+
+    /**
+     * Deletes the lottery with [id]; does nothing if it doesn't exist. Callers make sure
+     * nobody is on its waiting list first, so no entries are left pointing at it.
+     */
+    suspend fun delete(id: String)
 }
