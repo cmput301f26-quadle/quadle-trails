@@ -1,3 +1,4 @@
+// AI assistance.
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
 // USER STORIES: 01.01.05
 // PURPOSE: Unit tests for the entrant campsite page state.

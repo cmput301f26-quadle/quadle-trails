@@ -1,3 +1,4 @@
+// AI assistance.
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
 // USER STORIES: 01.01.04
 // PURPOSE: UI tests for the campsite summary card.
