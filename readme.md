@@ -32,13 +32,3 @@ Files marked OWNER: shared can be changed by anyone via a small PR reviewed by a
 ## AI usage
 
 Files where AI helped are marked with an `// AI assistance:` line in their header.
-
-### Zainab (zsaghir)
-
-Zainab used Claude Code (Anthropic) to add the required file headers to her files. It changed header comments only, no code. Zainab reviewed and tested every change.
-
-- **Admin tests (15 files)** in `androidTest/.../ui/admin/` and `test/.../ui/admin/`: rewrote each header as OWNER, USER STORIES, PURPOSE and Outstanding issues, matching the other admin files.
-- **Rating data (3 files)**, `data/fake/TestRatings.kt`, `data/fake/FakeRatingRepository.kt` and `data/repository/RatingRepository.kt`: replaced the template header text with the same full header (US 01.13.01).
-- **App-shell tests (6 files)** in `ui/shell/` and `ui/navigation/` (`MessagesContentTest`, `NotificationsContentTest`, `SettingsContentTest`, `BottomBarContentTest`, `TrailsAppTest`, `BottomNavTabsTest`): rewrote each header as OWNER, PURPOSE and Outstanding issues.
-- **Shared files only Zainab has edited (10 files)**, `data/model/User`, `Role`, `Lottery`, `DateRange` and `Rating`, `data/fake/TestDates`, `ui/navigation/NavArgs` and `AppNavGraph`, `ui/common/PlaceholderScreen`, and `ui/theme/Type`: added the missing Outstanding issues line.
-- **`test/.../ExampleUnitTest.kt`**: added a header to the Android Studio template test.
