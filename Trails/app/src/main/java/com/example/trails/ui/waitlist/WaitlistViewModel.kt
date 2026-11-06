@@ -59,11 +59,13 @@ sealed interface WaitlistUiState {
         val entry: WaitlistEntry? = null
     ) : WaitlistUiState
 
-    // error state with user facing message
+    // error state with a user facing message; keeps the campsite and lottery so the screen does not go blank
     data class Error(
         val message: String,
         val isFull: Boolean = false,
-        val entries: List<WaitlistEntry> = emptyList()
+        val entries: List<WaitlistEntry> = emptyList(),
+        val campsite: Campsite? = null,
+        val lottery: Lottery? = null
     ) : WaitlistUiState
 }
 
@@ -191,7 +193,9 @@ class WaitlistViewModel(
                 }
             }.catch { e ->
                 _uiState.value = WaitlistUiState.Error(
-                    message = e.message ?: "Network error: Failed to load waitlist data."
+                    message = e.message ?: "Network error: Failed to load waitlist data.",
+                    campsite = _campsite.value,
+                    lottery = _lottery.value
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -213,7 +217,9 @@ class WaitlistViewModel(
             WaitlistUiState.Error(
                 message = error,
                 isFull = isFull,
-                entries = allEntries
+                entries = allEntries,
+                campsite = info.campsite,
+                lottery = info.lottery
             )
         } else if (userEntry != null) {
             WaitlistUiState.Waitlisted(
@@ -260,7 +266,11 @@ class WaitlistViewModel(
                 val targetLotteryId = _activeLotteryId.value.ifBlank {
                     _lottery.value?.id?.ifBlank { null } ?: lotteryId
                 }
-                val currentLottery = _lottery.value ?: if (targetLotteryId.isNotBlank()) lotteryRepository.getById(targetLotteryId) else null
+                if (targetLotteryId.isBlank()) {
+                    _errorMessage.value = "This campsite is not in a lottery right now."
+                    return@launch
+                }
+                val currentLottery = _lottery.value ?: lotteryRepository.getById(targetLotteryId)
                 val maxCapacity = currentLottery?.waitlistCapacity
 
                 // resolve user display name from user repository or param

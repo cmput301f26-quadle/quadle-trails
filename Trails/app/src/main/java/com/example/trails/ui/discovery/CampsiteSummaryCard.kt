@@ -14,16 +14,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -62,64 +59,64 @@ fun CampsiteSummaryCard(
             .fillMaxWidth()
             .testTag(CampsiteSummaryCardTags.card(campsite.id))
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Thumbnail(campsite.imageUrl)
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .padding(start = 12.dp)
-                ) {
-                    Text(campsite.name, style = MaterialTheme.typography.titleMedium)
+        Column {
+            Banner(campsite.imageUrl)
+            Column(Modifier.padding(12.dp)) {
+                Text(campsite.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stringResource(
+                        R.string.discovery_card_location_guests,
+                        campsite.locationName,
+                        campsite.maxOccupancy
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(
+                        R.string.discovery_card_price,
+                        CampsiteFormFields.formatPrice(campsite.pricePerNight)
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                if (campsite.ratingCount > 0) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            stringResource(R.string.discovery_card_rating, formatRating(campsite.ratingAverage)),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            pluralStringResource(
+                                R.plurals.discovery_rating_count,
+                                campsite.ratingCount,
+                                campsite.ratingCount
+                            ),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
                     Text(
-                        stringResource(
-                            R.string.discovery_card_location_guests,
-                            campsite.locationName,
-                            campsite.maxOccupancy
-                        ),
+                        stringResource(R.string.discovery_card_no_rating),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (campsite.tags.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        campsite.tags.take(3).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        stringResource(
-                            R.string.discovery_card_price,
-                            CampsiteFormFields.formatPrice(campsite.pricePerNight)
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
                 }
-            }
-            Spacer(Modifier.height(8.dp))
-            if (campsite.ratingCount > 0) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        stringResource(R.string.discovery_card_rating, formatRating(campsite.ratingAverage)),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        pluralStringResource(
-                            R.plurals.discovery_rating_count,
-                            campsite.ratingCount,
-                            campsite.ratingCount
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    stringResource(R.string.discovery_card_no_rating),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (campsite.tags.isNotEmpty()) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    campsite.tags.take(3).joinToString(" · "),
+                    stringResource(R.string.discovery_lottery_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -129,16 +126,15 @@ fun CampsiteSummaryCard(
 }
 
 /**
- * Square promo photo, or a plain tile when the campsite has none.
+ * Wide promo photo, or a plain tile when the campsite has none.
  *
  * @param url the photo address, or null when the campsite has no photo.
  */
 @Composable
-private fun Thumbnail(url: String?) {
-    val shape = RoundedCornerShape(8.dp)
+private fun Banner(url: String?) {
     val mod = Modifier
-        .size(72.dp)
-        .clip(shape)
+        .fillMaxWidth()
+        .height(160.dp)
     if (url != null) {
         AsyncImage(
             model = url,
