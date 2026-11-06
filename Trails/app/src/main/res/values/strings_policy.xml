@@ -19,4 +19,20 @@
     <string name="policy_card_device_body">Quadle recognizes your device without a password. Profile details and entries are associated with that device identity. Access on a new device or after clearing data is not assured.</string>
     <string name="policy_card_rules_title">Campsite rules &amp; cancellation</string>
     <string name="policy_card_rules_body">Read the owner\'s rules before confirming a stay. Cancellation terms appear on each listing and apply to confirmed reservations, not lottery entries.</string>
+
+    <!-- Camping guidelines screen -->
+    <string name="guidelines_title">Camping guidelines</string>
+    <string name="guidelines_breadcrumb">App policy / Camping guidelines</string>
+    <string name="guidelines_heading">Leave it better</string>
+    <string name="guidelines_intro">Make room for nature, your neighbours and the next camper.</string>
+    <string name="guidelines_note">For urgent danger, contact local emergency services. Follow posted notices and current local restrictions.</string>
+    <string name="guidelines_back_to_policy">Back to app policy</string>
+
+    <!-- Camping guidelines cards -->
+    <string name="guidelines_card_respect_title">Respect fellow campers</string>
+    <string name="guidelines_card_respect_body">Keep noise low, stay within your assigned site and respect shared facilities. Follow the campsite\'s guest limit and owner instructions.</string>
+    <string name="guidelines_card_trace_title">Leave no trace</string>
+    <string name="guidelines_card_trace_body">Pack out litter and food scraps. Use designated trails, protect vegetation and leave natural objects where you find them.</string>
+    <string name="guidelines_card_safety_title">Camp safely</string>
+    <string name="guidelines_card_safety_body">Check weather and local fire restrictions. Use designated fire pits only when permitted, fully extinguish fires and store food away from wildlife.</string>
 </resources>

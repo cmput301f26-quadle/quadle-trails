@@ -2,25 +2,18 @@
 // USER STORIES: 01.11.01
 // PURPOSE: Entrant's App policy screen explaining lottery entry, selection, the device-linked
 //   profile and campsite rules (Figma Scenario 1 · App policy).
-// Outstanding issues: policy text is fixed in the app, not loaded from Firestore;
-//   "Read camping guidelines" does nothing yet (wired in the next commit).
+// Outstanding issues: policy text is fixed in the app, not loaded from Firestore.
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -31,24 +24,23 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.trails.R
+import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
  * Connects navigation to [PolicyContent] with the fixed [appPolicyCards].
- * Back and "Back to settings" both return to the previous screen.
+ * Back and "Back to settings" both return to the previous screen;
+ * "Read camping guidelines" opens [GuidelinesScreen].
  *
- * @param navController used to go back to Settings.
+ * @param navController used to go back to Settings and to open the guidelines.
+ * @param modifier modifier for the screen's root layout.
  */
 @Composable
 fun PolicyScreen(
@@ -58,7 +50,7 @@ fun PolicyScreen(
     PolicyContent(
         cards = appPolicyCards,
         onBack = { navController.popBackStack() },
-        onGuidelinesClick = { },
+        onGuidelinesClick = { navController.navigate(AdminRoutes.GUIDELINES) },
         onBackToSettings = { navController.popBackStack() },
         modifier = modifier
     )
@@ -71,6 +63,7 @@ fun PolicyScreen(
  * @param onBack called when the back arrow is tapped.
  * @param onGuidelinesClick called when "Read camping guidelines" is tapped.
  * @param onBackToSettings called when "Back to settings" is tapped.
+ * @param modifier modifier for the screen's root layout.
  */
 @Composable
 fun PolicyContent(
@@ -82,7 +75,14 @@ fun PolicyContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { PolicyHeader(onBack) }
+        topBar = {
+            TrailsTopBar(
+                title = stringResource(R.string.policy_title),
+                onBack = onBack,
+                backTestTag = PolicyTags.BACK,
+                backContentDescription = stringResource(R.string.policy_back)
+            )
+        }
     ) { padding ->
         Column(
             Modifier
@@ -134,35 +134,15 @@ fun PolicyContent(
     }
 }
 
-/** Green back arrow and the "App policy" title, matching the admin Profile header. */
+/**
+ * One outlined green card with a heading and its paragraph; shared by the
+ * App policy and Camping guidelines screens.
+ *
+ * @param card the heading and paragraph to show.
+ * @param modifier modifier for the card, e.g. its test tag.
+ */
 @Composable
-private fun PolicyHeader(onBack: () -> Unit) {
-    val backLabel = stringResource(R.string.policy_back)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack)
-                .semantics { contentDescription = backLabel }
-                .testTag(PolicyTags.BACK),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("‹", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.policy_title), style = MaterialTheme.typography.titleLarge)
-    }
-}
-
-/** One outlined green card with a policy heading and its paragraph; reused by the guidelines screen. */
-@Composable
-private fun PolicyCardItem(card: PolicyCard, modifier: Modifier = Modifier) {
+internal fun PolicyCardItem(card: PolicyCard, modifier: Modifier = Modifier) {
     OutlinedCard(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
