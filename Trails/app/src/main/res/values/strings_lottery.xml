@@ -143,6 +143,19 @@
     <string name="lottery_save_failed_body">Check your connection and try again. Your edits are still here.</string>
     <string name="lottery_try_again">Try again</string>
 
+    <!-- Delete lottery (only while nobody has joined) -->
+    <string name="lottery_delete">Delete lottery</string>
+    <string name="lottery_deleting">Deleting…</string>
+    <string name="lottery_delete_confirm_title">Delete this lottery?</string>
+    <string name="lottery_delete_confirm_body">Campers won’t be able to find it any more, and its campsites become free for another lottery. This can’t be undone.</string>
+    <string name="lottery_delete_confirm">Delete</string>
+    <string name="lottery_delete_failed_title">Couldn’t delete the lottery</string>
+    <string name="lottery_delete_failed_body">Check your connection and try again.</string>
+    <plurals name="lottery_delete_blocked">
+        <item quantity="one">%d person has joined the waiting list, so this lottery can’t be deleted.</item>
+        <item quantity="other">%d people have joined the waiting list, so this lottery can’t be deleted.</item>
+    </plurals>
+
     <!-- Problems shown on the form -->
     <string name="lottery_problem_name">Give the lottery a name.</string>
     <string name="lottery_problem_campsites">Pick at least one campsite.</string>

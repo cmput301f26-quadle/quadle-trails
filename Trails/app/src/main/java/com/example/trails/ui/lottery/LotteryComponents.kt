@@ -35,9 +35,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -59,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import com.example.trails.R
 
@@ -86,6 +92,9 @@ object LotteryTags {
     const val CREATE = "lottery_create"
     const val EMPTY = "lottery_empty"
     const val LOADING = "lottery_loading"
+    const val DIALOG_CANCEL = "lottery_dialog_cancel"
+    const val DELETE = "lottery_delete"
+    const val DELETE_BLOCKED = "lottery_delete_blocked"
 
     /** Tag for a campsite row in the picker. */
     fun campsite(id: String) = "lottery_campsite_$id"
@@ -572,14 +581,14 @@ internal fun waitlistText(capacity: Int?, short: Boolean = false): String = when
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LotterySheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    val shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = LotteryColors.Sheet,
         scrimColor = Color.Black.copy(alpha = 0.62f),
-        shape = shape,
-        modifier = Modifier.border(1.dp, LotteryColors.Line, shape),
+        // No border modifier here: ModalBottomSheet measures it before the slide-in offset,
+        // so it drew a stray box over the top half of the sheet.
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = {
             Box(
                 Modifier
@@ -600,5 +609,99 @@ internal fun LotterySheet(title: String?, onDismiss: () -> Unit, content: @Compo
             if (title != null) Text(title, style = LotteryType.Header)
             content()
         }
+    }
+}
+
+/**
+ * Small card dialog: title, message and a full-width button, plus a grey Cancel when
+ * [dismissLabel] is given (Figma F18 Published, F21 Couldn't save).
+ */
+@Composable
+internal fun LotteryDialog(
+    title: String,
+    body: String,
+    button: String,
+    destructive: Boolean,
+    onClick: () -> Unit,
+    onDismiss: () -> Unit,
+    dismissLabel: String? = null
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        val shape = RoundedCornerShape(16.dp)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .border(1.5.dp, if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, shape)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(title, style = LotteryType.Header)
+            Text(body, style = LotteryType.Body.copy(lineHeight = 20.sp))
+            LotteryButton(text = button, onClick = onClick, destructive = destructive, modifier = Modifier.testTag(LotteryTags.DIALOG_BUTTON))
+            if (dismissLabel != null) {
+                Text(
+                    dismissLabel,
+                    style = LotteryType.Label,
+                    color = LotteryColors.Muted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onDismiss)
+                        .padding(vertical = 8.dp)
+                        .testTag(LotteryTags.DIALOG_CANCEL)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Red outlined "Delete lottery", or a grey note saying why it can't be deleted once
+ * people have joined. Tapping the button asks for confirmation first.
+ *
+ * @param entrantCount people on the waiting list; deleting is only offered at 0.
+ * @param isDeleting true while the delete runs.
+ * @param onConfirm called after the owner confirms.
+ */
+@Composable
+internal fun DeleteLotterySection(entrantCount: Int, isDeleting: Boolean, onConfirm: () -> Unit) {
+    var confirming by rememberSaveable { mutableStateOf(false) }
+    if (entrantCount > 0) {
+        Text(
+            pluralStringResource(R.plurals.lottery_delete_blocked, entrantCount, entrantCount),
+            style = LotteryType.Small,
+            color = LotteryColors.Muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().testTag(LotteryTags.DELETE_BLOCKED)
+        )
+        return
+    }
+    val red = LotteryColors.Error
+    OutlinedButton(
+        onClick = { confirming = true },
+        enabled = !isDeleting,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, if (isDeleting) LotteryColors.Line else red),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = red, disabledContentColor = LotteryColors.Muted),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .testTag(LotteryTags.DELETE)
+    ) {
+        Text(stringResource(if (isDeleting) R.string.lottery_deleting else R.string.lottery_delete), style = LotteryType.Button)
+    }
+    if (confirming) {
+        LotteryDialog(
+            title = stringResource(R.string.lottery_delete_confirm_title),
+            body = stringResource(R.string.lottery_delete_confirm_body),
+            button = stringResource(R.string.lottery_delete_confirm),
+            destructive = true,
+            onClick = { confirming = false; onConfirm() },
+            onDismiss = { confirming = false },
+            dismissLabel = stringResource(R.string.lottery_cancel)
+        )
     }
 }
