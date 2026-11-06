@@ -14,6 +14,34 @@ Our project documentation, including the **Product Backlog**, **UI Mockups**, **
 
 The application id is `com.example.quadletrails` so it matches the Firebase project in `google-services.json`. The Kotlin package is `com.example.trails`.
 
+## Testing as different users
+
+There is no sign-in. The app runs as one of three realistic sample users, so every role can be tested on one device.
+
+| User | Roles | Opens in |
+|---|---|---|
+| Priya Sharma | Camper | Camper (Browse) — the default |
+| Daniel Whitehorse | Owner, Camper | Owner (Hosting) |
+| Morgan Lee | Admin, Owner, Camper | Admin (Admin home) |
+
+**Switch user (no code changes needed):**
+1. Tap the **Settings** tab (gear icon) → **Profile**.
+2. Tap the green **"Signed in with this device"** card to open **Device profile**.
+3. Scroll to **"Testing: run as a sample user"** and tap Priya, Daniel or Morgan.
+4. The app restarts as that user, on their home screen.
+
+**Switch mode (US 03.11.01):** as Morgan or Daniel, go to **Settings → Profile**, tap the mode pill at the top right (e.g. **Admin ▾**), pick a mode and tap **Switch to …**. Users only see the roles they hold, so Priya cannot switch.
+
+**Profile stories (US 01.07.03, 01.08.01, 01.09.01):** on **Settings → Profile**, edit name, email or phone and tap **Save Changes**, or tap **Delete Profile** and confirm. Device profile shows the masked device identifier.
+
+**Data:** campsites, lotteries and waitlists are stored in Firestore. Users and ratings use in-memory sample data for this checkpoint, so profile changes reset when the app restarts. Firebase anonymous sign-in and Firestore storage for users are built and will be switched on in Part 4.
+
+**Run the tests** (from the `Trails/` folder, with an emulator running for the second command):
+```
+./gradlew testDebugUnitTest
+./gradlew connectedDebugAndroidTest
+```
+
 ## Who owns what
 
 Paths are relative to `Trails/app/src/main/java/com/example/trails/`.
