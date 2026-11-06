@@ -59,7 +59,7 @@ sealed interface WaitlistUiState {
         val entry: WaitlistEntry? = null
     ) : WaitlistUiState
 
-    // error state with user facing message
+    // error state with a user facing message; keeps the campsite and lottery so the screen does not go blank
     data class Error(
         val message: String,
         val isFull: Boolean = false,

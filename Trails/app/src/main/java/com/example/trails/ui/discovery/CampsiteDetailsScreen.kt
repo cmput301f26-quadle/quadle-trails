@@ -68,7 +68,8 @@ import kotlinx.coroutines.flow.stateIn
  * Loads one campsite and shows its details to an entrant.
  *
  * The campsite comes from the repository in [AppContainer], so this keeps working when
- * Firestore is swapped in. The join and rating sections below the details belong to other owners.
+ * Firestore is swapped in. The join section is shown only when the campsite has an
+ * active lottery. The rating section below the details belongs to another owner.
  *
  * @param navController used to go back and to open the waitlist from the join section.
  * @param campsiteId the campsite to load.
@@ -189,8 +190,9 @@ private fun DetailsHeader(title: String, onBack: () -> Unit) {
 }
 
 /**
- * Scrollable campsite details, followed by the join and rating sections.
+ * Scrollable campsite details, followed by the rating section.
  *
+ * The join section is included only when [Campsite.activeLotteryId] is set.
  * The live map is skipped in the Compose preview, where osmdroid has no storage.
  * On an emulator or device the map is shown.
  *

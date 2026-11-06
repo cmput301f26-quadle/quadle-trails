@@ -264,7 +264,7 @@ private fun NotWaitlistedContent(
     }
 }
 
-// campsite details integration overload called by campsite details screen
+// Campsite details button. Hidden when the campsite has no active lottery.
 @Composable
 fun JoinLotterySection(
     navController: NavController,
