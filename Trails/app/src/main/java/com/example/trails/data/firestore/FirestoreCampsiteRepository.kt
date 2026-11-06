@@ -55,6 +55,11 @@ class FirestoreCampsiteRepository(
         return doc.id
     }
 
+    /** Firestore's delete already succeeds when the document doesn't exist. */
+    override suspend fun delete(id: String) {
+        campsites.document(id).delete().await()
+    }
+
     /** Uploads to Firebase Storage under campsite-images/ and returns the download URL. */
     override suspend fun uploadImage(localUri: String): String {
         val ref = storage.reference.child("campsite-images/${UUID.randomUUID()}.jpg")
