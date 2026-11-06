@@ -1,4 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles — strings for ui/profile. -->
+<!-- Wording follows the Scenario 1 and Scenario 8 storyboards. -->
 <resources>
+
+    <!-- US 01.09.01: identity gate -->
+    <string name="identity_starting">Recognizing this device…</string>
+    <string name="identity_failed_title">Couldn\'t recognize this device</string>
+    <string name="identity_failed_body">Quadle needs an internet connection the first time it opens. Check your connection and try again.</string>
+    <string name="identity_retry">Try again</string>
+
+    <!-- US 01.09.01: Welcome -->
+    <string name="profile_welcome_screen_title">Welcome</string>
+    <string name="profile_welcome_title">Welcome to Quadle</string>
+    <string name="profile_welcome_body">Your next campsite starts here. We\'ve automatically created a camper identity associated with this device.</string>
+    <string name="profile_welcome_badge">New device · Ready to explore</string>
+    <string name="profile_no_password_title">No username or password</string>
+    <string name="profile_no_password_body">Quadle recognizes this device automatically, so you can explore without creating a sign-in.</string>
+    <string name="profile_device_identifier">Device identifier</string>
+    <string name="profile_device_identifier_created">Created for this device</string>
+    <string name="profile_device_identifier_associated">Associated with this profile</string>
+    <string name="profile_device_bound_title">Your profile stays device-associated</string>
+    <string name="profile_device_bound_body">This identifier links this device to your camper profile. Your profile may not follow you to another device or after app data is cleared.</string>
+    <string name="profile_continue">Continue to explore</string>
+
+    <!-- US 01.09.01: Welcome back -->
+    <string name="profile_welcome_back_screen_title">Welcome back</string>
+    <string name="profile_welcome_back_title">Welcome back, %1$s</string>
+    <string name="profile_welcome_back_body">You\'re recognized on this device. Pick up where you left off.</string>
+    <string name="profile_on_this_device">%1$s · Profile on this device</string>
+    <string name="profile_recognised_badge">Recognized on this device</string>
+    <string name="profile_retained_title">Your camper profile is retained</string>
+    <string name="profile_retained_body">Quadle has recognized your device-associated identity. No registration, username or password is needed again.</string>
+    <string name="profile_continue_exploring">Continue exploring</string>
+    <string name="profile_recognition_note">Recognition applies to this device. Your profile may not follow you to another device or after app data is cleared.</string>
+
+    <!-- US 01.09.01: Device profile -->
+    <string name="profile_device_profile_title">Device profile</string>
+    <string name="profile_no_sign_in_title">No sign-in needed</string>
+    <string name="profile_no_sign_in_body">Quadle automatically recognizes this device and associates it with your camper profile. You don\'t need a username or password.</string>
+    <string name="profile_different_device_title">Using a different device?</string>
+    <string name="profile_different_device_body">Your profile may not follow you to another device or after app data is cleared. Cross-device recovery is not established in this concept.</string>
+    <string name="profile_manage">Manage profile</string>
+    <string name="profile_policy">App policy &amp; guidelines</string>
+    <string name="profile_breadcrumb">Settings → Profile → Device profile</string>
+
+    <!-- US 01.07.03: Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_change_photo">Change photo</string>
+    <string name="profile_name_label">Name</string>
+    <string name="profile_email_label">Email</string>
+    <string name="profile_phone_label">Phone (optional)</string>
+    <string name="profile_save_changes">Save Changes</string>
+    <string name="profile_saving">Saving…</string>
+    <string name="profile_saved">Changes saved</string>
+    <string name="profile_signed_in_note">Signed in with this device – no username or password needed.</string>
+
+    <string name="profile_error_name_required">Enter your name.</string>
+    <string name="profile_error_email_required">Enter your email.</string>
+    <string name="profile_error_email_invalid">Enter a valid email, like you@example.com.</string>
+    <string name="profile_error_phone_invalid">Enter a phone number with 7 to 15 digits, or leave it empty.</string>
+    <string name="profile_error_save_failed">Couldn\'t save your changes. Your edits are still here. Try again.</string>
+    <string name="profile_error_load">Couldn\'t load your profile.</string>
+    <string name="profile_retry">Try again</string>
+
+    <!-- US 01.08.01: Delete profile -->
+    <string name="profile_delete">Delete Profile</string>
+    <string name="profile_delete_dialog_title">Delete your profile?</string>
+    <string name="profile_delete_dialog_body">This permanently removes your profile and your lottery entries. This can\'t be undone.</string>
+    <string name="profile_delete_cancel">Cancel</string>
+    <string name="profile_deleting">Deleting…</string>
+    <string name="profile_error_delete">Couldn\'t delete your profile. It\'s still here. Try again.</string>
+    <string name="profile_deleted_title">Profile deleted</string>
+    <string name="profile_deleted_body">Your profile and lottery entries have been removed. You can keep browsing as a new user on this device.</string>
+    <string name="profile_browse_campsites">Browse Campsites</string>
+    <string name="profile_set_up_new">Set Up New Profile</string>
+
+    <!-- US 03.11.01: mode pill and "Use Quadle as" -->
+    <string name="profile_choose_mode_title">Choose a mode</string>
+    <string name="profile_use_quadle_as">Use Quadle as</string>
+    <string name="profile_sheet_subtitle">%1$s · %2$s</string>
+    <string name="profile_mode_admin">Admin</string>
+    <string name="profile_mode_admin_body">Moderate campsites, profiles and images.</string>
+    <string name="profile_mode_owner">Owner</string>
+    <string name="profile_mode_owner_body">List campsites and run lotteries.</string>
+    <string name="profile_mode_camper">Camper</string>
+    <string name="profile_mode_camper_body">Find, enter lotteries and book campsites.</string>
+    <string name="profile_mode_current">Current</string>
+    <string name="profile_switch_to">Switch to %1$s</string>
+    <string name="profile_mode_footer">Admin tools only appear in Admin mode. Your campsites, bookings and entries are the same in every mode.</string>
+    <string name="profile_error_mode">Couldn\'t switch mode. Try again.</string>
+    <string name="profile_mode_pill_description">Mode: %1$s. Tap to switch mode.</string>
+
 </resources>
