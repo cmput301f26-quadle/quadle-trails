@@ -1,7 +1,10 @@
-// Which bottom-nav tab is selected and where each tab goes.
 // OWNER: Zainab (zsaghir) — App shell
-// Outstanding issues: mode switching (US 03.11.01) is Aarav's; until
-//   then every user is in ENTRANT mode by default.
+// USER STORIES: App shell; supports 01.11.01 and 03.11.01 (Aarav's story)
+// PURPOSE: Which bottom-nav tab is selected and where each tab goes. Every
+//   screen opened from Settings (profile, device profile, choose a mode,
+//   app policy, camping guidelines) keeps the Settings tab highlighted.
+// Outstanding issues: none.
+// AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.navigation
 
 import com.example.trails.data.model.Role
@@ -49,8 +52,10 @@ fun routeFor(tab: BottomNavTab, mode: Role): String = when (tab) {
 }
 
 /**
- * Which tab to highlight for the screen being shown. Profile, app policy and
- * camping guidelines count as Settings; every other screen counts as Home.
+ * Which tab to highlight for the screen being shown. Profile, edit profile,
+ * device profile, choose a mode, app policy and camping guidelines are all
+ * opened from Settings, so they count as Settings; every other screen counts
+ * as Home.
  *
  * @param route the current route pattern (e.g. `NavDestination.route`), or null if none.
  * @return the selected tab, or null when there is no route.
@@ -62,6 +67,8 @@ fun selectedTab(route: String?): BottomNavTab? = when (route) {
     ShellRoutes.SETTINGS,
     ProfileRoutes.PROFILE,
     ProfileRoutes.EDIT_PROFILE,
+    ProfileRoutes.DEVICE_PROFILE,
+    ProfileRoutes.CHOOSE_MODE,
     AdminRoutes.POLICY,
     AdminRoutes.GUIDELINES -> BottomNavTab.SETTINGS
     else -> BottomNavTab.HOME
