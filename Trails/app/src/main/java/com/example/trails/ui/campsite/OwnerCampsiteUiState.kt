@@ -1,4 +1,4 @@
-// UI state and display logic for the owner's campsite page (US 02.01.04).
+// UI state and display logic for the owner's campsite page (US 02.01.04, 02.06.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Plain Kotlin (no Compose), so it can be unit-tested.
 // AI assistance: written in assistance with Claude AI by Anthropic.
@@ -7,6 +7,7 @@ package com.example.trails.ui.campsite
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.DateRange
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Reservation
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.abs
@@ -28,8 +29,13 @@ sealed interface OwnerCampsiteUiState {
      *
      * @property campsite the campsite to show.
      * @property lotteryName name of the lottery it is in, or null if none.
+     * @property bookedDays day keys taken by its reservations, shown red (US 02.06.01).
      */
-    data class Loaded(val campsite: Campsite, val lotteryName: String?) : OwnerCampsiteUiState
+    data class Loaded(
+        val campsite: Campsite,
+        val lotteryName: String?,
+        val bookedDays: Set<Long> = emptySet()
+    ) : OwnerCampsiteUiState
 }
 
 /**
@@ -39,11 +45,20 @@ sealed interface OwnerCampsiteUiState {
  *
  * @param campsite the campsite, or null if it doesn't exist.
  * @param lotteries all lotteries, used to find the one this campsite is in.
+ * @param reservations reservations to mark as booked; only this campsite's ones count.
  * @return [OwnerCampsiteUiState.NotFound] or [OwnerCampsiteUiState.Loaded].
  */
-fun buildOwnerCampsiteState(campsite: Campsite?, lotteries: List<Lottery>): OwnerCampsiteUiState =
+fun buildOwnerCampsiteState(
+    campsite: Campsite?,
+    lotteries: List<Lottery>,
+    reservations: List<Reservation> = emptyList()
+): OwnerCampsiteUiState =
     if (campsite == null) OwnerCampsiteUiState.NotFound
-    else OwnerCampsiteUiState.Loaded(campsite, lotteryFor(campsite, lotteries)?.name)
+    else OwnerCampsiteUiState.Loaded(
+        campsite,
+        lotteryFor(campsite, lotteries)?.name,
+        bookedDayKeys(reservations, campsite.id)
+    )
 
 /**
  * The lottery a campsite is in: its active lottery, or any lottery that lists it.

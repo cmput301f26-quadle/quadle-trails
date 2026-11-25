@@ -1,4 +1,4 @@
-// Date logic for the availability calendar (US 02.01.02 / Figma "Availability").
+// Date logic for the availability calendar (US 02.01.02, 02.06.01 / Figma "Availability").
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Days are "day keys": whole days since 1970-01-01, so they're timezone-free and easy to
 // compare. Plain Kotlin without java.time, because minSdk is 24.
@@ -6,6 +6,8 @@
 package com.example.trails.ui.campsite
 
 import com.example.trails.data.model.DateRange
+import com.example.trails.data.model.Reservation
+import com.example.trails.data.model.ReservationStatus
 import com.google.firebase.Timestamp
 import java.util.Calendar
 import java.util.GregorianCalendar
@@ -114,11 +116,80 @@ fun dayKeyToTimestamp(key: Long): Timestamp {
  *
  * Written in assistance with Claude AI by Anthropic.
  */
-fun availabilityToDays(ranges: List<DateRange>): Set<Long> = ranges.flatMap { range ->
-    val start = range.start?.toDayKey()
-    val end = range.end?.toDayKey()
-    if (start == null || end == null || end < start) emptyList() else (start..end).toList()
-}.toSet()
+fun availabilityToDays(ranges: List<DateRange>): Set<Long> =
+    ranges.flatMap { daysBetween(it.start, it.end) }.toSet()
+
+/**
+ * Every day from [start] to [end], both included; empty if either is missing or [end] is
+ * before [start].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
+private fun daysBetween(start: Timestamp?, end: Timestamp?): List<Long> {
+    val first = start?.toDayKey()
+    val last = end?.toDayKey()
+    return if (first == null || last == null || last < first) emptyList() else (first..last).toList()
+}
+
+/**
+ * The days taken by reservations (US 02.06.01): the red days on the calendar. Check-in and
+ * check-out days both count, as in Figma, where a May 15–16 stay shows both days red.
+ * Only [ReservationStatus.ACTIVE] reservations count, so a cancelled or rejected stay frees
+ * its days. Reservations missing a date, or ending before they start, are skipped.
+ *
+ * Shared: also usable for a winner picking dates (US 01.04.01) with [openDayKeys].
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ *
+ * @param reservations any reservations, e.g. from ReservationRepository.observeForCampsite;
+ *   non-active ones are ignored.
+ * @param campsiteId if set, only reservations for this campsite count.
+ * @return the booked day keys (see [dayKey]).
+ */
+fun bookedDayKeys(reservations: List<Reservation>, campsiteId: String? = null): Set<Long> =
+    reservations
+        .filter { it.status == ReservationStatus.ACTIVE }
+        .filter { campsiteId == null || it.campsiteId == campsiteId }
+        .flatMap { daysBetween(it.startDate, it.endDate) }
+        .toSet()
+
+/**
+ * Days that can still be booked: available and not already booked.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ *
+ * @param available the campsite's available days, e.g. from [availabilityToDays].
+ * @param booked the booked days, e.g. from [bookedDayKeys].
+ */
+fun openDayKeys(available: Set<Long>, booked: Set<Long>): Set<Long> = available - booked
+
+/**
+ * Groups days into runs of consecutive days, in order: {15, 16, 20} becomes 15..16 and 20..20.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
+fun consecutiveRuns(days: Collection<Long>): List<LongRange> {
+    val runs = mutableListOf<LongRange>()
+    for (day in days.toSortedSet()) {
+        val last = runs.lastOrNull()
+        if (last != null && day == last.last + 1) runs[runs.size - 1] = last.first..day
+        else runs += day..day
+    }
+    return runs
+}
+
+/**
+ * Labels runs of days within one month, e.g. "May 15–16, May 20" (Figma's booked footer).
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ *
+ * @param runs from [consecutiveRuns].
+ * @param monthDay formats one day, e.g. "May 15".
+ */
+fun formatDayRuns(runs: List<LongRange>, monthDay: (Long) -> String): String =
+    runs.joinToString(", ") { run ->
+        if (run.first == run.last) monthDay(run.first) else "${monthDay(run.first)}–${dayOfMonth(run.last)}"
+    }
 
 /**
  * Merges selected days into as few ranges as possible, e.g. May 7, 8, 9 and 14 become
