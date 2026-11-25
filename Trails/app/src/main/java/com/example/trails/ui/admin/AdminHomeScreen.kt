@@ -2,8 +2,7 @@
 // USER STORIES: 03.04.01, 03.05.01
 // PURPOSE: Admin's home screen (Home tab in Admin mode, Figma Scenario 8 · Admin home): greeting
 //   and live Campsites / Profiles counts that open the admin lists.
-// Outstanding issues: no mode pill in the header yet (US 03.11.01 is Aarav's); the Images, Logs
-//   and Needs review parts come in Part 4.
+// Outstanding issues: Images, Logs and Needs review come in Part 4.
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -36,6 +35,7 @@ import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.ui.theme.TrailsTheme
+import com.example.trails.ui.profile.ModePill
 
 /**
  * Connects [AdminHomeViewModel] to navigation and renders [AdminHomeContent].
@@ -55,7 +55,8 @@ fun AdminHomeScreen(
         state = state,
         onCampsitesClick = { navController.navigate(AdminRoutes.ADMIN_CAMPSITES) },
         onProfilesClick = { navController.navigate(AdminRoutes.ADMIN_PROFILES) },
-        modifier = modifier
+        modifier = modifier,
+        modeSelector = { ModePill(navController) }
     )
 }
 
@@ -72,7 +73,8 @@ fun AdminHomeContent(
     state: AdminHomeUiState?,
     onCampsitesClick: () -> Unit,
     onProfilesClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    modeSelector: @Composable () -> Unit = {}
 ) {
     Column(
         modifier
@@ -81,6 +83,14 @@ fun AdminHomeContent(
             .testTag(AdminHomeTags.SCREEN),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stringResource(R.string.profile_mode_admin), style = MaterialTheme.typography.titleLarge)
+            modeSelector()
+        }
         if (state == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.testTag(AdminHomeTags.LOADING))

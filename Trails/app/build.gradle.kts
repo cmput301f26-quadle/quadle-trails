@@ -37,7 +37,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "TESTING_TOOLS", "true")
+            versionNameSuffix = "-testing"
+        }
         release {
+            buildConfigField("boolean", "TESTING_TOOLS", "false")
             optimization {
                 enable = false
             }
@@ -48,6 +53,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
         resValues = true // needed for the maptiler_key resValue above
     }

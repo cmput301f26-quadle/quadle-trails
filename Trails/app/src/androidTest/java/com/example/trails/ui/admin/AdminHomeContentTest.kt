@@ -11,6 +11,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.trails.ui.theme.TrailsTheme
+import com.example.trails.ui.profile.ModePillChip
+import com.example.trails.ui.profile.ModePillTags
+import com.example.trails.data.model.Role
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -59,5 +62,19 @@ class AdminHomeContentTest {
         composeRule.onNodeWithTag(AdminHomeTags.PROFILES).performClick()
         assertEquals(0, campsites)
         assertEquals(1, profiles)
+    }
+
+    @Test
+    fun modeSelector_remainsAvailableWhileAdminDataLoads() {
+        var clicks = 0
+        composeRule.setContent {
+            TrailsTheme {
+                AdminHomeContent(null, {}, {}, modeSelector = {
+                    ModePillChip(Role.ADMIN, onClick = { clicks++ })
+                })
+            }
+        }
+        composeRule.onNodeWithTag(ModePillTags.PILL).assertIsDisplayed().performClick()
+        assertEquals(1, clicks)
     }
 }
