@@ -1,17 +1,24 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: Unit tests for AdminRemoval, which removes a campsite or a user
 //   profile together with the campsites, lotteries and waitlist entries that
-//   depend on it.
+//   depend on it (including the campsite's ratings), closes policy reports against a reviewed owner, and removes
+//   single ratings while keeping the campsite's average and count right, or
+//   only a rating's review text while keeping its stars.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeRatingRepository
+import com.example.trails.data.fake.FakeReportRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Rating
+import com.example.trails.data.model.Report
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.model.WaitlistEntry
@@ -118,19 +125,60 @@ class AdminRemovalTest {
         activeMode = Role.ADMIN
     )
 
+    private fun report(id: String, ownerId: String, campsiteId: String, status: ReportStatus = ReportStatus.OPEN) =
+        Report(
+            id = id,
+            ownerId = ownerId,
+            campsiteId = campsiteId,
+            reason = "Misleading photos",
+            ruleBroken = "Accurate listings",
+            status = status,
+            createdAt = Timestamp.now()
+        )
+
+    private val mayaPhotos = report("maya-photos", "device-maya", "jasper-pines")
+    private val mayaBooking = report("maya-booking", "device-maya", "wapiti-flats")
+    private val mayaOld = report("maya-old", "device-maya", "jasper-pines", ReportStatus.DISMISSED)
+    private val omarPhotos = report("omar-photos", "device-omar", "tunnel-mountain")
+
+    private fun rating(campsiteId: String, userId: String, score: Int, review: String) = Rating(
+        userId = userId,
+        campsiteId = campsiteId,
+        score = score,
+        review = review,
+        createdAt = Timestamp.now()
+    )
+
+    /** Tunnel Mountain has three ratings; Priya's 1-star rant is the one that breaks policy. */
+    private val priyaTunnelRating = rating(
+        "tunnel-mountain", "device-priya", 1, "The owner is a crook, call him at 403-555-0199 and tell him."
+    )
+    private val avaTunnelRating = rating("tunnel-mountain", "device-ava", 4, "Clean washrooms, a bit close to the road.")
+    private val mayaTunnelRating = rating("tunnel-mountain", "device-maya", 5, "Woke up to elk wandering past the site.")
+
+    /** Jasper Pines has a single rating. */
+    private val avaPinesRating = rating("jasper-pines", "device-ava", 3, "Nice trees, noisy neighbours.")
+
+    private val tunnelRated = tunnelMountain.copy(ratingAverage = 10.0 / 3, ratingCount = 3)
+    private val pinesRated = jasperPines.copy(ratingAverage = 3.0, ratingCount = 1)
+
     private lateinit var campsites: FakeCampsiteRepository
     private lateinit var lotteries: FakeLotteryRepository
     private lateinit var waitlist: FakeWaitlistRepository
     private lateinit var users: FakeUserRepository
+    private lateinit var reports: FakeReportRepository
+    private lateinit var ratings: FakeRatingRepository
     private lateinit var removal: AdminRemoval
 
     @Before
     fun setUp() {
-        campsites = FakeCampsiteRepository(initial = listOf(jasperPines, wapitiFlats, tunnelMountain))
+        campsites = FakeCampsiteRepository(initial = listOf(pinesRated, wapitiFlats, tunnelRated))
         lotteries = FakeLotteryRepository(initial = listOf(pinesSummer, jasperFall, banffWinter))
         waitlist = FakeWaitlistRepository(initial = listOf(priyaPines, avaPines, priyaFall, avaBanff))
         users = FakeUserRepository(initial = listOf(maya, omar, priya, ava, jordan))
-        removal = AdminRemoval(campsites, lotteries, waitlist, users)
+        reports = FakeReportRepository(initial = listOf(mayaPhotos, mayaBooking, mayaOld, omarPhotos))
+        ratings = FakeRatingRepository(initial = listOf(priyaTunnelRating, avaTunnelRating, mayaTunnelRating, avaPinesRating))
+        removal = AdminRemoval(campsites, lotteries, waitlist, users, reports, ratings)
     }
 
     // This checks that removing a campsite succeeds and the campsite is gone afterwards.
@@ -162,7 +210,7 @@ class AdminRemovalTest {
     fun removeCampsite_otherCampsitesUntouched() = runBlocking {
         removal.removeCampsite("jasper-pines")
         assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
-        assertEquals(tunnelMountain, campsites.getById("tunnel-mountain"))
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
         assertEquals(banffWinter, lotteries.getById("banff-winter"))
         assertEquals(listOf(avaBanff), waitlist.getEntriesForLottery("banff-winter"))
     }
@@ -180,9 +228,42 @@ class AdminRemovalTest {
     // This checks that the impact counts only the lotteries that would be deleted and the entries in them.
     @Test
     fun campsiteImpact_countsLotteriesAndEntries() = runBlocking {
-        assertEquals(CampsiteImpact("Jasper Pines", 1, 2), removal.campsiteImpact("jasper-pines"))
-        assertEquals(CampsiteImpact("Wapiti Flats", 0, 0), removal.campsiteImpact("wapiti-flats"))
-        assertEquals(CampsiteImpact("Tunnel Mountain Village", 1, 1), removal.campsiteImpact("tunnel-mountain"))
+        assertEquals(CampsiteImpact("Jasper Pines", 1, 2, 1), removal.campsiteImpact("jasper-pines"))
+        assertEquals(CampsiteImpact("Wapiti Flats", 0, 0, 0), removal.campsiteImpact("wapiti-flats"))
+        assertEquals(CampsiteImpact("Tunnel Mountain Village", 1, 1, 3), removal.campsiteImpact("tunnel-mountain"))
+    }
+
+    // This checks that the impact counts every rating of the campsite, and 0 for a campsite nobody rated.
+    @Test
+    fun campsiteImpact_countsRatings() = runBlocking {
+        assertEquals(3, removal.campsiteImpact("tunnel-mountain")!!.ratingCount)
+        assertEquals(1, removal.campsiteImpact("jasper-pines")!!.ratingCount)
+        assertEquals(0, removal.campsiteImpact("wapiti-flats")!!.ratingCount)
+    }
+
+    // This checks that removing a campsite deletes every one of its ratings.
+    @Test
+    fun removeCampsite_deletesItsRatings() = runBlocking {
+        val result = removal.removeCampsite("tunnel-mountain")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("tunnel-mountain").first().isEmpty())
+        assertNull(ratings.getRating("tunnel-mountain", "device-priya"))
+    }
+
+    // This checks that removing a campsite keeps the ratings of other campsites, even by the same reviewers.
+    @Test
+    fun removeCampsite_otherCampsitesRatingsKept() = runBlocking {
+        removal.removeCampsite("tunnel-mountain")
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+        assertEquals(listOf(avaPinesRating), ratings.observeForCampsite("jasper-pines").first())
+    }
+
+    // This checks that removing a campsite that doesn't exist deletes no ratings.
+    @Test
+    fun removeCampsite_missing_keepsRatings() = runBlocking {
+        removal.removeCampsite("no-such-site")
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(1, ratings.observeForCampsite("jasper-pines").first().size)
     }
 
     // This checks that the impact of a campsite that doesn't exist is null.
@@ -262,5 +343,176 @@ class AdminRemovalTest {
     @Test
     fun profileImpact_missing_isNull() = runBlocking {
         assertNull(removal.profileImpact("device-nobody"))
+    }
+
+    /** Each report's status by id, for comparing whole sets at once. */
+    private suspend fun statuses() = reports.observeAll().first().associate { it.id to it.status }
+
+    // This checks that removing a reported owner deletes them and marks only their open reports as resolved.
+    @Test
+    fun removeOwner_removesUserAndResolvesReports() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-jordan")
+        assertTrue(result.isSuccess)
+        assertNull(users.getById("device-maya"))
+        assertNull(campsites.getById("jasper-pines"))
+        assertEquals(
+            mapOf(
+                "maya-photos" to ReportStatus.OWNER_REMOVED,
+                "maya-booking" to ReportStatus.OWNER_REMOVED,
+                "maya-old" to ReportStatus.DISMISSED,
+                "omar-photos" to ReportStatus.OPEN
+            ),
+            statuses()
+        )
+    }
+
+    // This checks that removing a reported owner deletes the ratings of their campsites, and keeps
+    // other owners' campsite ratings and the ratings the removed owner wrote of other campsites.
+    @Test
+    fun removeOwner_deletesRatingsOfTheirCampsites() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-jordan")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("jasper-pines").first().isEmpty())
+        assertTrue(ratings.observeForCampsite("wapiti-flats").first().isEmpty())
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
+    }
+
+    // This checks that an admin can't remove themselves as a reported owner, and their reports stay open.
+    @Test
+    fun removeOwner_self_fails_reportsStayOpen() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-maya")
+        assertTrue(result.isFailure)
+        assertEquals(maya, users.getById("device-maya"))
+        assertEquals(ReportStatus.OPEN, statuses()["maya-photos"])
+        assertEquals(ReportStatus.OPEN, statuses()["maya-booking"])
+    }
+
+    // This checks that dismissing reports only changes that owner's open reports.
+    @Test
+    fun dismissReports_onlyThatOwner() = runBlocking {
+        val result = removal.dismissReports("device-maya")
+        assertTrue(result.isSuccess)
+        assertEquals(
+            mapOf(
+                "maya-photos" to ReportStatus.DISMISSED,
+                "maya-booking" to ReportStatus.DISMISSED,
+                "maya-old" to ReportStatus.DISMISSED,
+                "omar-photos" to ReportStatus.OPEN
+            ),
+            statuses()
+        )
+    }
+
+    // This checks that dismissing reports leaves the owner, their campsites and their lotteries in place.
+    @Test
+    fun dismissReports_keepsUserAndCampsites() = runBlocking {
+        removal.dismissReports("device-maya")
+        assertEquals(maya, users.getById("device-maya"))
+        assertEquals(pinesRated, campsites.getById("jasper-pines"))
+        assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
+        assertEquals(pinesSummer, lotteries.getById("pines-summer"))
+        assertEquals(jasperFall, lotteries.getById("jasper-fall"))
+    }
+
+    // This checks that removing a rating deletes it and saves the average and count of the ratings left.
+    @Test
+    fun removeRating_deletesAndUpdatesAverage() = runBlocking {
+        val result = removal.removeRating("tunnel-mountain", "device-priya")
+        assertTrue(result.isSuccess)
+        assertNull(ratings.getRating("tunnel-mountain", "device-priya"))
+        val saved = campsites.getById("tunnel-mountain")!!
+        assertEquals(4.5, saved.ratingAverage, 0.0001)
+        assertEquals(2, saved.ratingCount)
+        assertEquals(tunnelMountain.copy(ratingAverage = 4.5, ratingCount = 2), saved)
+    }
+
+    // This checks that removing a campsite's only rating sets its average and count back to zero.
+    @Test
+    fun removeRating_lastRating_averageZeroCountZero() = runBlocking {
+        val result = removal.removeRating("jasper-pines", "device-ava")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("jasper-pines").first().isEmpty())
+        val saved = campsites.getById("jasper-pines")!!
+        assertEquals(0.0, saved.ratingAverage, 0.0)
+        assertEquals(0, saved.ratingCount)
+    }
+
+    // This checks that removing a rating that doesn't exist, or one for a campsite that doesn't exist,
+    // fails and changes no rating or campsite.
+    @Test
+    fun removeRating_missing_fails_nothingChanged() = runBlocking {
+        assertTrue(removal.removeRating("tunnel-mountain", "device-jordan").isFailure)
+        assertTrue(removal.removeRating("no-such-site", "device-priya").isFailure)
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+    }
+
+    // This checks that a rating whose campsite is gone fails and is left in storage.
+    @Test
+    fun removeRating_campsiteMissing_keepsRating() = runBlocking {
+        campsites.delete("jasper-pines")
+        assertTrue(removal.removeRating("jasper-pines", "device-ava").isFailure)
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+    }
+
+    // This checks that removing one rating leaves the other ratings and other campsites exactly as they were.
+    @Test
+    fun removeRating_otherRatingsUntouched() = runBlocking {
+        removal.removeRating("tunnel-mountain", "device-priya")
+        assertEquals(avaTunnelRating, ratings.getRating("tunnel-mountain", "device-ava"))
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+        assertEquals(pinesRated, campsites.getById("jasper-pines"))
+        assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
+    }
+
+    // ---- Remove review (US 03.10.01) ----
+
+    // This checks that removing a review empties the text and marks it removed, but keeps the score and date.
+    @Test
+    fun removeReview_clearsTextKeepsScore() = runBlocking {
+        val result = removal.removeReview("tunnel-mountain", "device-priya")
+        assertTrue(result.isSuccess)
+        val saved = ratings.getRating("tunnel-mountain", "device-priya")!!
+        assertEquals("", saved.review)
+        assertTrue(saved.reviewRemoved)
+        assertEquals(priyaTunnelRating.copy(review = "", reviewRemoved = true), saved)
+        assertEquals(1, saved.score)
+        assertEquals(priyaTunnelRating.createdAt, saved.createdAt)
+    }
+
+    // This checks that removing a review leaves the campsite's average, count and the other ratings as they were.
+    @Test
+    fun removeReview_averageUnchanged() = runBlocking {
+        removal.removeReview("tunnel-mountain", "device-priya")
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
+        val stats = ratingStats(ratings.observeForCampsite("tunnel-mountain").first())
+        assertEquals(10.0 / 3, stats.average, 0.0001)
+        assertEquals(3, stats.count)
+        assertEquals(avaTunnelRating, ratings.getRating("tunnel-mountain", "device-ava"))
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
+    }
+
+    // This checks that a rating with no review text can't have its review removed, and is left as it was.
+    @Test
+    fun removeReview_noReviewText_fails() = runBlocking {
+        val starsOnly = rating("jasper-pines", "device-jordan", 2, "")
+        ratings.save(starsOnly)
+        assertTrue(removal.removeReview("jasper-pines", "device-jordan").isFailure)
+        assertEquals(starsOnly, ratings.getRating("jasper-pines", "device-jordan"))
+
+        removal.removeReview("tunnel-mountain", "device-priya")
+        assertTrue(removal.removeReview("tunnel-mountain", "device-priya").isFailure)
+    }
+
+    // This checks that removing the review of a rating that doesn't exist fails and changes nothing.
+    @Test
+    fun removeReview_missing_fails() = runBlocking {
+        assertTrue(removal.removeReview("tunnel-mountain", "device-jordan").isFailure)
+        assertTrue(removal.removeReview("no-such-site", "device-priya").isFailure)
+        assertNull(ratings.getRating("tunnel-mountain", "device-jordan"))
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
     }
 }

@@ -1,9 +1,9 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.01.04
-// PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner).
-// Outstanding issues: booked days aren't shown on the calendar (no reservations yet); the
-//  "Published" chip is always shown (no published flag in the model); the QR code card is
-//  US 02.02.01, final part.
+// USER STORIES: 02.01.04, 02.06.01
+// PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner),
+//  with booked days red on the availability calendar.
+// Outstanding issues: the "Published" chip is always shown (no published flag in the model);
+//  the QR code card is US 02.02.01, final part.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -192,8 +192,8 @@ private fun CampsiteDetails(
 
         Section(stringResource(R.string.campsite_section_availability)) {
             val days = remember(c.availability) { availabilityToDays(c.availability) }
-            if (days.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
-            else AvailabilityCalendar(days)
+            if (days.isEmpty() && state.bookedDays.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
+            else AvailabilityCalendar(days, bookedDays = state.bookedDays)
         }
 
         Section(stringResource(R.string.campsite_section_location)) {

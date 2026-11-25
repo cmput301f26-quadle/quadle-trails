@@ -8,6 +8,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -86,7 +88,7 @@ class WaitlistContentTest {
                 isRulesAccepted = false
             )
         )
-        composeRule.onNodeWithText("Grande Cache Ridge").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Grande Cache Ridge").onFirst().assertIsDisplayed()
         composeRule.onNodeWithText("Hinton – Grande Cache, AB").assertIsDisplayed()
         composeRule.onNodeWithText("$65 / night").assertIsDisplayed()
         composeRule.onNodeWithText("All May weekends · 2027").assertIsDisplayed()

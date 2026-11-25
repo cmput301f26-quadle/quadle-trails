@@ -253,9 +253,12 @@ private fun ProfileRow(item: AdminProfileItem, onClick: () -> Unit) {
     }
 }
 
-/** 40dp round profile photo, or a dark circle with the user's initials when there is none. */
+/**
+ * 40dp round profile photo, or a dark circle with the user's initials when there is none.
+ * Also used by the Policy reports list.
+ */
 @Composable
-private fun Avatar(user: User) {
+internal fun Avatar(user: User) {
     val mod = Modifier
         .size(40.dp)
         .clip(CircleShape)

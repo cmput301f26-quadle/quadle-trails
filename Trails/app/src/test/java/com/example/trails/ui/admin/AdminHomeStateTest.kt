@@ -1,22 +1,37 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.04.01, 03.05.01
+// USER STORIES: 03.04.01, 03.05.01, 03.07.01
 // PURPOSE: Unit tests for buildAdminHomeState() and greeting() on the admin home.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Report
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
+import com.google.firebase.Timestamp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.Date
+import java.util.concurrent.TimeUnit
 
 class AdminHomeStateTest {
 
     private lateinit var admin: User
     private lateinit var users: List<User>
     private lateinit var campsites: List<Campsite>
+    private val now = Timestamp(Date(1_800_000_000_000L))
+
+    /** A report filed [days] days before [now], against Daniel unless another owner is given. */
+    private fun report(days: Long, status: ReportStatus = ReportStatus.OPEN, ownerId: String = "device-daniel") =
+        Report(
+            ownerId = ownerId, campsiteId = "campsite-banff-tunnel", reason = "Misleading photos",
+            ruleBroken = "Accurate listings", status = status,
+            createdAt = Timestamp(Date(now.toDate().time - TimeUnit.DAYS.toMillis(days)))
+        )
 
     @Before
     fun setUp() {
@@ -81,5 +96,50 @@ class AdminHomeStateTest {
             "Good evening",
             buildAdminHomeState(admin.copy(name = "  "), campsites, users, 19).greeting
         )
+    }
+
+    // This checks that the Needs review card counts only open reports from the last 30 days and
+    // says how long the oldest of them has waited.
+    @Test
+    fun openReports_countedWithOldest() {
+        val reports = listOf(
+            report(2),
+            report(5, ownerId = "device-ava"),
+            report(1),
+            report(3, status = ReportStatus.DISMISSED),
+            report(10, status = ReportStatus.OWNER_REMOVED),
+            report(45)
+        )
+        val state = buildAdminHomeState(admin, campsites, users, 9, reports, now)
+        assertEquals(3, state.openReportCount)
+        assertEquals("3 policy reports", state.reportCountLine)
+        assertEquals("Oldest report: 5 days ago", state.oldestReportLine)
+    }
+
+    // This checks that one open report uses the singular "1 policy report".
+    @Test
+    fun oneOpenReport_singular() {
+        val state = buildAdminHomeState(admin, campsites, users, 9, listOf(report(0)), now)
+        assertEquals(1, state.openReportCount)
+        assertEquals("1 policy report", state.reportCountLine)
+        assertEquals("Oldest report: today", state.oldestReportLine)
+    }
+
+    // This checks that with no open reports the count is 0, so the Needs review card is hidden.
+    @Test
+    fun noOpenReports_countZero() {
+        val closed = listOf(report(2, status = ReportStatus.DISMISSED))
+        assertEquals(0, buildAdminHomeState(admin, campsites, users, 9, closed, now).openReportCount)
+        val none = buildAdminHomeState(admin, campsites, users, 9, emptyList(), now)
+        assertEquals(0, none.openReportCount)
+        assertNull(none.oldestReportLine)
+    }
+
+    // This checks that reports against an owner who no longer has a profile aren't counted,
+    // matching the Policy reports list.
+    @Test
+    fun reportAgainstRemovedOwner_notCounted() {
+        val reports = listOf(report(2, ownerId = "device-gone"))
+        assertEquals(0, buildAdminHomeState(admin, campsites, users, 9, reports, now).openReportCount)
     }
 }

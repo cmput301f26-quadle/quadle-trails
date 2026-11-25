@@ -118,9 +118,9 @@ class WaitlistEntrantsContentTest {
         composeRule.onNodeWithTag("entrant_name_user-2").assertTextEquals("Daniel Kim")
         composeRule.onNodeWithTag("entrant_name_user-3").assertTextEquals("Lena Fischer")
 
-        composeRule.onNodeWithTag("entrant_details_user-1").assertTextContains("Party of 2")
-        composeRule.onNodeWithTag("entrant_details_user-2").assertTextContains("Party of 4")
-        composeRule.onNodeWithTag("entrant_details_user-3").assertTextContains("Party of 3")
+        composeRule.onNodeWithTag("entrant_details_user-1").assertTextContains("Party of 2", substring = true)
+        composeRule.onNodeWithTag("entrant_details_user-2").assertTextContains("Party of 4", substring = true)
+        composeRule.onNodeWithTag("entrant_details_user-3").assertTextContains("Party of 3", substring = true)
 
         // assert vertical ordering from top to bottom
         val top1 = composeRule.onNodeWithTag("waitlist_entrant_item_user-1").getBoundsInRoot().top

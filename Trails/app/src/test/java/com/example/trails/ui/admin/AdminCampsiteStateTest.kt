@@ -31,8 +31,8 @@ class AdminCampsiteStateTest {
     // This checks that an existing campsite gives a Loaded state with its owner's name and the removal counts.
     @Test
     fun buildAdminCampsiteState_loaded_hasOwnerAndCounts() {
-        val state = buildAdminCampsiteState(jasperPines, listOf(priya, maya), CampsiteImpact("Jasper Pines", 2, 5))
-        assertEquals(AdminCampsiteUiState.Loaded(jasperPines, "Maya Singh", 2, 5), state)
+        val state = buildAdminCampsiteState(jasperPines, listOf(priya, maya), CampsiteImpact("Jasper Pines", 2, 5, 3))
+        assertEquals(AdminCampsiteUiState.Loaded(jasperPines, "Maya Singh", 2, 5, ratingCount = 3), state)
     }
 
     // This checks that a missing campsite gives the NotFound state.
@@ -47,6 +47,7 @@ class AdminCampsiteStateTest {
         val state = buildAdminCampsiteState(jasperPines, listOf(maya), null) as AdminCampsiteUiState.Loaded
         assertEquals(0, state.lotteryCount)
         assertEquals(0, state.entryCount)
+        assertEquals(0, state.ratingCount)
     }
 
     // This checks that the owner's name comes from the matching user, and "Unknown owner" if none or blank.
@@ -74,24 +75,41 @@ class AdminCampsiteStateTest {
     @Test
     fun removeCampsiteMessage_plural_listsCounts() {
         assertEquals(
-            "Jasper Pines is removed for everyone. Its 2 lotteries and 5 lottery entries are removed too. " +
-                "This can't be undone.",
-            removeCampsiteMessage("Jasper Pines", 2, 5)
+            "Jasper Pines is removed for everyone. Its 2 lotteries, 5 lottery entries and 3 ratings are " +
+                "removed too. This can't be undone.",
+            removeCampsiteMessage("Jasper Pines", 2, 5, 3)
         )
     }
 
-    // This checks the dialog text uses the singular for one lottery and one entry, and handles zero.
+    // This checks the dialog text uses the singular for one lottery, one entry and one rating.
     @Test
-    fun removeCampsiteMessage_singularAndZero_readsNaturally() {
+    fun removeCampsiteMessage_singular_readsNaturally() {
         assertEquals(
-            "Wapiti Flats is removed for everyone. Its 1 lottery and 1 lottery entry are removed too. " +
-                "This can't be undone.",
-            removeCampsiteMessage("Wapiti Flats", 1, 1)
+            "Wapiti Flats is removed for everyone. Its 1 lottery, 1 lottery entry and 1 rating are " +
+                "removed too. This can't be undone.",
+            removeCampsiteMessage("Wapiti Flats", 1, 1, 1)
         )
         assertEquals(
-            "Wapiti Flats is removed for everyone. Its 0 lotteries and 0 lottery entries are removed too. " +
+            "Wapiti Flats is removed for everyone. Its 1 rating is removed too. This can't be undone.",
+            removeCampsiteMessage("Wapiti Flats", 0, 0, 1)
+        )
+    }
+
+    // This checks the dialog text leaves out counts of 0, and the whole middle sentence when all are 0.
+    @Test
+    fun removeCampsiteMessage_zero_leftOut() {
+        assertEquals(
+            "Wapiti Flats is removed for everyone. Its 2 lotteries and 4 ratings are removed too. " +
                 "This can't be undone.",
-            removeCampsiteMessage("Wapiti Flats", 0, 0)
+            removeCampsiteMessage("Wapiti Flats", 2, 0, 4)
+        )
+        assertEquals(
+            "Wapiti Flats is removed for everyone. Its 3 lottery entries are removed too. This can't be undone.",
+            removeCampsiteMessage("Wapiti Flats", 0, 3, 0)
+        )
+        assertEquals(
+            "Wapiti Flats is removed for everyone. This can't be undone.",
+            removeCampsiteMessage("Wapiti Flats", 0, 0, 0)
         )
     }
 }

@@ -47,6 +47,9 @@
         <item quantity="one">%1$d day open this month</item>
         <item quantity="other">%1$d days open this month</item>
     </plurals>
+    <!-- US 02.06.01: booked days. Args: open days, booked days, booked dates e.g. "May 15–16". -->
+    <string name="campsite_calendar_open_booked">%1$d open · %2$d booked (%3$s)</string>
+    <string name="campsite_calendar_booked_state">Booked</string>
     <string name="campsite_calendar_prev">Previous month</string>
     <string name="campsite_calendar_next">Next month</string>
     <string name="campsite_form_map_label">Map location *</string>
