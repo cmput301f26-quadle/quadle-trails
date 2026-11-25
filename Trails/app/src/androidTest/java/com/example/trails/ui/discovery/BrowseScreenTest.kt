@@ -1,6 +1,6 @@
 // AI assistance: used ai to understand and modify lines of codes to tailor to my requirements
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
-// USER STORIES: 01.01.01, 01.01.02, 01.01.03
+// USER STORIES: 01.01.01, 01.01.02, 01.01.03, 03.11.01
 // PURPOSE: UI tests for the browse list, keyword search, and filters.
 // Outstanding issues: none.
 package com.example.trails.ui.discovery
@@ -21,9 +21,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Role
 import com.example.trails.ui.navigation.requireArg
 import com.example.trails.ui.navigation.requiredId
+import com.example.trails.ui.profile.ModePillChip
+import com.example.trails.ui.profile.ModePillTags
 import com.example.trails.ui.theme.TrailsTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.util.GregorianCalendar
@@ -55,6 +59,25 @@ class BrowseScreenTest {
         composeRule.onNodeWithTag(BrowseTags.LIST)
             .performScrollToNode(hasText("Wildhorse Lake Site 3"))
         composeRule.onNodeWithText("Wildhorse Lake Site 3").performScrollTo().assertIsDisplayed()
+    }
+
+    // This checks that the mode pill slot is shown in the Browse header and its pill can be tapped (US 03.11.01).
+    @Test
+    fun modePillSlot_isShown() {
+        var taps = 0
+        composeRule.setContent {
+            TrailsTheme {
+                BrowseScreen(
+                    navController = rememberNavController(),
+                    viewModel = BrowseViewModel(FakeCampsiteRepository(TestCampsites.all)),
+                    modePill = { ModePillChip(Role.ENTRANT, onClick = { taps++ }) }
+                )
+            }
+        }
+        composeRule.onNodeWithText("Browse").assertIsDisplayed()
+        composeRule.onNodeWithTag(BrowseTags.MODE_PILL).assertIsDisplayed()
+        composeRule.onNodeWithTag(ModePillTags.PILL).assertIsDisplayed().performClick()
+        assertEquals(1, taps)
     }
 
     @Test

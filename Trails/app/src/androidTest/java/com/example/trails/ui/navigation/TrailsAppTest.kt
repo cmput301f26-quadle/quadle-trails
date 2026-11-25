@@ -10,6 +10,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.platform.app.InstrumentationRegistry
+import com.example.trails.R
 import com.example.trails.ui.shell.SettingsTags
 import com.example.trails.ui.theme.TrailsTheme
 import org.junit.Before
@@ -57,11 +59,13 @@ class TrailsAppTest {
         assertTabSelected(BottomNavTab.SETTINGS)
     }
 
-    // This checks that the bell opens the Notifications placeholder saying it comes in Part 4.
+    // This checks that the bell opens Notifications and shows its empty state.
     @Test
-    fun tapNotifications_showsComingInPart4() {
+    fun tapNotifications_showsEmptyState() {
         tapTab(BottomNavTab.NOTIFICATIONS)
-        composeRule.onNodeWithText("Coming in Part 4", substring = true).assertIsDisplayed()
+        val emptyText = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.shell_notifications_empty)
+        composeRule.onNodeWithText(emptyText).assertIsDisplayed()
         assertTabSelected(BottomNavTab.NOTIFICATIONS)
     }
 
