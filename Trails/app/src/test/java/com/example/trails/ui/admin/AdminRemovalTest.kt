@@ -1,17 +1,20 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01
 // PURPOSE: Unit tests for AdminRemoval, which removes a campsite or a user
 //   profile together with the campsites, lotteries and waitlist entries that
-//   depend on it.
+//   depend on it, and closes policy reports against a reviewed owner.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeReportRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Report
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.model.WaitlistEntry
@@ -118,10 +121,27 @@ class AdminRemovalTest {
         activeMode = Role.ADMIN
     )
 
+    private fun report(id: String, ownerId: String, campsiteId: String, status: ReportStatus = ReportStatus.OPEN) =
+        Report(
+            id = id,
+            ownerId = ownerId,
+            campsiteId = campsiteId,
+            reason = "Misleading photos",
+            ruleBroken = "Accurate listings",
+            status = status,
+            createdAt = Timestamp.now()
+        )
+
+    private val mayaPhotos = report("maya-photos", "device-maya", "jasper-pines")
+    private val mayaBooking = report("maya-booking", "device-maya", "wapiti-flats")
+    private val mayaOld = report("maya-old", "device-maya", "jasper-pines", ReportStatus.DISMISSED)
+    private val omarPhotos = report("omar-photos", "device-omar", "tunnel-mountain")
+
     private lateinit var campsites: FakeCampsiteRepository
     private lateinit var lotteries: FakeLotteryRepository
     private lateinit var waitlist: FakeWaitlistRepository
     private lateinit var users: FakeUserRepository
+    private lateinit var reports: FakeReportRepository
     private lateinit var removal: AdminRemoval
 
     @Before
@@ -130,7 +150,8 @@ class AdminRemovalTest {
         lotteries = FakeLotteryRepository(initial = listOf(pinesSummer, jasperFall, banffWinter))
         waitlist = FakeWaitlistRepository(initial = listOf(priyaPines, avaPines, priyaFall, avaBanff))
         users = FakeUserRepository(initial = listOf(maya, omar, priya, ava, jordan))
-        removal = AdminRemoval(campsites, lotteries, waitlist, users)
+        reports = FakeReportRepository(initial = listOf(mayaPhotos, mayaBooking, mayaOld, omarPhotos))
+        removal = AdminRemoval(campsites, lotteries, waitlist, users, reports)
     }
 
     // This checks that removing a campsite succeeds and the campsite is gone afterwards.
@@ -262,5 +283,63 @@ class AdminRemovalTest {
     @Test
     fun profileImpact_missing_isNull() = runBlocking {
         assertNull(removal.profileImpact("device-nobody"))
+    }
+
+    /** Each report's status by id, for comparing whole sets at once. */
+    private suspend fun statuses() = reports.observeAll().first().associate { it.id to it.status }
+
+    // This checks that removing a reported owner deletes them and marks only their open reports as resolved.
+    @Test
+    fun removeOwner_removesUserAndResolvesReports() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-jordan")
+        assertTrue(result.isSuccess)
+        assertNull(users.getById("device-maya"))
+        assertNull(campsites.getById("jasper-pines"))
+        assertEquals(
+            mapOf(
+                "maya-photos" to ReportStatus.OWNER_REMOVED,
+                "maya-booking" to ReportStatus.OWNER_REMOVED,
+                "maya-old" to ReportStatus.DISMISSED,
+                "omar-photos" to ReportStatus.OPEN
+            ),
+            statuses()
+        )
+    }
+
+    // This checks that an admin can't remove themselves as a reported owner, and their reports stay open.
+    @Test
+    fun removeOwner_self_fails_reportsStayOpen() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-maya")
+        assertTrue(result.isFailure)
+        assertEquals(maya, users.getById("device-maya"))
+        assertEquals(ReportStatus.OPEN, statuses()["maya-photos"])
+        assertEquals(ReportStatus.OPEN, statuses()["maya-booking"])
+    }
+
+    // This checks that dismissing reports only changes that owner's open reports.
+    @Test
+    fun dismissReports_onlyThatOwner() = runBlocking {
+        val result = removal.dismissReports("device-maya")
+        assertTrue(result.isSuccess)
+        assertEquals(
+            mapOf(
+                "maya-photos" to ReportStatus.DISMISSED,
+                "maya-booking" to ReportStatus.DISMISSED,
+                "maya-old" to ReportStatus.DISMISSED,
+                "omar-photos" to ReportStatus.OPEN
+            ),
+            statuses()
+        )
+    }
+
+    // This checks that dismissing reports leaves the owner, their campsites and their lotteries in place.
+    @Test
+    fun dismissReports_keepsUserAndCampsites() = runBlocking {
+        removal.dismissReports("device-maya")
+        assertEquals(maya, users.getById("device-maya"))
+        assertEquals(jasperPines, campsites.getById("jasper-pines"))
+        assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
+        assertEquals(pinesSummer, lotteries.getById("pines-summer"))
+        assertEquals(jasperFall, lotteries.getById("jasper-fall"))
     }
 }

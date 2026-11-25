@@ -1,8 +1,9 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01
 // PURPOSE: Removes campsites and user profiles an administrator takes down,
 //   and everything that depends on them, so no lottery or waitlist entry is
-//   left pointing at something that no longer exists.
+//   left pointing at something that no longer exists. Also closes policy
+//   reports when the admin removes a reported owner or dismisses the reports.
 // Outstanding issues:
 //   - Reservations and notifications to affected guests don't exist yet (Part 4).
 //   - The removed campsite's ratings stay in storage.
@@ -13,7 +14,9 @@ package com.example.trails.ui.admin
 
 import com.example.trails.data.AppContainer
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.ReportRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
 import kotlinx.coroutines.flow.first
@@ -43,12 +46,14 @@ data class ProfileImpact(val name: String, val campsiteCount: Int, val entryCoun
  * @param lotteryRepository where lotteries are stored.
  * @param waitlistRepository where each lottery's waitlist entries are stored.
  * @param userRepository where user profiles are stored.
+ * @param reportRepository where policy reports against owners are stored.
  */
 class AdminRemoval(
     private val campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
-    private val userRepository: UserRepository = AppContainer.userRepository
+    private val userRepository: UserRepository = AppContainer.userRepository,
+    private val reportRepository: ReportRepository = AppContainer.reportRepository
 ) {
     /**
      * Counts what [removeCampsite] would delete, without changing anything.
@@ -127,6 +132,31 @@ class AdminRemoval(
             }
         }
         userRepository.delete(userId)
+    }
+
+    /**
+     * Removes a reported campsite owner after policy review (US 03.07.01): the owner is removed
+     * with [removeProfile], then their OPEN reports are marked OWNER_REMOVED.
+     *
+     * @param ownerId device id of the reported owner.
+     * @param currentUserId device id of the admin doing the removal.
+     * @return success, or the failure from [removeProfile], in which case the reports stay OPEN;
+     *   or a failure if updating the reports fails.
+     */
+    suspend fun removeOwner(ownerId: String, currentUserId: String): Result<Unit> = runCatching {
+        removeProfile(ownerId, currentUserId).getOrThrow()
+        reportRepository.setStatusForOwner(ownerId, ReportStatus.OPEN, ReportStatus.OWNER_REMOVED)
+    }
+
+    /**
+     * Dismisses every OPEN report against one owner after policy review found no violation
+     * (US 03.07.01). The owner, their campsites and their entries are left as they are.
+     *
+     * @param ownerId device id of the reported owner.
+     * @return success, or a failure if the write fails.
+     */
+    suspend fun dismissReports(ownerId: String): Result<Unit> = runCatching {
+        reportRepository.setStatusForOwner(ownerId, ReportStatus.OPEN, ReportStatus.DISMISSED)
     }
 
     /** Every lottery whose campsiteIds include [campsiteId]. */
