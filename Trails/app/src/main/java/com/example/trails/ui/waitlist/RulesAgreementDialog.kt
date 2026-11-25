@@ -1,11 +1,12 @@
-// UI Controller component displaying campsite rules and cancellation policy agreement (UI Controller in MVVM).
-// implements US 02.11.01
+// UI Controller component displaying campsite rules agreement and confirmed reservation creation (MVVM pattern).
+// implements US 01.04.01, US 01.04.02, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,17 +45,30 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
-import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Reservation
+import com.example.trails.data.model.ReservationStatus
 import com.example.trails.data.model.WaitlistStatus
+import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.repository.ReservationRepository
+import com.example.trails.data.repository.WaitlistRepository
+import com.example.trails.ui.campsite.dayKeyToTimestamp
+import com.example.trails.ui.campsite.dayOfMonth
+import com.example.trails.ui.campsite.monthOf
+import com.example.trails.ui.campsite.todayKey
 import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
@@ -64,7 +79,10 @@ import com.example.trails.ui.theme.TrailGreen
 import com.example.trails.ui.theme.TrailsTheme
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
+import java.text.DateFormatSymbols
 import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 // standard embedded scrollable rules section matching story 02.11.01
 /**
@@ -213,13 +231,44 @@ private fun RuleRow(
 
 // screen for confirming reservation with embedded rules agreement section
 /**
- * Screen enabling an entrant to review campsite rules and confirm their reservation.
+ * Formats calendar day keys into a human-readable stay date range (e.g. "May 22 – 24, 2027").
+ *
+ * @param startKey check-in day key.
+ * @param endKey check-out day key.
+ * @return formatted date string.
+ */
+fun formatStayDates(startKey: Long, endKey: Long): String {
+    val startMonth = monthOf(startKey)
+    val endMonth = monthOf(endKey)
+    val startMonthName = DateFormatSymbols(Locale.getDefault()).shortMonths[startMonth.month - 1]
+    val startDay = dayOfMonth(startKey)
+    val endDay = dayOfMonth(endKey)
+    val year = startMonth.year
+    return if (startKey == endKey) {
+        "$startMonthName $startDay, $year"
+    } else if (startMonth == endMonth) {
+        "$startMonthName $startDay – $endDay, $year"
+    } else {
+        val endMonthName = DateFormatSymbols(Locale.getDefault()).shortMonths[endMonth.month - 1]
+        "$startMonthName $startDay – $endMonthName $endDay, $year"
+    }
+}
+
+/**
+ * Screen enabling an entrant to review campsite rules, booking summary, and confirm their reservation.
  *
  * Observes asynchronous retrieval of campsite rules and cancellation policy, as well as submission state.
  * Triggers back navigation via [navController] upon cancellation or successful confirmation.
  *
  * @param navController navigation controller for screen transitions.
  * @param campsiteId identifier of the campsite being reserved.
+ * @param lotteryId optional identifier of the lottery won.
+ * @param startDayKey optional start date day key.
+ * @param endDayKey optional end date day key.
+ * @param guests party size for the reservation.
+ * @param contactName optional entrant contact name.
+ * @param contactEmail optional entrant contact email.
+ * @param contactPhone optional entrant contact phone.
  * @param modifier optional [Modifier] for screen styling.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -227,19 +276,38 @@ private fun RuleRow(
 fun ConfirmReservationScreen(
     navController: NavController,
     campsiteId: String,
-    modifier: Modifier = Modifier
+    lotteryId: String? = null,
+    startDayKey: Long? = null,
+    endDayKey: Long? = null,
+    guests: Int = 1,
+    contactName: String? = null,
+    contactEmail: String? = null,
+    contactPhone: String? = null,
+    modifier: Modifier = Modifier,
+    campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
+    reservationRepository: ReservationRepository = AppContainer.reservationRepository,
+    waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository
 ) {
     var isChecked by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
+    var campsite by remember { mutableStateOf<Campsite?>(null) }
     var campsiteRules by remember { mutableStateOf("Loading rules...") }
     var campsiteCancellation by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
+    val today = remember { todayKey() }
+    val startKey = startDayKey ?: today
+    val endKey = endDayKey ?: startKey
+    val nights = ((endKey - startKey) + 1).coerceAtLeast(1)
+    val pricePerNight = campsite?.pricePerNight ?: 0.0
+    val totalPrice = pricePerNight * nights
+
     LaunchedEffect(campsiteId) {
         try {
-            val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-            campsiteRules = campsite?.rules ?: "No rules available."
-            campsiteCancellation = campsite?.cancellationPolicy ?: ""
+            val site = campsiteRepository.getById(campsiteId)
+            campsite = site
+            campsiteRules = site?.rules ?: "No rules available."
+            campsiteCancellation = site?.cancellationPolicy ?: ""
         } catch (_: Exception) {
             campsiteRules = "No rules available."
             campsiteCancellation = ""
@@ -267,26 +335,38 @@ fun ConfirmReservationScreen(
                             isSubmitting = true
                             coroutineScope.launch {
                                 try {
-                                    val campsite = AppContainer.campsiteRepository.getById(campsiteId)
-                                    val lotteryId = campsite?.activeLotteryId
-                                    if (!lotteryId.isNullOrBlank()) {
-                                        val now = Timestamp(Date())
-                                        val currentUserId = CurrentUser.id()
-                                        val userProfile = AppContainer.userRepository.getById(currentUserId)
-                                        val currentUserName = userProfile?.name?.ifBlank { null } ?: currentUserId
-                                        val newEntry = WaitlistEntry(
+                                    val currentUserId = CurrentUser.id()
+                                    val targetLotteryId = lotteryId?.ifBlank { null }
+                                        ?: campsite?.activeLotteryId?.ifBlank { null }
+                                    val now = Timestamp.now()
+
+                                    // create and persist confirmed reservation (story 02.11.01)
+                                    val newReservation = Reservation(
+                                        id = UUID.randomUUID().toString(),
+                                        userId = currentUserId,
+                                        campsiteId = campsiteId,
+                                        lotteryId = targetLotteryId,
+                                        partySize = guests,
+                                        startDate = dayKeyToTimestamp(startKey),
+                                        endDate = dayKeyToTimestamp(endKey),
+                                        totalPrice = totalPrice,
+                                        rulesAccepted = true,
+                                        rulesAcceptedAt = now,
+                                        createdAt = now,
+                                        status = ReservationStatus.ACTIVE
+                                    )
+                                    reservationRepository.save(newReservation)
+
+                                    // update waitlist entry status to RESERVED if attached to a lottery
+                                    if (!targetLotteryId.isNullOrBlank()) {
+                                        waitlistRepository.updateStatus(
+                                            lotteryId = targetLotteryId,
                                             userId = currentUserId,
-                                            userName = currentUserName,
-                                            lotteryId = lotteryId,
-                                            partySize = 1,
-                                            joinedAt = now,
-                                            status = WaitlistStatus.WAITING,
-                                            rulesAcceptedAt = now,
-                                            rulesAccepted = true
+                                            status = WaitlistStatus.RESERVED
                                         )
-                                        AppContainer.waitlistRepository.save(newEntry)
-                                        navController.popBackStack()
                                     }
+
+                                    navController.popBackStack()
                                 } catch (_: Exception) {
                                     // ignore transient failure and re-enable button
                                 } finally {
@@ -297,15 +377,21 @@ fun ConfirmReservationScreen(
                         enabled = isChecked && !isSubmitting,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(48.dp)
                             .testTag("confirm_reservation_button"),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = TrailGreen,
                             contentColor = Night,
                             disabledContainerColor = Forest,
-                            disabledContentColor = Mist
-                        )
+                            disabledContentColor = Mist.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Confirm Reservation")
+                        Text(
+                            text = "Confirm Reservation",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -316,17 +402,136 @@ fun ConfirmReservationScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // embedded rules section instead of dialog popup
+            // Booking summary card matching Figma node 367:2870
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(NightSurface, RoundedCornerShape(8.dp))
+                    .border(1.dp, Moss, RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+                    .testTag("confirm_booking_summary_card")
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val imageUrl = campsite?.imageUrl
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Forest)
+                    ) {
+                        if (!imageUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = campsite?.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = campsite?.name ?: "Loading...",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = campsite?.locationName.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Mist
+                        )
+                        if (pricePerNight > 0) {
+                            Text(
+                                text = "$${pricePerNight.toInt()} / night",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TrailGreen
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Stay details rows
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Dates", style = MaterialTheme.typography.bodySmall, color = Mist)
+                    Text(
+                        text = "${formatStayDates(startKey, endKey)} · $nights night${if (nights > 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Guests", style = MaterialTheme.typography.bodySmall, color = Mist)
+                    Text(
+                        text = "$guests guest${if (guests > 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Total", style = MaterialTheme.typography.bodySmall, color = Mist)
+                    Text(
+                        text = "$${totalPrice.toInt()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // embedded rules section (story 02.11.01)
             RulesAgreementSection(
                 rulesText = campsiteRules,
                 cancellationPolicy = campsiteCancellation,
                 isChecked = isChecked,
                 onCheckedChange = { isChecked = it }
             )
+
+            // Feedback helper text
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (isChecked) {
+                    "Rules accepted. You can now confirm your reservation."
+                } else {
+                    "You must review and accept the campsite rules."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (isChecked) TrailGreen else Mist.copy(alpha = 0.7f),
+                modifier = Modifier.padding(start = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
