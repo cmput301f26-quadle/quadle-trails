@@ -1,5 +1,5 @@
 // in memory waitlist repository seeded from test entries
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01, and Bonus Rolling Lottery
 // outstanding issues: none
 // owner: chitkarsh (chitkarshrathi) - waitlist & booking
 // used antigravity to scaffold this in-memory test fake
@@ -129,5 +129,36 @@ class FakeWaitlistRepository(
         val updated = entry.copy(status = status)
         save(updated)
         return updated
+    }
+
+    override suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry? {
+        checkFailure()
+        val waitingEntry = entries.value
+            .filter { it.lotteryId == lotteryId && it.status == WaitlistStatus.WAITING }
+            .minByOrNull { it.joinedAt?.toDate() ?: Date(Long.MAX_VALUE) }
+            ?: return null
+
+        val promoted = waitingEntry.copy(status = WaitlistStatus.WON)
+        save(promoted)
+        return promoted
+    }
+
+    override suspend fun autoRollOnDecline(lotteryId: String, userId: String): WaitlistEntry? {
+        checkFailure()
+        updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+        return drawNextReplacement(lotteryId)
+    }
+
+    override suspend fun reconcileExpiredInvites(
+        lotteryId: String,
+        expiredUserIds: List<String>
+    ): List<WaitlistEntry> {
+        checkFailure()
+        val replacements = mutableListOf<WaitlistEntry>()
+        for (userId in expiredUserIds) {
+            updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+            drawNextReplacement(lotteryId)?.let { replacements.add(it) }
+        }
+        return replacements
     }
 }

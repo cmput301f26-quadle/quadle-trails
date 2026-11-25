@@ -1,5 +1,5 @@
 // ViewModel controller managing date selection, guest count, and lottery decline operations (MVVM pattern).
-// implements US 01.04.01, US 01.04.02, US 01.04.03
+// implements US 01.04.01, US 01.04.02, US 01.04.03, and Bonus Rolling Lottery
 // Outstanding issues: None
 // OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
@@ -255,14 +255,15 @@ class ReserveDatesViewModel(
     }
 
     /**
-     * Declines the won lottery invitation, setting entry status to DECLINED.
+     * Declines the won lottery invitation, setting entry status to DECLINED and automatically
+     * rolling the winning ticket to the next waiting entrant (Bonus: Rolling Lottery).
      *
      * @param onSuccess optional callback invoked upon successful decline.
      */
     fun declineLottery(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             try {
-                waitlistRepository.updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+                waitlistRepository.autoRollOnDecline(lotteryId, userId)
                 _uiState.update { it.copy(isDeclined = true) }
                 onSuccess()
             } catch (e: Exception) {

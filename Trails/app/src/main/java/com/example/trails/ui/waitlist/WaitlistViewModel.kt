@@ -1,5 +1,5 @@
 // ViewModel controller orchestrating waitlist state streams, rules acceptance, and entry operations (MVVM pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.09.01, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.09.01, US 02.11.01, and Bonus Rolling Lottery
 // Outstanding issues: None
 // OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
@@ -407,7 +407,8 @@ class WaitlistViewModel(
                     _errorMessage.value = "This campsite is not in a lottery right now."
                     return@launch
                 }
-                waitlistRepository.updateStatus(targetLotteryId, userId, WaitlistStatus.DECLINED)
+                // declines invitation and automatically rolls spot to the next waiting entrant (Bonus: Rolling Lottery)
+                waitlistRepository.autoRollOnDecline(targetLotteryId, userId)
                 onSuccess()
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to decline lottery invitation."

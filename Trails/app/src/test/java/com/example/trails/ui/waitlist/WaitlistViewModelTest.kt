@@ -477,6 +477,37 @@ class WaitlistViewModelTest {
     }
 
     @Test
+    fun declineWin_triggersAutoRoll_promotingNextWaitingEntrant(): Unit = kotlinx.coroutines.runBlocking {
+        val winningEntry = WaitlistEntry(
+            userId = currentUserId,
+            userName = "Chitkarsh",
+            lotteryId = lotteryId,
+            status = WaitlistStatus.WON,
+            rulesAccepted = true
+        )
+        val waitingEntry = WaitlistEntry(
+            userId = "waiting-entrant-42",
+            userName = "Morgan",
+            lotteryId = lotteryId,
+            status = WaitlistStatus.WAITING,
+            rulesAccepted = true
+        )
+        waitlistRepo.save(winningEntry)
+        waitlistRepo.save(waitingEntry)
+
+        viewModel.declineWin()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // current user is declined
+        val userEntry = waitlistRepo.getEntry(lotteryId, currentUserId)
+        assertEquals(WaitlistStatus.DECLINED, userEntry?.status)
+
+        // next waiting entrant is promoted to WON
+        val replacementEntry = waitlistRepo.getEntry(lotteryId, "waiting-entrant-42")
+        assertEquals(WaitlistStatus.WON, replacementEntry?.status)
+    }
+
+    @Test
     fun declineWin_noActiveLottery_setsErrorMessage() {
         val vm = WaitlistViewModel(
             lotteryId = "",

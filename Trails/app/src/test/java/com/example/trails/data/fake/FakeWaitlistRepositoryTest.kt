@@ -1,5 +1,5 @@
 // Unit test suite verifying in-memory fake waitlist repository logic (Repository pattern test double).
-// implements US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
+// implements US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01, and Bonus Rolling Lottery
 // Outstanding issues: None
 // OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.fake
@@ -204,5 +204,97 @@ class FakeWaitlistRepositoryTest {
     fun updateStatus_nonExistingEntry_returnsNull(): Unit = runBlocking {
         val result = repo.updateStatus(lotteryId, "unknown-user", WaitlistStatus.WON)
         assertNull(result)
+    }
+
+    @Test
+    fun drawNextReplacement_picksEarliestRegisteredWaitingEntrant(): Unit = runBlocking {
+        val earlierEntry = WaitlistEntry(
+            userId = "user-waiting-1",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(1000000L)),
+            status = WaitlistStatus.WAITING,
+            rulesAccepted = true
+        )
+        val laterEntry = WaitlistEntry(
+            userId = "user-waiting-2",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(2000000L)),
+            status = WaitlistStatus.WAITING,
+            rulesAccepted = true
+        )
+        repo.save(laterEntry)
+        repo.save(earlierEntry)
+
+        val replacement = repo.drawNextReplacement(lotteryId)
+        assertNotNull(replacement)
+        assertEquals("user-waiting-1", replacement?.userId)
+        assertEquals(WaitlistStatus.WON, replacement?.status)
+
+        // Verify later entry is still WAITING
+        assertEquals(WaitlistStatus.WAITING, repo.getEntry(lotteryId, "user-waiting-2")?.status)
+    }
+
+    @Test
+    fun drawNextReplacement_noWaitingEntrants_returnsNull(): Unit = runBlocking {
+        val replacement = repo.drawNextReplacement("non-existent-lottery")
+        assertNull(replacement)
+    }
+
+    @Test
+    fun autoRollOnDecline_updatesDecliningUserAndPromotesNextWaitingEntrant(): Unit = runBlocking {
+        val winnerEntry = WaitlistEntry(
+            userId = "winner-user",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(500000L)),
+            status = WaitlistStatus.WON,
+            rulesAccepted = true
+        )
+        val waitingEntry = WaitlistEntry(
+            userId = "waiting-user",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(1500000L)),
+            status = WaitlistStatus.WAITING,
+            rulesAccepted = true
+        )
+        repo.save(winnerEntry)
+        repo.save(waitingEntry)
+
+        val newWinner = repo.autoRollOnDecline(lotteryId, "winner-user")
+
+        // Winner should be updated to DECLINED
+        val declined = repo.getEntry(lotteryId, "winner-user")
+        assertEquals(WaitlistStatus.DECLINED, declined?.status)
+
+        // Next waiting user should be promoted to WON
+        assertNotNull(newWinner)
+        assertEquals("waiting-user", newWinner?.userId)
+        assertEquals(WaitlistStatus.WON, newWinner?.status)
+    }
+
+    @Test
+    fun reconcileExpiredInvites_declinesExpiredUsersAndDrawsReplacements(): Unit = runBlocking {
+        val expired1 = WaitlistEntry(
+            userId = "expired-1",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(100000L)),
+            status = WaitlistStatus.WON,
+            rulesAccepted = true
+        )
+        val waiting1 = WaitlistEntry(
+            userId = "waiting-1",
+            lotteryId = lotteryId,
+            joinedAt = Timestamp(Date(200000L)),
+            status = WaitlistStatus.WAITING,
+            rulesAccepted = true
+        )
+        repo.save(expired1)
+        repo.save(waiting1)
+
+        val replacements = repo.reconcileExpiredInvites(lotteryId, listOf("expired-1"))
+
+        assertEquals(WaitlistStatus.DECLINED, repo.getEntry(lotteryId, "expired-1")?.status)
+        assertEquals(1, replacements.size)
+        assertEquals("waiting-1", replacements.first().userId)
+        assertEquals(WaitlistStatus.WON, replacements.first().status)
     }
 }

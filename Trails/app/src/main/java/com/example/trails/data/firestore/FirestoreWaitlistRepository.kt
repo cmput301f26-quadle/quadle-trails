@@ -1,5 +1,5 @@
 // Firestore implementation of WaitlistRepository managing real-time entry streams and subcollections (Repository pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01, and Bonus Rolling Lottery
 // Outstanding issues: None
 // OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.firestore
@@ -17,6 +17,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 /**
  * Firestore implementation of [WaitlistRepository] managing waitlist documents under lotteries/{id}/entries.
@@ -233,5 +234,66 @@ class FirestoreWaitlistRepository(
         if (!snapshot.exists()) return null
         docRef.update("status", status.name).await()
         return docRef.get().await().toObject(WaitlistEntry::class.java)
+    }
+
+    /**
+     * Selects the next entrant in the lottery with status [WaitlistStatus.WAITING]
+     * (ordered by registration timestamp) and promotes them to [WaitlistStatus.WON].
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @return the newly promoted [WaitlistEntry], or null if no waiting entrants remain.
+     */
+    override suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry? {
+        if (lotteryId.isBlank()) return null
+        val querySnapshot = entriesCollection(lotteryId)
+            .whereEqualTo("status", WaitlistStatus.WAITING.name)
+            .get()
+            .await()
+
+        val nextWaitingDoc = querySnapshot.documents
+            .mapNotNull { it.toObject(WaitlistEntry::class.java) }
+            .minByOrNull { it.joinedAt?.toDate() ?: Date(Long.MAX_VALUE) }
+            ?: return null
+
+        val docRef = entriesCollection(lotteryId).document(nextWaitingDoc.userId)
+        docRef.update("status", WaitlistStatus.WON.name).await()
+        return docRef.get().await().toObject(WaitlistEntry::class.java)
+    }
+
+    /**
+     * Declines a won lottery invitation for an entrant and immediately draws the next replacement entrant.
+     *
+     * Updates [userId]'s status to [WaitlistStatus.DECLINED], then draws the next
+     * waiting entrant to preserve full winner capacity without requiring manual organizer redrawing.
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @param userId the identifier of the declining entrant.
+     * @return the replacement [WaitlistEntry] promoted to WON, or null if no waiting entrants remain.
+     */
+    override suspend fun autoRollOnDecline(lotteryId: String, userId: String): WaitlistEntry? {
+        if (lotteryId.isBlank() || userId.isBlank()) return null
+        updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+        return drawNextReplacement(lotteryId)
+    }
+
+    /**
+     * Reconciles expired invitations for a lottery by transitioning stale WON entries to DECLINED
+     * and rolling those slots to waiting entrants.
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @param expiredUserIds the list of user identifiers whose invitation acceptance deadline has lapsed.
+     * @return the list of newly promoted replacement [WaitlistEntry] records.
+     */
+    override suspend fun reconcileExpiredInvites(
+        lotteryId: String,
+        expiredUserIds: List<String>
+    ): List<WaitlistEntry> {
+        if (lotteryId.isBlank()) return emptyList()
+        val replacements = mutableListOf<WaitlistEntry>()
+        for (userId in expiredUserIds) {
+            updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+            drawNextReplacement(lotteryId)?.let { replacements.add(it) }
+        }
+        return replacements
     }
 }

@@ -242,4 +242,27 @@ class ReserveDatesViewModelTest {
         val entry = kotlinx.coroutines.runBlocking { waitlistRepo.getEntry(lotteryId, userId) }
         assertEquals(WaitlistStatus.DECLINED, entry?.status)
     }
+
+    @Test
+    fun declineLottery_triggersAutoRoll_promotingNextWaitingEntrant() = kotlinx.coroutines.runBlocking {
+        val nextWaiting = WaitlistEntry(
+            userId = "next-in-line-entrant",
+            lotteryId = lotteryId,
+            status = WaitlistStatus.WAITING,
+            joinedAt = Timestamp.now(),
+            rulesAccepted = true
+        )
+        waitlistRepo.save(nextWaiting)
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.declineLottery()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // user is declined
+        assertEquals(WaitlistStatus.DECLINED, waitlistRepo.getEntry(lotteryId, userId)?.status)
+        // next waiting entrant is rolled into WON
+        assertEquals(WaitlistStatus.WON, waitlistRepo.getEntry(lotteryId, "next-in-line-entrant")?.status)
+    }
 }
