@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
  * @property campsite the campsite being booked.
  * @property availableDays day keys offering open booking windows.
  * @property bookedDays day keys locked by active reservations.
+ * @property userBookedDays day keys locked due to user's existing reservations across the park.
  * @property openDays day keys that are open and unreserved.
  * @property selectedDays day keys chosen by the entrant.
  * @property name entrant full name.
@@ -51,6 +53,7 @@ data class ReserveDatesUiState(
     val campsite: Campsite? = null,
     val availableDays: Set<Long> = emptySet(),
     val bookedDays: Set<Long> = emptySet(),
+    val userBookedDays: Set<Long> = emptySet(),
     val openDays: Set<Long> = emptySet(),
     val selectedDays: Set<Long> = emptySet(),
     val name: String = "",
@@ -150,13 +153,18 @@ class ReserveDatesViewModel(
 
     private fun observeReservations() {
         viewModelScope.launch {
-            reservationRepository.observeForCampsite(campsiteId)
-                .catch { /* keep existing state on observe failure */ }
-                .collect { reservations ->
-                    val booked = bookedDayKeys(reservations, campsiteId)
-                    _uiState.update { it.copy(bookedDays = booked) }
-                    recalculateOpenDays()
-                }
+            combine(
+                reservationRepository.observeForCampsite(campsiteId),
+                reservationRepository.observeForUser(userId)
+            ) { campsiteReservations, userReservations ->
+                val campsiteBooked = bookedDayKeys(campsiteReservations, campsiteId)
+                val userBooked = bookedDayKeys(userReservations)
+                (campsiteBooked + userBooked) to userBooked
+            }.catch { /* keep existing state on observe failure */ }
+            .collect { (allBooked, userBooked) ->
+                _uiState.update { it.copy(bookedDays = allBooked, userBookedDays = userBooked) }
+                recalculateOpenDays()
+            }
         }
     }
 

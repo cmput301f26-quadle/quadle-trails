@@ -153,6 +153,28 @@ class ReserveDatesViewModelTest {
     }
 
     @Test
+    fun observeReservations_locksUserExistingReservationsAtDifferentCampsite() {
+        val userBookingAtOtherSite = Reservation(
+            id = "res-user-other",
+            campsiteId = "different-campsite-999",
+            userId = userId,
+            startDate = dayKeyToTimestamp(day3),
+            endDate = dayKeyToTimestamp(day3),
+            status = ReservationStatus.ACTIVE
+        )
+        reservationRepo = FakeReservationRepository(initial = listOf(userBookingAtOtherSite))
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue("Day 3 should be locked because user already has a trip then", day3 in state.bookedDays)
+        assertTrue("Day 3 should be tracked in userBookedDays", day3 in state.userBookedDays)
+        assertFalse("Day 3 should be excluded from open days", day3 in state.openDays)
+        assertEquals(setOf(day1, day2, day4), state.openDays)
+    }
+
+    @Test
     fun onDayTapped_selectsDayAndFormsRange() {
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()

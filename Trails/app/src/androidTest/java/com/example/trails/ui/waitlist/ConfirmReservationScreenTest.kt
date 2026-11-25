@@ -17,10 +17,12 @@ import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeReservationRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Reservation
 import com.example.trails.data.model.ReservationStatus
 import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.model.WaitlistStatus
 import com.example.trails.ui.campsite.dayKey
+import com.example.trails.ui.campsite.dayKeyToTimestamp
 import com.example.trails.ui.theme.TrailsTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -140,5 +142,66 @@ class ConfirmReservationScreenTest {
         val updatedEntry = waitlistRepo.getEntry(lotteryId, currentUserId)
         assertNotNull(updatedEntry)
         assertEquals(WaitlistStatus.RESERVED, updatedEntry?.status)
+    }
+
+    @Test
+    fun conflictingExistingReservation_showsErrorBanner_andBlocksSubmission() = runBlocking {
+        val currentUserId = CurrentUser.id()
+        val campsiteRepo = FakeCampsiteRepository(initial = listOf(sampleCampsite))
+        val conflictingStay = Reservation(
+            id = "res-conflict-prior",
+            userId = currentUserId,
+            campsiteId = "other-campsite-id",
+            startDate = dayKeyToTimestamp(startDay),
+            endDate = dayKeyToTimestamp(endDay),
+            status = ReservationStatus.ACTIVE
+        )
+        val reservationRepo = FakeReservationRepository(initial = listOf(conflictingStay))
+        val waitlistRepo = FakeWaitlistRepository(
+            initial = listOf(
+                WaitlistEntry(
+                    userId = currentUserId,
+                    lotteryId = lotteryId,
+                    status = WaitlistStatus.WON,
+                    rulesAccepted = true
+                )
+            )
+        )
+
+        composeRule.setContent {
+            TrailsTheme {
+                ConfirmReservationScreen(
+                    navController = rememberNavController(),
+                    campsiteId = campsiteId,
+                    lotteryId = lotteryId,
+                    startDayKey = startDay,
+                    endDayKey = endDay,
+                    guests = 2,
+                    campsiteRepository = campsiteRepo,
+                    reservationRepository = reservationRepo,
+                    waitlistRepository = waitlistRepo
+                )
+            }
+        }
+
+        // check rules agreement
+        composeRule.onNodeWithTag("rules_checkbox").performClick()
+        composeRule.onNodeWithTag("confirm_reservation_button").assertIsEnabled()
+
+        // submit confirmation
+        composeRule.onNodeWithTag("confirm_reservation_button").performClick()
+        composeRule.waitForIdle()
+
+        // verify error banner displayed
+        composeRule.onNodeWithTag("confirm_reservation_error_banner").assertIsDisplayed()
+        composeRule.onNodeWithText("You already have an active reservation for overlapping dates.").assertIsDisplayed()
+
+        // verify no duplicate reservation was created for this campsite
+        val reservations = reservationRepo.observeForCampsite(campsiteId).first()
+        assertTrue("No reservation should be saved for the new campsite", reservations.isEmpty())
+
+        // verify waitlist entry status was NOT updated to RESERVED
+        val entry = waitlistRepo.getEntry(lotteryId, currentUserId)
+        assertEquals("Status should remain WON", WaitlistStatus.WON, entry?.status)
     }
 }

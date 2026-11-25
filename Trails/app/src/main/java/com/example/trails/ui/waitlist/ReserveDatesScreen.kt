@@ -414,6 +414,16 @@ fun ReserveDatesContent(
                 modifier = Modifier.testTag("reserve_dates_calendar")
             )
 
+            if (state.userBookedDays.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Note: Red locked dates include your existing bookings to prevent double-booking.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Mist,
+                    modifier = Modifier.testTag("user_booked_days_note")
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Action Buttons

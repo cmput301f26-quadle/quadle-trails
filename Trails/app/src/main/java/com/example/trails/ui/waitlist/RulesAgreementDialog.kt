@@ -70,6 +70,7 @@ import com.example.trails.ui.campsite.dayOfMonth
 import com.example.trails.ui.campsite.monthOf
 import com.example.trails.ui.campsite.todayKey
 import com.example.trails.ui.common.TrailsTopBar
+import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
 import com.example.trails.ui.theme.Moss
@@ -78,6 +79,7 @@ import com.example.trails.ui.theme.NightSurface
 import com.example.trails.ui.theme.TrailGreen
 import com.example.trails.ui.theme.TrailsTheme
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.DateFormatSymbols
 import java.util.Date
@@ -290,6 +292,7 @@ fun ConfirmReservationScreen(
 ) {
     var isChecked by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     var campsite by remember { mutableStateOf<Campsite?>(null) }
     var campsiteRules by remember { mutableStateOf("Loading rules...") }
     var campsiteCancellation by remember { mutableStateOf("") }
@@ -339,6 +342,28 @@ fun ConfirmReservationScreen(
                                     val targetLotteryId = lotteryId?.ifBlank { null }
                                         ?: campsite?.activeLotteryId?.ifBlank { null }
                                     val now = Timestamp.now()
+                                    val startTimestamp = dayKeyToTimestamp(startKey)
+                                    val endTimestamp = dayKeyToTimestamp(endKey)
+
+                                    // Check if user already has an active reservation for overlapping dates
+                                    val userReservations = try {
+                                        reservationRepository.observeForUser(currentUserId).first()
+                                    } catch (_: Exception) {
+                                        emptyList()
+                                    }
+
+                                    val hasConflict = userReservations.any { existing ->
+                                        existing.status == ReservationStatus.ACTIVE &&
+                                            existing.startDate != null &&
+                                            existing.endDate != null &&
+                                            maxOf(existing.startDate.seconds, startTimestamp.seconds) <= minOf(existing.endDate.seconds, endTimestamp.seconds)
+                                    }
+
+                                    if (hasConflict) {
+                                        errorMessage = "You already have an active reservation for overlapping dates."
+                                        isSubmitting = false
+                                        return@launch
+                                    }
 
                                     // create and persist confirmed reservation (story 02.11.01)
                                     val newReservation = Reservation(
@@ -406,6 +431,25 @@ fun ConfirmReservationScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (!errorMessage.isNullOrBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Ember.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                        .border(1.dp, Ember, RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                        .testTag("confirm_reservation_error_banner")
+                ) {
+                    Text(
+                        text = errorMessage!!,
+                        color = Ember,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             // Booking summary card matching Figma node 367:2870
             Column(
