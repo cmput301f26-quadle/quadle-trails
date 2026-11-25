@@ -137,4 +137,14 @@ class CampsiteMatcherTest {
         assertTrue(ranked[0].matchPercentage >= ranked[1].matchPercentage)
         assertTrue(ranked[1].matchPercentage >= ranked[2].matchPercentage)
     }
+
+    @Test
+    fun matchesTag_tolerantOfCaseSpacingAndHyphens() {
+        assertTrue(CampsiteMatcher.matchesTag("firepit", "Fire pit"))
+        assertTrue(CampsiteMatcher.matchesTag("fire-pit", "Fire pit"))
+        assertTrue(CampsiteMatcher.matchesTag("Pet friendly", "pet-friendly"))
+        assertTrue(CampsiteMatcher.matchesTag("SHOWERS", "showers"))
+        assertTrue(CampsiteMatcher.matchesTag("Lakeside", "lake"))
+        org.junit.Assert.assertFalse(CampsiteMatcher.matchesTag("Mountain", "Lakeside"))
+    }
 }

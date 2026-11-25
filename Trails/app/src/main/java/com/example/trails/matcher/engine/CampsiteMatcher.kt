@@ -122,7 +122,7 @@ object CampsiteMatcher {
         }
 
         val matchingTags = preferredTags.filter { pref ->
-            campsiteTags.any { it.equals(pref, ignoreCase = true) }
+            campsiteTags.any { matchesTag(it, pref) }
         }
 
         if (matchingTags.size == preferredTags.size) {
@@ -198,5 +198,17 @@ object CampsiteMatcher {
         } else {
             normalized
         }
+    }
+
+    /**
+     * Case- and punctuation-tolerant tag matching so campsite owner inputs like "fire-pit" or "firepit"
+     * reliably match entrant preference tags like "Fire pit".
+     */
+    fun matchesTag(tagA: String, tagB: String): Boolean {
+        if (tagA.equals(tagB, ignoreCase = true)) return true
+        val normA = tagA.replace(" ", "").replace("-", "").lowercase()
+        val normB = tagB.replace(" ", "").replace("-", "").lowercase()
+        if (normA.isEmpty() || normB.isEmpty()) return false
+        return normA == normB || (normA.length >= 4 && normB.length >= 4 && (normA.contains(normB) || normB.contains(normA)))
     }
 }
