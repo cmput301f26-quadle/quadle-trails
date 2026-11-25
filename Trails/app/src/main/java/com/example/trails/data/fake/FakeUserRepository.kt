@@ -36,6 +36,11 @@ class FakeUserRepository(initial: List<User> = TestUsers.all) : UserRepository {
         replace(deviceId) { it.copy(name = name, email = email, phone = phone) }
     }
 
+    override suspend fun updateProfileImage(deviceId: String, url: String?) {
+        requireProfile(deviceId)
+        replace(deviceId) { it.copy(profileImageUrl = url) }
+    }
+
     override suspend fun updateActiveMode(deviceId: String, mode: Role) {
         val user = requireProfile(deviceId)
         require(mode in user.roles) { "Profile $deviceId does not hold the $mode role." }

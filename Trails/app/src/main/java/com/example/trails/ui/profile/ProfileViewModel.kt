@@ -1,6 +1,7 @@
-// Handles loading, editing and deleting the profile, and switching modes (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Handles loading, editing and deleting the profile, and switching modes (US 01.09.01, 01.07.03, 01.08.01, 01.08.02, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: Profile photos are not supported, and deleting a profile does not remove reservations yet.
+// Outstanding issues: deleting a profile does not remove reservations yet. Profile photo upload
+//   (US 01.08.02, added by Ibrahim) needs Firebase Storage enabled (Blaze plan).
 // AI assistance: Used AI to help implement profile updates, deletion, and related data handling.
 package com.example.trails.ui.profile
 
@@ -11,6 +12,8 @@ import com.example.trails.data.device.formatDeviceId
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
+import com.example.trails.data.repository.ImageFolder
+import com.example.trails.data.repository.ImageRepository
 import com.example.trails.data.repository.LotteryRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
@@ -42,6 +45,7 @@ import kotlinx.coroutines.launch
  * @param waitlistRepository used to remove the user's waitlist entries on deletion.
  * @param deleteIdentity removes the user's identity after the profile is deleted.
  * @param startNewSession ends the current session, so a new identity is established.
+ * @param images where profile photos are uploaded (US 01.08.02).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModel(
@@ -50,7 +54,8 @@ class ProfileViewModel(
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
     private val deleteIdentity: suspend () -> Unit = { CurrentUser.deleteIdentity() },
-    private val startNewSession: () -> Unit = { CurrentUser.endSession() }
+    private val startNewSession: () -> Unit = { CurrentUser.endSession() },
+    private val images: ImageRepository = AppContainer.imageRepository
 ) : ViewModel() {
 
     private val reloads = MutableStateFlow(0)
@@ -83,6 +88,11 @@ class ProfileViewModel(
 
     /** Progress of deleting the profile. */
     val deleteState: StateFlow<DeleteState> = _deleteState.asStateFlow()
+
+    private val _photoState = MutableStateFlow<PhotoState>(PhotoState.Idle)
+
+    /** Progress of adding, changing or removing the profile photo (US 01.08.02). */
+    val photoState: StateFlow<PhotoState> = _photoState.asStateFlow()
 
     private val _modeSwitch = MutableStateFlow<ModeSwitchState>(ModeSwitchState.Idle)
 
@@ -183,10 +193,12 @@ class ProfileViewModel(
     fun onDeleteConfirmed() {
         if (_deleteState.value == DeleteState.Deleting) return
         _deleteState.value = DeleteState.Deleting
+        val photo = (uiState.value as? ProfileUiState.Loaded)?.user?.profileImageUrl
         viewModelScope.launch {
             _deleteState.value = try {
                 removeWaitlistEntries()
                 repository.delete(deviceId)
+                photo?.let { deletePhotoQuietly(it) }
                 deleteIdentity()
                 deleted.value = true
                 DeleteState.Idle
@@ -201,6 +213,67 @@ class ProfileViewModel(
     private suspend fun removeWaitlistEntries() {
         lotteryRepository.observeAll().first().forEach { lottery ->
             waitlistRepository.deleteEntry(lottery.id, deviceId)
+        }
+    }
+
+    /**
+     * Uploads a newly picked photo and makes it the profile photo (US 01.08.02). The old
+     * photo is deleted from storage only once the new one is saved, so a failure keeps it.
+     *
+     * @param localUri the picked image, e.g. a "content://" URI as a string.
+     */
+    fun onPhotoPicked(localUri: String) {
+        if (isPhotoBusy()) return
+        val user = (uiState.value as? ProfileUiState.Loaded)?.user ?: return
+        _photoState.value = PhotoState.Uploading
+        viewModelScope.launch {
+            _photoState.value = try {
+                val url = images.upload(localUri, ImageFolder.PROFILES)
+                try {
+                    repository.updateProfileImage(deviceId, url)
+                } catch (e: Exception) {
+                    deletePhotoQuietly(url) // don't leave the unused upload behind
+                    throw e
+                }
+                user.profileImageUrl?.takeIf { it != url }?.let { deletePhotoQuietly(it) }
+                PhotoState.Idle
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                PhotoState.Failed(e.message)
+            }
+        }
+    }
+
+    /** Removes the profile photo (US 01.08.02). Does nothing if there is no photo. */
+    fun onPhotoRemoved() {
+        if (isPhotoBusy()) return
+        val photo = (uiState.value as? ProfileUiState.Loaded)?.user?.profileImageUrl ?: return
+        _photoState.value = PhotoState.Removing
+        viewModelScope.launch {
+            _photoState.value = try {
+                repository.updateProfileImage(deviceId, null)
+                deletePhotoQuietly(photo)
+                PhotoState.Idle
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                PhotoState.Failed(e.message)
+            }
+        }
+    }
+
+    private fun isPhotoBusy(): Boolean =
+        _photoState.value == PhotoState.Uploading || _photoState.value == PhotoState.Removing
+
+    /** Deletes a photo from storage; if that fails it is left for admin image moderation. */
+    private suspend fun deletePhotoQuietly(url: String) {
+        try {
+            images.delete(url)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The profile no longer points at it, so nothing breaks.
         }
     }
 

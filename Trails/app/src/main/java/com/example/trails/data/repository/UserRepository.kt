@@ -1,4 +1,4 @@
-// Read and write access to user profiles (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Read and write access to user profiles (US 01.09.01, 01.07.03, 01.08.01, 01.08.02, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
 // AI assistance: Used AI to help design profile update, deletion, and role-switching operations.
@@ -54,6 +54,16 @@ interface UserRepository {
      * @throws Exception if the profile does not exist or the write fails.
      */
     suspend fun updateProfile(deviceId: String, name: String, email: String, phone: String)
+
+    /**
+     * Sets or clears only the profile photo of an existing profile (US 01.08.02).
+     * Every other field is left as stored.
+     *
+     * @param deviceId the profile to change.
+     * @param url the uploaded photo's URL, or null to remove the photo.
+     * @throws Exception if the profile does not exist or the write fails.
+     */
+    suspend fun updateProfileImage(deviceId: String, url: String?)
 
     /**
      * Changes which of its roles the profile is acting as (US 03.11.01).

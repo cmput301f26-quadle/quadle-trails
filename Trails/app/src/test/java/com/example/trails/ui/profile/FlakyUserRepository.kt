@@ -27,6 +27,9 @@ class FlakyUserRepository(private val inner: FakeUserRepository) : UserRepositor
     /** Thrown by [updateActiveMode] when set. */
     var modeFailure: Exception? = null
 
+    /** Thrown by [updateProfileImage] when set (US 01.08.02, added by Ibrahim). */
+    var photoFailure: Exception? = null
+
     /** Thrown by [delete] when set. */
     var deleteFailure: Exception? = null
 
@@ -43,6 +46,11 @@ class FlakyUserRepository(private val inner: FakeUserRepository) : UserRepositor
     override suspend fun updateActiveMode(deviceId: String, mode: Role) {
         modeFailure?.let { throw it }
         inner.updateActiveMode(deviceId, mode)
+    }
+
+    override suspend fun updateProfileImage(deviceId: String, url: String?) {
+        photoFailure?.let { throw it }
+        inner.updateProfileImage(deviceId, url)
     }
 
     override suspend fun delete(deviceId: String) {

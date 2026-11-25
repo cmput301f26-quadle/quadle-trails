@@ -1,8 +1,7 @@
 // Read/write access to campsite listings.
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Implemented by FirestoreCampsiteRepository (used by the app) and FakeCampsiteRepository (tests).
-// Outstanding issues: uploadImage needs Firebase Storage, which isn't enabled on the project yet
-//  (it needs the Blaze plan), so photo upload is deferred to the final part.
+// Outstanding issues: none. Photo upload moved to the shared ImageRepository (US 01.08.02).
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.repository
 
@@ -42,13 +41,4 @@ interface CampsiteRepository {
      * @param id id of the campsite to delete.
      */
     suspend fun delete(id: String)
-
-    /**
-     * Uploads a promo image the owner picked on the device (US 02.01.02). Needs Firebase
-     * Storage, which isn't enabled yet, so this is deferred to the final part.
-     *
-     * @param localUri the picked image, e.g. a "content://" URI as a string.
-     * @return a URL that can be stored in [Campsite.imageUrl] and shown anywhere.
-     */
-    suspend fun uploadImage(localUri: String): String
 }

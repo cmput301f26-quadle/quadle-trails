@@ -6,9 +6,6 @@
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +59,7 @@ import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
+import com.example.trails.ui.common.rememberImagePicker
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -210,12 +208,10 @@ private fun FormFields(
         if (state.saveFailed) {
             Text(stringResource(R.string.campsite_form_save_failed), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 12.dp))
         }
-        val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) onFieldsChange(f.copy(imageUrl = uri.toString()))
-        }
+        val pickPhoto = rememberImagePicker { uri -> onFieldsChange(f.copy(imageUrl = uri)) }
         PhotoPicker(
             imageUrl = f.imageUrl,
-            onPick = { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPick = pickPhoto,
             onRemove = { onFieldsChange(f.copy(imageUrl = null)) }
         )
         LabeledField(stringResource(R.string.campsite_form_name_label), f.name, { onFieldsChange(f.copy(name = it)) },
