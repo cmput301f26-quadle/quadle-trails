@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.11.01, 01.13.01, 03.01.01, 03.04.01, 03.05.01
+// USER STORIES: 01.11.01, 01.13.01, 03.01.01, 03.04.01, 03.05.01, 03.07.01
 // PURPOSE: Routes and nav graph for the admin screens.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
@@ -20,6 +20,9 @@ import com.example.trails.ui.navigation.requiredId
  * @property ADMIN_HOME the admin home with the Campsites and Profiles tiles.
  * @property ADMIN_PROFILE pattern for one user's admin page; build it with [adminProfile].
  * @property ADMIN_CAMPSITE pattern for one campsite's admin page; build it with [adminCampsite].
+ * @property ADMIN_REPORTS the admin's list of owners with open policy reports.
+ * @property ADMIN_POLICY_REVIEW pattern for one owner's Policy review page; build it with
+ *   [adminPolicyReview].
  */
 object AdminRoutes {
     const val POLICY = "policy"
@@ -46,6 +49,17 @@ object AdminRoutes {
      * @return the route to navigate to.
      */
     fun adminCampsite(campsiteId: String) = "admin_campsite/$campsiteId"
+
+    const val ADMIN_REPORTS = "admin_reports"
+    const val ADMIN_POLICY_REVIEW = "admin_policy_review/{userId}"
+
+    /**
+     * Route to one reported owner's Policy review page.
+     *
+     * @param userId device id of the reported owner.
+     * @return the route to navigate to.
+     */
+    fun adminPolicyReview(userId: String) = "admin_policy_review/$userId"
 }
 
 /**
@@ -64,5 +78,9 @@ fun NavGraphBuilder.adminGraph(navController: NavController) {
     }
     composable(AdminRoutes.ADMIN_CAMPSITE, arguments = listOf(requiredId("campsiteId"))) { entry ->
         AdminCampsiteScreen(navController, campsiteId = entry.requireArg("campsiteId"))
+    }
+    composable(AdminRoutes.ADMIN_REPORTS) { ReportsScreen(navController) }
+    composable(AdminRoutes.ADMIN_POLICY_REVIEW, arguments = listOf(requiredId("userId"))) { entry ->
+        PolicyReviewScreen(navController, userId = entry.requireArg("userId"))
     }
 }

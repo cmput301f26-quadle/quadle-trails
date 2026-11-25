@@ -1,13 +1,17 @@
 // Saves a user's campsite rating and keeps the campsite's average and count in sync (US 01.13.01).
+// syncRatingStats is also used by AdminRemoval.removeRating (US 03.09.01).
+// Keeps an admin's review removal (US 03.10.01) until the user writes a new review.
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // Outstanding issues: the rating and the campsite are saved in two steps,
 //   not one Firestore transaction, so two people rating at the same moment
 //   could briefly leave a stale average.
+//   AppContainer still uses FakeRatingRepository; FirestoreRatingRepository isn't switched on yet.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.AppContainer
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.RatingRepository
+import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Rating
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.first
@@ -24,7 +28,9 @@ class RatingSubmitter(
 ) {
     /**
      * Saves [userId]'s rating of a campsite, replacing any earlier one by the same user,
-     * then updates only the campsite's ratingAverage and ratingCount.
+     * then updates only the campsite's ratingAverage and ratingCount. If an admin removed the
+     * user's earlier review (US 03.10.01), reviewRemoved stays true until they write a new
+     * review; writing one sets it back to false.
      *
      * @param campsiteId id of the campsite being rated.
      * @param userId device id of the user rating it.
@@ -48,20 +54,39 @@ class RatingSubmitter(
             return Result.failure(IllegalStateException("You can't rate this campsite"))
         }
 
+        val text = review.trim().take(MAX_REVIEW_LENGTH)
+        val wasRemoved = ratingRepository.getRating(campsiteId, userId)?.reviewRemoved ?: false
         ratingRepository.save(
             Rating(
                 userId = userId,
                 campsiteId = campsiteId,
                 score = score,
-                review = review.trim().take(MAX_REVIEW_LENGTH),
-                createdAt = Timestamp.now()
+                review = text,
+                createdAt = Timestamp.now(),
+                reviewRemoved = wasRemoved && text.isEmpty()
             )
         )
 
-        val stats = ratingStats(ratingRepository.observeForCampsite(campsiteId).first())
-        campsiteRepository.save(
-            campsite.copy(ratingAverage = stats.average, ratingCount = stats.count)
-        )
-        return Result.success(stats)
+        return Result.success(syncRatingStats(campsite, ratingRepository, campsiteRepository))
     }
+}
+
+/**
+ * Recalculates a campsite's ratingAverage and ratingCount from the ratings stored for it now,
+ * and saves the campsite with only those two fields changed. Shared by rating submission
+ * (US 01.13.01) and admin rating removal (US 03.09.01) so both keep the stats the same way.
+ *
+ * @param campsite the campsite as last read; every field except the two stats is kept.
+ * @param ratingRepository where the campsite's ratings are read from.
+ * @param campsiteRepository where the updated campsite is saved.
+ * @return the campsite's new stats.
+ */
+internal suspend fun syncRatingStats(
+    campsite: Campsite,
+    ratingRepository: RatingRepository,
+    campsiteRepository: CampsiteRepository
+): RatingStats {
+    val stats = ratingStats(ratingRepository.observeForCampsite(campsite.id).first())
+    campsiteRepository.save(campsite.copy(ratingAverage = stats.average, ratingCount = stats.count))
+    return stats
 }

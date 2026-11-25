@@ -1,19 +1,29 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: Removes campsites and user profiles an administrator takes down,
 //   and everything that depends on them, so no lottery or waitlist entry is
-//   left pointing at something that no longer exists.
+//   left pointing at something that no longer exists. Also closes policy
+//   reports when the admin removes a reported owner or dismisses the reports,
+//   and removes single ratings that break app policy, keeping the campsite's
+//   average and count in step, or only a rating's review text, keeping its stars.
 // Outstanding issues:
-//   - Reservations and notifications to affected guests don't exist yet (Part 4).
-//   - The removed campsite's ratings stay in storage.
+//   - Guests with reservations aren't notified and reservations aren't cancelled
+//     (needs reservations and notifications, Part 4).
 //   - The removed user's ratings stay in storage.
 //   - The steps are separate writes, not one Firestore batch, so a failure
-//     part-way through can leave some lotteries already changed.
+//     part-way through can leave some lotteries already changed, some of a
+//     removed campsite's ratings already deleted (or a rating deleted before
+//     the campsite's average is saved).
+//   - AppContainer still uses FakeRatingRepository; FirestoreRatingRepository
+//     isn't switched on until ratings are seeded in Firestore.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.AppContainer
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.RatingRepository
+import com.example.trails.data.repository.ReportRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
 import kotlinx.coroutines.flow.first
@@ -24,8 +34,9 @@ import kotlinx.coroutines.flow.first
  * @property name the campsite's display name.
  * @property lotteryCount lotteries that will be deleted because this is their only campsite.
  * @property entryCount waitlist entries in those lotteries, deleted with them.
+ * @property ratingCount the campsite's ratings, deleted with it.
  */
-data class CampsiteImpact(val name: String, val lotteryCount: Int, val entryCount: Int)
+data class CampsiteImpact(val name: String, val lotteryCount: Int, val entryCount: Int, val ratingCount: Int = 0)
 
 /**
  * What removing a user profile takes with it, shown in the confirmation dialog.
@@ -43,32 +54,37 @@ data class ProfileImpact(val name: String, val campsiteCount: Int, val entryCoun
  * @param lotteryRepository where lotteries are stored.
  * @param waitlistRepository where each lottery's waitlist entries are stored.
  * @param userRepository where user profiles are stored.
+ * @param reportRepository where policy reports against owners are stored.
+ * @param ratingRepository where campsite ratings are stored.
  */
 class AdminRemoval(
     private val campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
-    private val userRepository: UserRepository = AppContainer.userRepository
+    private val userRepository: UserRepository = AppContainer.userRepository,
+    private val reportRepository: ReportRepository = AppContainer.reportRepository,
+    private val ratingRepository: RatingRepository = AppContainer.ratingRepository
 ) {
     /**
      * Counts what [removeCampsite] would delete, without changing anything.
      *
      * @param campsiteId id of the campsite the admin is about to remove.
-     * @return the campsite's name with the number of lotteries and waitlist entries that
-     *   go with it, or null if the campsite doesn't exist.
+     * @return the campsite's name with the number of lotteries, waitlist entries and ratings
+     *   that go with it, or null if the campsite doesn't exist.
      */
     suspend fun campsiteImpact(campsiteId: String): CampsiteImpact? {
         val campsite = campsiteRepository.getById(campsiteId) ?: return null
         val doomed = lotteriesFor(campsiteId).filter { it.campsiteIds.size == 1 }
         val entries = doomed.sumOf { waitlistRepository.getEntryCount(it.id) }
-        return CampsiteImpact(campsite.name, doomed.size, entries)
+        val ratings = ratingRepository.observeForCampsite(campsiteId).first().size
+        return CampsiteImpact(campsite.name, doomed.size, entries, ratings)
     }
 
     /**
      * Removes a campsite for everyone (US 03.01.01). Each lottery covering it either loses
      * it from [com.example.trails.data.model.Lottery.campsiteIds], or, if it was the
      * lottery's only campsite, is deleted together with every waitlist entry in it.
-     * The campsite itself is deleted last.
+     * Then every rating of the campsite is deleted, and the campsite itself is deleted last.
      *
      * @param campsiteId id of the campsite to remove.
      * @return success, or a failure if the campsite doesn't exist or a write fails.
@@ -86,6 +102,7 @@ class AdminRemoval(
                 lotteryRepository.save(lottery.copy(campsiteIds = lottery.campsiteIds - campsiteId))
             }
         }
+        ratingRepository.deleteForCampsite(campsiteId)
         campsiteRepository.delete(campsiteId)
     }
 
@@ -127,6 +144,67 @@ class AdminRemoval(
             }
         }
         userRepository.delete(userId)
+    }
+
+    /**
+     * Removes a reported campsite owner after policy review (US 03.07.01): the owner is removed
+     * with [removeProfile], then their OPEN reports are marked OWNER_REMOVED.
+     *
+     * @param ownerId device id of the reported owner.
+     * @param currentUserId device id of the admin doing the removal.
+     * @return success, or the failure from [removeProfile], in which case the reports stay OPEN;
+     *   or a failure if updating the reports fails.
+     */
+    suspend fun removeOwner(ownerId: String, currentUserId: String): Result<Unit> = runCatching {
+        removeProfile(ownerId, currentUserId).getOrThrow()
+        reportRepository.setStatusForOwner(ownerId, ReportStatus.OPEN, ReportStatus.OWNER_REMOVED)
+    }
+
+    /**
+     * Dismisses every OPEN report against one owner after policy review found no violation
+     * (US 03.07.01). The owner, their campsites and their entries are left as they are.
+     *
+     * @param ownerId device id of the reported owner.
+     * @return success, or a failure if the write fails.
+     */
+    suspend fun dismissReports(ownerId: String): Result<Unit> = runCatching {
+        reportRepository.setStatusForOwner(ownerId, ReportStatus.OPEN, ReportStatus.DISMISSED)
+    }
+
+    /**
+     * Removes one rating that violates app policy (US 03.09.01), then recalculates the
+     * campsite's ratingAverage and ratingCount from the ratings left and saves the campsite
+     * with only those two fields changed.
+     *
+     * @param campsiteId id of the rated campsite.
+     * @param userId device id of the reviewer whose rating is removed.
+     * @return success, or a failure (with nothing changed) if the campsite or the rating
+     *   doesn't exist, or a failure if a write fails.
+     */
+    suspend fun removeRating(campsiteId: String, userId: String): Result<Unit> = runCatching {
+        val campsite = campsiteRepository.getById(campsiteId)
+            ?: throw IllegalArgumentException("Campsite not found")
+        ratingRepository.getRating(campsiteId, userId)
+            ?: throw IllegalArgumentException("Rating not found")
+        ratingRepository.delete(campsiteId, userId)
+        syncRatingStats(campsite, ratingRepository, campsiteRepository)
+    }
+
+    /**
+     * Removes the written review of one rating that violates app policy (US 03.10.01). The
+     * rating is saved again with an empty review and reviewRemoved set; its score and createdAt
+     * stay, so the campsite's ratingAverage and ratingCount don't change and aren't rewritten.
+     *
+     * @param campsiteId id of the rated campsite.
+     * @param userId device id of the reviewer whose review text is removed.
+     * @return success, or a failure (with nothing changed) if the rating doesn't exist or has
+     *   no review text, or a failure if the write fails.
+     */
+    suspend fun removeReview(campsiteId: String, userId: String): Result<Unit> = runCatching {
+        val rating = ratingRepository.getRating(campsiteId, userId)
+            ?: throw IllegalArgumentException("Rating not found")
+        require(rating.review.isNotBlank()) { "Rating has no review text" }
+        ratingRepository.save(rating.copy(review = "", reviewRemoved = true))
     }
 
     /** Every lottery whose campsiteIds include [campsiteId]. */

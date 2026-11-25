@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.05.01, 03.02.01
+// USER STORIES: 03.05.01, 03.02.01, 03.07.01
 // PURPOSE: UI (intent) tests for the admin's Profile page and its Remove profile dialog.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
@@ -41,12 +41,14 @@ class AdminProfileContentTest {
         onBack: () -> Unit = {},
         onRemoveClick: () -> Unit = {},
         onDismiss: () -> Unit = {},
-        onConfirmRemove: () -> Unit = {}
+        onConfirmRemove: () -> Unit = {},
+        onReviewReportsClick: () -> Unit = {}
     ) = composeRule.setContent {
         TrailsTheme {
             AdminProfileContent(
                 state, onBack,
-                onRemoveClick = onRemoveClick, onDismiss = onDismiss, onConfirmRemove = onConfirmRemove
+                onRemoveClick = onRemoveClick, onDismiss = onDismiss, onConfirmRemove = onConfirmRemove,
+                onReviewReportsClick = onReviewReportsClick
             )
         }
     }
@@ -189,5 +191,32 @@ class AdminProfileContentTest {
         composeRule.onNodeWithTag(AdminProfileTags.DIALOG).assertDoesNotExist()
         composeRule.onNodeWithTag(AdminProfileTags.ERROR).assertIsDisplayed()
         composeRule.onNodeWithText("Couldn't remove this profile. Please try again.").assertIsDisplayed()
+    }
+
+    // This checks that a user with open reports shows how many, with a link to review them.
+    @Test
+    fun openReports_showsCountAndReview() {
+        show(AdminProfileUiState.Loaded(daniel, 2, openReportCount = 3))
+        composeRule.onNodeWithText("Reports").assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminProfileTags.REPORTS, useUnmergedTree = true).assertTextEquals("3 open · Review ›")
+        composeRule.onNodeWithTag(AdminProfileTags.REPORTS_ROW).assertIsDisplayed()
+    }
+
+    // This checks that a user with no open reports shows "None" and the row can't be tapped.
+    @Test
+    fun noReports_showsNone() {
+        show(AdminProfileUiState.Loaded(priya, 0))
+        composeRule.onNodeWithText("Reports").assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminProfileTags.REPORTS).assertTextEquals("None")
+        composeRule.onNodeWithTag(AdminProfileTags.REPORTS_ROW).assertDoesNotExist()
+    }
+
+    // This checks that tapping the Reports row asks to open the user's Policy review page.
+    @Test
+    fun tapReports_opensReview() {
+        var opened = false
+        show(AdminProfileUiState.Loaded(daniel, 2, openReportCount = 3), onReviewReportsClick = { opened = true })
+        composeRule.onNodeWithTag(AdminProfileTags.REPORTS_ROW).performClick()
+        assertTrue(opened)
     }
 }

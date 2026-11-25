@@ -1,9 +1,10 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.05.01, 03.02.01
+// USER STORIES: 03.05.01, 03.02.01, 03.07.01
 // PURPOSE: Admin's view of one user profile, opened from the Profiles list, with a Remove profile
-//   button and confirmation dialog (Figma Scenario 8 · Profile, Remove profile?).
+//   button and confirmation dialog (Figma Scenario 8 · Profile, Remove profile?), and a Reports
+//   row that opens the user's Policy review page when they have open reports.
 // Outstanding issues:
-//   - No reservation, lottery-entry or report rows yet (Part 4).
+//   - No reservation or lottery-entry rows yet (Part 4).
 //   - Guests of the removed owner's campsites aren't notified, since reservations and
 //     notifications don't exist yet (Part 4).
 package com.example.trails.ui.admin
@@ -11,6 +12,7 @@ package com.example.trails.ui.admin
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -51,6 +54,7 @@ import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.data.fake.TestCampsites
+import com.example.trails.data.fake.TestReports
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
@@ -61,7 +65,7 @@ import com.example.trails.ui.theme.TrailsTheme
  * Connects [AdminProfileViewModel] to navigation and renders [AdminProfileContent].
  * Only the user's id arrives through navigation; the ViewModel loads the profile itself.
  *
- * @param navController used to go back to the Profiles list.
+ * @param navController used to go back to the Profiles list and to open the Policy review page.
  * @param userId device id of the user to show.
  */
 @Composable
@@ -81,6 +85,7 @@ fun AdminProfileScreen(
         onRemoveClick = viewModel::onRemoveClick,
         onDismiss = viewModel::onDismiss,
         onConfirmRemove = viewModel::onConfirmRemove,
+        onReviewReportsClick = { navController.navigate(AdminRoutes.adminPolicyReview(userId)) },
         modifier = modifier
     )
 }
@@ -93,6 +98,8 @@ fun AdminProfileScreen(
  * @param onRemoveClick called when "Remove profile" is tapped.
  * @param onDismiss called when Cancel is tapped or the dialog is dismissed.
  * @param onConfirmRemove called when Remove is tapped in the dialog.
+ * @param onReviewReportsClick called when the Reports row is tapped while the user has open
+ *   reports (US 03.07.01).
  */
 @Composable
 fun AdminProfileContent(
@@ -101,7 +108,8 @@ fun AdminProfileContent(
     modifier: Modifier = Modifier,
     onRemoveClick: () -> Unit = {},
     onDismiss: () -> Unit = {},
-    onConfirmRemove: () -> Unit = {}
+    onConfirmRemove: () -> Unit = {},
+    onReviewReportsClick: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
@@ -130,7 +138,7 @@ fun AdminProfileContent(
                     )
                 }
                 is AdminProfileUiState.Loaded -> {
-                    ProfileDetails(state, onRemoveClick)
+                    ProfileDetails(state, onRemoveClick, onReviewReportsClick)
                     val removing = state.removal == ProfileRemovalState.Removing
                     if (state.removal == ProfileRemovalState.Confirming || removing) {
                         AdminRemoveDialog(
@@ -155,7 +163,11 @@ fun AdminProfileContent(
  * profile, the Remove profile button with any error above it.
  */
 @Composable
-private fun ProfileDetails(state: AdminProfileUiState.Loaded, onRemoveClick: () -> Unit) {
+private fun ProfileDetails(
+    state: AdminProfileUiState.Loaded,
+    onRemoveClick: () -> Unit,
+    onReviewReportsClick: () -> Unit
+) {
     val user = state.user
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         Column(
@@ -184,7 +196,7 @@ private fun ProfileDetails(state: AdminProfileUiState.Loaded, onRemoveClick: () 
             Spacer(Modifier.height(12.dp))
             RoleChips(roleLabels(user))
             Spacer(Modifier.height(24.dp))
-            InfoCard(user, state.campsiteCount)
+            InfoCard(user, state.campsiteCount, state.openReportCount, onReviewReportsClick)
         }
         if (!state.isSelf) {
             if (state.removal == ProfileRemovalState.Error) {
@@ -208,9 +220,12 @@ private fun ProfileDetails(state: AdminProfileUiState.Loaded, onRemoveClick: () 
     }
 }
 
-/** 72dp round profile photo, or a dark circle with the user's initials when there is none. */
+/**
+ * 72dp round profile photo, or a dark circle with the user's initials when there is none.
+ * Also used by the Policy review page.
+ */
 @Composable
-private fun LargeAvatar(user: User) {
+internal fun LargeAvatar(user: User) {
     val mod = Modifier
         .size(72.dp)
         .clip(CircleShape)
@@ -238,22 +253,35 @@ private fun RoleChips(labels: List<String>) {
         Modifier.testTag(AdminProfileTags.ROLES),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        labels.forEach { label ->
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge,
-                color = TrailGreen,
-                modifier = Modifier
-                    .border(1.dp, TrailGreen, RoundedCornerShape(50))
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
-            )
-        }
+        labels.forEach { label -> AdminChip(label, TrailGreen) }
     }
 }
 
-/** Card with the Phone row and, for owners, the Campsites owned row. */
+/**
+ * One outlined pill chip, display only. Used for the role chips here and the Owner / report
+ * count chips on the Policy review page.
+ *
+ * @param label the chip's text.
+ * @param color used for both the text and the outline.
+ */
 @Composable
-private fun InfoCard(user: User, campsiteCount: Int) {
+internal fun AdminChip(label: String, color: Color, modifier: Modifier = Modifier) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        color = color,
+        modifier = modifier
+            .border(1.dp, color, RoundedCornerShape(50))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    )
+}
+
+/**
+ * Card with the Phone row, for owners the Campsites owned row, and the Reports row, which is
+ * tappable when the user has open reports.
+ */
+@Composable
+private fun InfoCard(user: User, campsiteCount: Int, openReportCount: Int, onReviewReportsClick: () -> Unit) {
     OutlinedCard(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -269,14 +297,31 @@ private fun InfoCard(user: User, campsiteCount: Int) {
                 AdminProfileTags.CAMPSITES
             )
         }
+        HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        if (openReportCount > 0) {
+            InfoRow(
+                stringResource(R.string.admin_profile_reports),
+                stringResource(R.string.admin_profile_reports_open, openReportCount),
+                AdminProfileTags.REPORTS,
+                modifier = Modifier
+                    .clickable(onClick = onReviewReportsClick)
+                    .testTag(AdminProfileTags.REPORTS_ROW)
+            )
+        } else {
+            InfoRow(
+                stringResource(R.string.admin_profile_reports),
+                stringResource(R.string.admin_profile_reports_none),
+                AdminProfileTags.REPORTS
+            )
+        }
     }
 }
 
 /** One label/value row inside the info card; [tag] is on the value. */
 @Composable
-private fun InfoRow(label: String, value: String, tag: String) {
+private fun InfoRow(label: String, value: String, tag: String, modifier: Modifier = Modifier) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -296,6 +341,8 @@ object AdminProfileTags {
     const val ROLES = "admin_profile_roles"
     const val PHONE = "admin_profile_phone"
     const val CAMPSITES = "admin_profile_campsites"
+    const val REPORTS = "admin_profile_reports"
+    const val REPORTS_ROW = "admin_profile_reports_row"
     const val REMOVE_BUTTON = "admin_profile_remove"
     const val ERROR = "admin_profile_error"
     const val DIALOG = "admin_profile_dialog"
@@ -315,7 +362,8 @@ private fun AdminProfileOwnerPreview() {
         AdminProfileContent(
             state = buildAdminProfileState(
                 TestUsers.all.first { it.deviceId == TestUsers.OWNER_ID },
-                TestCampsites.all
+                TestCampsites.all,
+                reports = TestReports.all
             ),
             onBack = {}
         )

@@ -15,11 +15,13 @@ import com.google.firebase.firestore.DocumentId
  * @property score Star score given by the user.
  * @property review Optional written review.
  * @property createdAt When the rating was submitted.
+ * @property reviewRemoved true when an admin removed the review text for breaking the app policy.
  */
 data class Rating(
     @DocumentId val userId: String = "",
     val campsiteId: String = "",
     val score: Int = 0,
     val review: String = "",
-    val createdAt: Timestamp? = null
+    val createdAt: Timestamp? = null,
+    val reviewRemoved: Boolean = false
 )
