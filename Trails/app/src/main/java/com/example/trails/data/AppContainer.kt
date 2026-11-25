@@ -2,6 +2,7 @@
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
 package com.example.trails.data
 
+import com.example.trails.data.fake.FakeNotificationRepository
 import com.example.trails.data.fake.FakeRatingRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.firestore.FirestoreCampsiteRepository
@@ -9,6 +10,7 @@ import com.example.trails.data.firestore.FirestoreLotteryRepository
 import com.example.trails.data.firestore.FirestoreWaitlistRepository
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.NotificationRepository
 import com.example.trails.data.repository.RatingRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
@@ -32,4 +34,6 @@ object AppContainer {
 
     // Rating — Zainab swaps this for the Firestore version.
     val ratingRepository: RatingRepository = FakeRatingRepository()
+
+    val notificationRepository: NotificationRepository = FakeNotificationRepository()
 }
