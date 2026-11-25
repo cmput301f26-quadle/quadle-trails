@@ -1,18 +1,21 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01, 03.07.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01
 // PURPOSE: Unit tests for AdminRemoval, which removes a campsite or a user
 //   profile together with the campsites, lotteries and waitlist entries that
-//   depend on it, and closes policy reports against a reviewed owner.
+//   depend on it, closes policy reports against a reviewed owner, and removes
+//   single ratings while keeping the campsite's average and count right.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeRatingRepository
 import com.example.trails.data.fake.FakeReportRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Rating
 import com.example.trails.data.model.Report
 import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.model.Role
@@ -137,21 +140,44 @@ class AdminRemovalTest {
     private val mayaOld = report("maya-old", "device-maya", "jasper-pines", ReportStatus.DISMISSED)
     private val omarPhotos = report("omar-photos", "device-omar", "tunnel-mountain")
 
+    private fun rating(campsiteId: String, userId: String, score: Int, review: String) = Rating(
+        userId = userId,
+        campsiteId = campsiteId,
+        score = score,
+        review = review,
+        createdAt = Timestamp.now()
+    )
+
+    /** Tunnel Mountain has three ratings; Priya's 1-star rant is the one that breaks policy. */
+    private val priyaTunnelRating = rating(
+        "tunnel-mountain", "device-priya", 1, "The owner is a crook, call him at 403-555-0199 and tell him."
+    )
+    private val avaTunnelRating = rating("tunnel-mountain", "device-ava", 4, "Clean washrooms, a bit close to the road.")
+    private val mayaTunnelRating = rating("tunnel-mountain", "device-maya", 5, "Woke up to elk wandering past the site.")
+
+    /** Jasper Pines has a single rating. */
+    private val avaPinesRating = rating("jasper-pines", "device-ava", 3, "Nice trees, noisy neighbours.")
+
+    private val tunnelRated = tunnelMountain.copy(ratingAverage = 10.0 / 3, ratingCount = 3)
+    private val pinesRated = jasperPines.copy(ratingAverage = 3.0, ratingCount = 1)
+
     private lateinit var campsites: FakeCampsiteRepository
     private lateinit var lotteries: FakeLotteryRepository
     private lateinit var waitlist: FakeWaitlistRepository
     private lateinit var users: FakeUserRepository
     private lateinit var reports: FakeReportRepository
+    private lateinit var ratings: FakeRatingRepository
     private lateinit var removal: AdminRemoval
 
     @Before
     fun setUp() {
-        campsites = FakeCampsiteRepository(initial = listOf(jasperPines, wapitiFlats, tunnelMountain))
+        campsites = FakeCampsiteRepository(initial = listOf(pinesRated, wapitiFlats, tunnelRated))
         lotteries = FakeLotteryRepository(initial = listOf(pinesSummer, jasperFall, banffWinter))
         waitlist = FakeWaitlistRepository(initial = listOf(priyaPines, avaPines, priyaFall, avaBanff))
         users = FakeUserRepository(initial = listOf(maya, omar, priya, ava, jordan))
         reports = FakeReportRepository(initial = listOf(mayaPhotos, mayaBooking, mayaOld, omarPhotos))
-        removal = AdminRemoval(campsites, lotteries, waitlist, users, reports)
+        ratings = FakeRatingRepository(initial = listOf(priyaTunnelRating, avaTunnelRating, mayaTunnelRating, avaPinesRating))
+        removal = AdminRemoval(campsites, lotteries, waitlist, users, reports, ratings)
     }
 
     // This checks that removing a campsite succeeds and the campsite is gone afterwards.
@@ -183,7 +209,7 @@ class AdminRemovalTest {
     fun removeCampsite_otherCampsitesUntouched() = runBlocking {
         removal.removeCampsite("jasper-pines")
         assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
-        assertEquals(tunnelMountain, campsites.getById("tunnel-mountain"))
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
         assertEquals(banffWinter, lotteries.getById("banff-winter"))
         assertEquals(listOf(avaBanff), waitlist.getEntriesForLottery("banff-winter"))
     }
@@ -337,9 +363,61 @@ class AdminRemovalTest {
     fun dismissReports_keepsUserAndCampsites() = runBlocking {
         removal.dismissReports("device-maya")
         assertEquals(maya, users.getById("device-maya"))
-        assertEquals(jasperPines, campsites.getById("jasper-pines"))
+        assertEquals(pinesRated, campsites.getById("jasper-pines"))
         assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
         assertEquals(pinesSummer, lotteries.getById("pines-summer"))
         assertEquals(jasperFall, lotteries.getById("jasper-fall"))
+    }
+
+    // This checks that removing a rating deletes it and saves the average and count of the ratings left.
+    @Test
+    fun removeRating_deletesAndUpdatesAverage() = runBlocking {
+        val result = removal.removeRating("tunnel-mountain", "device-priya")
+        assertTrue(result.isSuccess)
+        assertNull(ratings.getRating("tunnel-mountain", "device-priya"))
+        val saved = campsites.getById("tunnel-mountain")!!
+        assertEquals(4.5, saved.ratingAverage, 0.0001)
+        assertEquals(2, saved.ratingCount)
+        assertEquals(tunnelMountain.copy(ratingAverage = 4.5, ratingCount = 2), saved)
+    }
+
+    // This checks that removing a campsite's only rating sets its average and count back to zero.
+    @Test
+    fun removeRating_lastRating_averageZeroCountZero() = runBlocking {
+        val result = removal.removeRating("jasper-pines", "device-ava")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("jasper-pines").first().isEmpty())
+        val saved = campsites.getById("jasper-pines")!!
+        assertEquals(0.0, saved.ratingAverage, 0.0)
+        assertEquals(0, saved.ratingCount)
+    }
+
+    // This checks that removing a rating that doesn't exist, or one for a campsite that doesn't exist,
+    // fails and changes no rating or campsite.
+    @Test
+    fun removeRating_missing_fails_nothingChanged() = runBlocking {
+        assertTrue(removal.removeRating("tunnel-mountain", "device-jordan").isFailure)
+        assertTrue(removal.removeRating("no-such-site", "device-priya").isFailure)
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+    }
+
+    // This checks that a rating whose campsite is gone fails and is left in storage.
+    @Test
+    fun removeRating_campsiteMissing_keepsRating() = runBlocking {
+        campsites.delete("jasper-pines")
+        assertTrue(removal.removeRating("jasper-pines", "device-ava").isFailure)
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+    }
+
+    // This checks that removing one rating leaves the other ratings and other campsites exactly as they were.
+    @Test
+    fun removeRating_otherRatingsUntouched() = runBlocking {
+        removal.removeRating("tunnel-mountain", "device-priya")
+        assertEquals(avaTunnelRating, ratings.getRating("tunnel-mountain", "device-ava"))
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+        assertEquals(pinesRated, campsites.getById("jasper-pines"))
+        assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
     }
 }

@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01
+// USER STORIES: 01.13.01, 03.09.01
 // PURPOSE: In-memory RatingRepository seeded from TestRatings.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
@@ -30,5 +30,9 @@ class FakeRatingRepository(initial: List<Rating> = TestRatings.all) : RatingRepo
         ratings.update { list ->
             list.filterNot { it.campsiteId == rating.campsiteId && it.userId == rating.userId } + rating
         }
+    }
+
+    override suspend fun delete(campsiteId: String, userId: String) {
+        ratings.update { list -> list.filterNot { it.campsiteId == campsiteId && it.userId == userId } }
     }
 }

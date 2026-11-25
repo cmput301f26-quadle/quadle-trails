@@ -1,6 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01
+// USER STORIES: 01.13.01, 03.09.01
 // PURPOSE: Lets a user rate a campsite from its details page, using a bottom sheet (Figma Scenario 4 · Rate campsite / Rating submitted).
+// StarIcon is also used by the admin Campsite page's Ratings & reviews section (US 03.09.01).
 // Outstanding issues: anyone except the owner can rate (no completed-stay check until reservations, Part 4); other users' reviews aren't listed.
 package com.example.trails.ui.admin
 
@@ -322,9 +323,14 @@ fun RatingSheetContent(
     }
 }
 
-/** One star: TrailGreen when filled, a faint grey when not. Decorative; callers describe it. */
+/**
+ * One star: TrailGreen when filled, a faint grey when not. Decorative; callers describe it.
+ *
+ * @param filled true to draw the star in TrailGreen.
+ * @param size width and height of the star.
+ */
 @Composable
-private fun StarIcon(filled: Boolean, size: Dp) {
+internal fun StarIcon(filled: Boolean, size: Dp) {
     Icon(
         Icons.Filled.Star,
         contentDescription = null,

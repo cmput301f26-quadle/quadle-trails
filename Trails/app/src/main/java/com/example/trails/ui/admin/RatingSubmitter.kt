@@ -1,13 +1,16 @@
 // Saves a user's campsite rating and keeps the campsite's average and count in sync (US 01.13.01).
+// syncRatingStats is also used by AdminRemoval.removeRating (US 03.09.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // Outstanding issues: the rating and the campsite are saved in two steps,
 //   not one Firestore transaction, so two people rating at the same moment
 //   could briefly leave a stale average.
+//   AppContainer still uses FakeRatingRepository; FirestoreRatingRepository isn't switched on yet.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.AppContainer
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.RatingRepository
+import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Rating
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.first
@@ -58,10 +61,26 @@ class RatingSubmitter(
             )
         )
 
-        val stats = ratingStats(ratingRepository.observeForCampsite(campsiteId).first())
-        campsiteRepository.save(
-            campsite.copy(ratingAverage = stats.average, ratingCount = stats.count)
-        )
-        return Result.success(stats)
+        return Result.success(syncRatingStats(campsite, ratingRepository, campsiteRepository))
     }
+}
+
+/**
+ * Recalculates a campsite's ratingAverage and ratingCount from the ratings stored for it now,
+ * and saves the campsite with only those two fields changed. Shared by rating submission
+ * (US 01.13.01) and admin rating removal (US 03.09.01) so both keep the stats the same way.
+ *
+ * @param campsite the campsite as last read; every field except the two stats is kept.
+ * @param ratingRepository where the campsite's ratings are read from.
+ * @param campsiteRepository where the updated campsite is saved.
+ * @return the campsite's new stats.
+ */
+internal suspend fun syncRatingStats(
+    campsite: Campsite,
+    ratingRepository: RatingRepository,
+    campsiteRepository: CampsiteRepository
+): RatingStats {
+    val stats = ratingStats(ratingRepository.observeForCampsite(campsite.id).first())
+    campsiteRepository.save(campsite.copy(ratingAverage = stats.average, ratingCount = stats.count))
+    return stats
 }

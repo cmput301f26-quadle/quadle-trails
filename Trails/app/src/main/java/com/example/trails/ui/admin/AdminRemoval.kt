@@ -1,21 +1,27 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01, 03.07.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01
 // PURPOSE: Removes campsites and user profiles an administrator takes down,
 //   and everything that depends on them, so no lottery or waitlist entry is
 //   left pointing at something that no longer exists. Also closes policy
-//   reports when the admin removes a reported owner or dismisses the reports.
+//   reports when the admin removes a reported owner or dismisses the reports,
+//   and removes single ratings that break app policy, keeping the campsite's
+//   average and count in step.
 // Outstanding issues:
 //   - Reservations and notifications to affected guests don't exist yet (Part 4).
 //   - The removed campsite's ratings stay in storage.
 //   - The removed user's ratings stay in storage.
 //   - The steps are separate writes, not one Firestore batch, so a failure
-//     part-way through can leave some lotteries already changed.
+//     part-way through can leave some lotteries already changed (or a rating
+//     deleted before the campsite's average is saved).
+//   - AppContainer still uses FakeRatingRepository; FirestoreRatingRepository
+//     isn't switched on until ratings are seeded in Firestore.
 package com.example.trails.ui.admin
 
 import com.example.trails.data.AppContainer
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.RatingRepository
 import com.example.trails.data.repository.ReportRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
@@ -47,13 +53,15 @@ data class ProfileImpact(val name: String, val campsiteCount: Int, val entryCoun
  * @param waitlistRepository where each lottery's waitlist entries are stored.
  * @param userRepository where user profiles are stored.
  * @param reportRepository where policy reports against owners are stored.
+ * @param ratingRepository where campsite ratings are stored.
  */
 class AdminRemoval(
     private val campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
     private val userRepository: UserRepository = AppContainer.userRepository,
-    private val reportRepository: ReportRepository = AppContainer.reportRepository
+    private val reportRepository: ReportRepository = AppContainer.reportRepository,
+    private val ratingRepository: RatingRepository = AppContainer.ratingRepository
 ) {
     /**
      * Counts what [removeCampsite] would delete, without changing anything.
@@ -157,6 +165,25 @@ class AdminRemoval(
      */
     suspend fun dismissReports(ownerId: String): Result<Unit> = runCatching {
         reportRepository.setStatusForOwner(ownerId, ReportStatus.OPEN, ReportStatus.DISMISSED)
+    }
+
+    /**
+     * Removes one rating that violates app policy (US 03.09.01), then recalculates the
+     * campsite's ratingAverage and ratingCount from the ratings left and saves the campsite
+     * with only those two fields changed.
+     *
+     * @param campsiteId id of the rated campsite.
+     * @param userId device id of the reviewer whose rating is removed.
+     * @return success, or a failure (with nothing changed) if the campsite or the rating
+     *   doesn't exist, or a failure if a write fails.
+     */
+    suspend fun removeRating(campsiteId: String, userId: String): Result<Unit> = runCatching {
+        val campsite = campsiteRepository.getById(campsiteId)
+            ?: throw IllegalArgumentException("Campsite not found")
+        ratingRepository.getRating(campsiteId, userId)
+            ?: throw IllegalArgumentException("Rating not found")
+        ratingRepository.delete(campsiteId, userId)
+        syncRatingStats(campsite, ratingRepository, campsiteRepository)
     }
 
     /** Every lottery whose campsiteIds include [campsiteId]. */

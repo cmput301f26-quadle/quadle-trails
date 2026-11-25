@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.04.01
+// USER STORIES: 03.01.01, 03.04.01, 03.09.01
 // PURPOSE: State and display logic for the admin's Campsite page, where an
-//   administrator reviews one campsite and can remove it.
+//   administrator reviews one campsite and its ratings, and can remove either.
 // Outstanding issues:
 //   - The Lotteries and Lottery entries counts are what removal would delete
 //     (lotteries where this is the only campsite), not shared lotteries.
@@ -27,12 +27,14 @@ sealed interface AdminCampsiteUiState {
      * @property ownerName display name of its owner, or "Unknown owner".
      * @property lotteryCount lotteries that are removed with it.
      * @property entryCount waitlist entries in those lotteries.
+     * @property ratings the campsite's ratings, newest first (US 03.09.01).
      */
     data class Loaded(
         val campsite: Campsite,
         val ownerName: String,
         val lotteryCount: Int,
-        val entryCount: Int
+        val entryCount: Int,
+        val ratings: List<AdminRatingItem> = emptyList()
     ) : AdminCampsiteUiState
 }
 
@@ -50,25 +52,28 @@ data class AdminCampsiteRemoveState(
 )
 
 /**
- * Picks the page state from the latest campsite, users and removal impact.
+ * Picks the page state from the latest campsite, users, removal impact and ratings.
  * Kept free of coroutines so it can be unit-tested directly.
  *
  * @param campsite the campsite, or null if none has the requested id.
  * @param users every user profile, used to look up the owner's name by device id.
  * @param impact what removing the campsite would delete, or null if unknown (counts as 0).
+ * @param ratings the campsite's ratings as cards, from [buildAdminRatingItems].
  * @return [AdminCampsiteUiState.NotFound] or [AdminCampsiteUiState.Loaded].
  */
 fun buildAdminCampsiteState(
     campsite: Campsite?,
     users: List<User>,
-    impact: CampsiteImpact?
+    impact: CampsiteImpact?,
+    ratings: List<AdminRatingItem> = emptyList()
 ): AdminCampsiteUiState =
     if (campsite == null) AdminCampsiteUiState.NotFound
     else AdminCampsiteUiState.Loaded(
         campsite = campsite,
         ownerName = ownerName(campsite.ownerId, users),
         lotteryCount = impact?.lotteryCount ?: 0,
-        entryCount = impact?.entryCount ?: 0
+        entryCount = impact?.entryCount ?: 0,
+        ratings = ratings
     )
 
 /**
