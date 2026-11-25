@@ -1,6 +1,7 @@
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
-// USER STORIES: 01.01.01, 01.01.02, 01.01.03, 01.01.04
-// PURPOSE: Search, a filters page, the filtered list, and a summary preview.
+// USER STORIES: 01.01.01, 01.01.02, 01.01.03, 01.01.04, 03.11.01
+// PURPOSE: Search, a filters page, the filtered list, and a summary preview, with the mode pill
+//   at the top right of the Browse header (US 03.11.01, Aarav's ModePill).
 // Outstanding issues: the search title must stay "Browse" because TrailsAppTest looks for it.
 package com.example.trails.ui.discovery
 
@@ -62,6 +63,7 @@ import com.example.trails.data.AppContainer
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.ui.common.TrailsTopBar
+import com.example.trails.ui.profile.ModePill
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -86,12 +88,15 @@ private enum class BrowsePane { Search, Filters, Results, Preview }
  * @param navController used to open a campsite's details.
  * @param modifier applied to the screen.
  * @param viewModel supplies the list and records what the user types.
+ * @param modePill the mode pill shown at the top right of the Browse header (US 03.11.01);
+ *   tests can pass a plain chip so they don't need the profile ViewModel.
  */
 @Composable
 fun BrowseScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: BrowseViewModel = viewModel { BrowseViewModel() }
+    viewModel: BrowseViewModel = viewModel { BrowseViewModel() },
+    modePill: @Composable () -> Unit = { ModePill(navController) }
 ) {
     val state by viewModel.uiState.collectAsState()
     val draft by viewModel.draftFilters.collectAsState()
@@ -136,7 +141,12 @@ fun BrowseScreen(
             when (pane) {
                 BrowsePane.Search -> TrailsTopBar(
                     title = stringResource(R.string.discovery_browse_title),
-                    subtitle = stringResource(R.string.discovery_search_hint)
+                    subtitle = stringResource(R.string.discovery_search_hint),
+                    actions = {
+                        Box(Modifier.padding(end = 12.dp).testTag(BrowseTags.MODE_PILL)) {
+                            modePill()
+                        }
+                    }
                 )
                 BrowsePane.Filters -> TrailsTopBar(
                     title = stringResource(R.string.discovery_filters_title),
@@ -846,6 +856,7 @@ class BrowseViewModel(
  * @property GUESTS the guest filter.
  * @property ARRIVE the check-in field.
  * @property LEAVE the check-out field.
+ * @property MODE_PILL the mode pill slot in the Browse header.
  */
 object BrowseTags {
     const val LIST = "discovery_list"
@@ -854,4 +865,5 @@ object BrowseTags {
     const val GUESTS = "discovery_guests"
     const val ARRIVE = "discovery_arrive"
     const val LEAVE = "discovery_leave"
+    const val MODE_PILL = "discovery_mode_pill"
 }
