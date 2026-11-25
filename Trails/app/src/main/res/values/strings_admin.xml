@@ -47,6 +47,19 @@
     <string name="admin_campsite_remove_title">Remove campsite?</string>
     <string name="admin_campsite_remove_error">Couldn\'t remove this campsite. Please try again.</string>
 
+    <!-- Policy reports list and Policy review page (US 03.07.01) -->
+    <string name="admin_reports_title">Policy reports</string>
+    <string name="admin_reports_empty">No open reports</string>
+    <string name="admin_policy_review_title">Policy review</string>
+    <string name="admin_policy_review_not_found">This owner no longer exists</string>
+    <string name="admin_policy_review_rule_label">RULE BROKEN</string>
+    <string name="admin_policy_review_reports_heading">Reports · last 30 days</string>
+    <string name="admin_policy_review_owner_chip">Owner</string>
+    <string name="admin_policy_review_remove">Remove owner</string>
+    <string name="admin_policy_review_remove_title">Remove owner?</string>
+    <string name="admin_policy_review_dismiss">Dismiss reports</string>
+    <string name="admin_policy_review_error">Couldn\'t finish this review. Please try again.</string>
+
     <!-- Rating section and Rate campsite sheet (US 01.13.01) -->
     <string name="rating_rate_button">Rate this campsite</string>
     <string name="rating_edit_button">Edit rating</string>

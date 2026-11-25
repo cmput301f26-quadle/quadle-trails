@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -208,9 +209,12 @@ private fun ProfileDetails(state: AdminProfileUiState.Loaded, onRemoveClick: () 
     }
 }
 
-/** 72dp round profile photo, or a dark circle with the user's initials when there is none. */
+/**
+ * 72dp round profile photo, or a dark circle with the user's initials when there is none.
+ * Also used by the Policy review page.
+ */
 @Composable
-private fun LargeAvatar(user: User) {
+internal fun LargeAvatar(user: User) {
     val mod = Modifier
         .size(72.dp)
         .clip(CircleShape)
@@ -238,17 +242,27 @@ private fun RoleChips(labels: List<String>) {
         Modifier.testTag(AdminProfileTags.ROLES),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        labels.forEach { label ->
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge,
-                color = TrailGreen,
-                modifier = Modifier
-                    .border(1.dp, TrailGreen, RoundedCornerShape(50))
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
-            )
-        }
+        labels.forEach { label -> AdminChip(label, TrailGreen) }
     }
+}
+
+/**
+ * One outlined pill chip, display only. Used for the role chips here and the Owner / report
+ * count chips on the Policy review page.
+ *
+ * @param label the chip's text.
+ * @param color used for both the text and the outline.
+ */
+@Composable
+internal fun AdminChip(label: String, color: Color, modifier: Modifier = Modifier) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        color = color,
+        modifier = modifier
+            .border(1.dp, color, RoundedCornerShape(50))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    )
 }
 
 /** Card with the Phone row and, for owners, the Campsites owned row. */

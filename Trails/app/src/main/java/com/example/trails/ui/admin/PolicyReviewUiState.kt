@@ -52,6 +52,7 @@ sealed interface PolicyReviewUiState {
      * @property impact what removing the owner takes with them.
      * @property action where the Remove owner / Dismiss flow is.
      * @property isSelf true if this is the signed-in admin, who can't remove themselves.
+     * @property campsiteNames display name of each campsite by id, for the report subtitles.
      */
     data class Loaded(
         val user: User,
@@ -60,7 +61,8 @@ sealed interface PolicyReviewUiState {
         val ruleBroken: String?,
         val impact: ProfileImpact,
         val action: PolicyActionState = PolicyActionState.Idle,
-        val isSelf: Boolean = false
+        val isSelf: Boolean = false,
+        val campsiteNames: Map<String, String> = emptyMap()
     ) : PolicyReviewUiState
 }
 
@@ -144,7 +146,8 @@ fun buildPolicyReviewState(
         ruleBroken = mostCommonRule(ownerReports),
         impact = impact ?: ProfileImpact(user.name, campsiteCount, 0),
         action = action,
-        isSelf = user.deviceId == currentUserId
+        isSelf = user.deviceId == currentUserId,
+        campsiteNames = campsites.associate { it.id to it.name }
     )
 }
 
@@ -220,6 +223,45 @@ fun needsReviewLine(openCount: Int, oldestAt: Timestamp?, now: Timestamp): Strin
         else -> "$days days ago"
     }
     return "$count · Oldest report: $ago"
+}
+
+/** Every situation the reported owners list can be in. */
+sealed interface ReportsUiState {
+    /** Waiting for the reports to load. */
+    data object Loading : ReportsUiState
+
+    /**
+     * The reports are loaded.
+     *
+     * @property owners the reported owners from [buildReportedOwners]; empty when none are open.
+     */
+    data class Loaded(val owners: List<ReportedOwner>) : ReportsUiState
+}
+
+/**
+ * The grey line under an owner in the reported owners list, e.g. "3 reports · oldest Nov 1".
+ *
+ * @param owner the reported owner being drawn.
+ * @param locale locale used for the month name; defaults to US English.
+ * @return the report count and the oldest report's date, or just the count if it has no date.
+ */
+fun reportedOwnerSubtitle(owner: ReportedOwner, locale: Locale = Locale.US): String {
+    val oldest = owner.oldestReportAt?.let { "oldest " + SimpleDateFormat("MMM d", locale).format(it.toDate()) }
+    return listOfNotNull(reportCountLabel(owner.openReports.size), oldest).joinToString(" · ")
+}
+
+/**
+ * The grey line under the owner's name on the review page, e.g.
+ * "Owner · 3 campsites · Joined Nov 2026".
+ *
+ * @param user the reported owner.
+ * @param campsiteCount campsites the owner has listed.
+ * @param locale locale used for the month name; defaults to US English.
+ * @return "Owner", the campsite count and, if known, the joined month, separated by " · ".
+ */
+fun policyOwnerLine(user: User, campsiteCount: Int, locale: Locale = Locale.US): String {
+    val campsites = if (campsiteCount == 1) "1 campsite" else "$campsiteCount campsites"
+    return listOfNotNull("Owner", campsites, joinedLabel(user.createdAt, locale)).joinToString(" · ")
 }
 
 /** OPEN reports filed within [REPORT_WINDOW_DAYS] days before [now]; undated ones are kept. */

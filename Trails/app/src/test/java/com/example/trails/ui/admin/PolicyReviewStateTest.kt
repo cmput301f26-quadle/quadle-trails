@@ -215,4 +215,32 @@ class PolicyReviewStateTest {
         assertEquals("3 policy reports · Oldest report: 2 days ago", needsReviewLine(3, daysAgo(2), now))
         assertEquals("3 policy reports", needsReviewLine(3, null, now))
     }
+
+    // This checks the reported owner subtitle with an oldest date, a single report, and no date.
+    @Test
+    fun reportedOwnerSubtitle_countAndOldestDate() {
+        val reports = listOf(report("a", maya.deviceId, 1), report("b", maya.deviceId, 2))
+        assertEquals(
+            "2 reports · oldest Apr 8",
+            reportedOwnerSubtitle(ReportedOwner(maya, reports, 1, daysAgo(2)))
+        )
+        assertEquals("1 report", reportedOwnerSubtitle(ReportedOwner(maya, reports.take(1), 1, null)))
+    }
+
+    // This checks the owner line with a joined date, one campsite, and no joined date.
+    @Test
+    fun policyOwnerLine_campsitesAndJoined() {
+        val joined = Timestamp(Calendar.getInstance().apply { set(2026, Calendar.NOVEMBER, 15, 12, 0, 0) }.time)
+        assertEquals("Owner · 3 campsites · Joined Nov 2026", policyOwnerLine(maya.copy(createdAt = joined), 3))
+        assertEquals("Owner · 1 campsite", policyOwnerLine(maya, 1))
+    }
+
+    // This checks that the review state maps each campsite id to its name for the report subtitles.
+    @Test
+    fun buildPolicyReviewState_namesCampsites() {
+        val site = Campsite(id = "site-device-maya", ownerId = maya.deviceId, name = "Pine Ridge")
+        val state = buildPolicyReviewState(maya, emptyList(), listOf(site), null, "", now)
+            as PolicyReviewUiState.Loaded
+        assertEquals("Pine Ridge", state.campsiteNames["site-device-maya"])
+    }
 }

@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01
 // PURPOSE: The "Remove ...?" confirmation dialog and the muted red Remove button
-//   shared by the admin Campsite and Profile pages (Figma Scenario 8), so both look the same.
+//   shared by the admin Campsite, Profile and Policy review pages (Figma Scenario 8), so both look the same.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
@@ -92,12 +92,14 @@ internal fun AdminRemoveDialog(
  *
  * @param label e.g. "Remove campsite".
  * @param tag test tag for the button.
+ * @param enabled false to grey the button out, e.g. while an action is running.
  * @param onClick called when the button is tapped.
  */
 @Composable
-internal fun AdminRemoveButton(label: String, tag: String, onClick: () -> Unit) {
+internal fun AdminRemoveButton(label: String, tag: String, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Ember.copy(alpha = 0.15f), contentColor = Ember),
         modifier = Modifier
