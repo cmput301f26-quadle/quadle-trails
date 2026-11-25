@@ -1,7 +1,7 @@
 // Compose UI test suite validating waitlist screen rendering, status banners, and join/leave buttons (UI Controller tests).
-// implements US 01.01.06, US 01.02.01, US 01.02.02
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.01, US 01.04.02, US 01.04.03, US 02.04.02, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -203,5 +203,82 @@ class WaitlistContentTest {
         )
         composeRule.onNodeWithTag("waitlist_back_button").performClick()
         assertTrue(backed)
+    }
+
+    @Test
+    fun winnerState_showsWinnerCardAndButtons() {
+        var claimClicked = false
+        var declineClicked = false
+        val winEntry = WaitlistEntry(
+            userId = "winner-user",
+            lotteryId = "lottery-01",
+            partySize = 2,
+            status = WaitlistStatus.WON,
+            rulesAccepted = true
+        )
+        composeRule.setContent {
+            TrailsTheme {
+                WaitlistContent(
+                    state = WaitlistUiState.Waitlisted(
+                        entry = winEntry,
+                        lottery = sampleLottery,
+                        campsite = sampleCampsite
+                    ),
+                    onRulesCheckedChange = {},
+                    onJoinClick = {},
+                    onLeaveClick = {},
+                    onBack = {},
+                    onClearError = {},
+                    onClaimWinClick = { claimClicked = true },
+                    onDeclineWinClick = { declineClicked = true }
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("YOU WON THIS LOTTERY!").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("claim_reservation_button").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("decline_win_button").performScrollTo().assertIsDisplayed()
+
+        composeRule.onNodeWithTag("claim_reservation_button").performClick()
+        assertTrue(claimClicked)
+
+        composeRule.onNodeWithTag("decline_win_button").performClick()
+        assertTrue(declineClicked)
+    }
+
+    @Test
+    fun declinedState_showsDeclinedBanner() {
+        val declinedEntry = WaitlistEntry(
+            userId = "declined-user",
+            lotteryId = "lottery-01",
+            status = WaitlistStatus.DECLINED,
+            rulesAccepted = true
+        )
+        show(
+            state = WaitlistUiState.Waitlisted(
+                entry = declinedEntry,
+                lottery = sampleLottery,
+                campsite = sampleCampsite
+            )
+        )
+        composeRule.onNodeWithText("INVITATION DECLINED").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun reservedState_showsReservedBanner() {
+        val reservedEntry = WaitlistEntry(
+            userId = "reserved-user",
+            lotteryId = "lottery-01",
+            status = WaitlistStatus.RESERVED,
+            rulesAccepted = true
+        )
+        show(
+            state = WaitlistUiState.Waitlisted(
+                entry = reservedEntry,
+                lottery = sampleLottery,
+                campsite = sampleCampsite
+            )
+        )
+        composeRule.onNodeWithText("RESERVATION CONFIRMED").performScrollTo().assertIsDisplayed()
     }
 }
