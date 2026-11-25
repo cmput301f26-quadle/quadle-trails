@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.05.01, 03.02.01
+// USER STORIES: 03.05.01, 03.02.01, 03.07.01
 // PURPOSE: Controller for the admin's Profile page: loads one profile and runs its removal.
 // Outstanding issues: Firestore listener errors are not surfaced to the screen yet.
 package com.example.trails.ui.admin
@@ -11,8 +11,10 @@ import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.ReportRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -28,16 +30,18 @@ import kotlinx.coroutines.launch
 
 /**
  * Controller for [AdminProfileScreen]: watches one user by id, every campsite (to count the
- * ones they own) and their entry in every lottery's waitlist, so the page updates by itself if
- * any of these change. Also runs the Remove profile flow.
+ * ones they own), their entry in every lottery's waitlist and the policy reports against them,
+ * so the page updates by itself if any of these change. Also runs the Remove profile flow.
  *
  * @param userId device id of the user to show.
  * @param userRepository where user profiles are stored.
  * @param campsiteRepository where campsites are stored, used to count the user's campsites.
  * @param lotteryRepository where lotteries are stored, used to find the user's waitlist entries.
  * @param waitlistRepository where each lottery's waitlist entries are stored.
+ * @param reportRepository where policy reports are stored, used to count the user's open reports.
  * @param currentUserId device id of the signed-in admin; their own profile can't be removed.
  * @param removal does the removal itself.
+ * @param now returns the current time, which the report window is measured back from.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdminProfileViewModel(
@@ -46,8 +50,10 @@ class AdminProfileViewModel(
     campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
     lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
+    reportRepository: ReportRepository = AppContainer.reportRepository,
     private val currentUserId: String = CurrentUser.id(),
-    private val removal: AdminRemoval = AdminRemoval()
+    private val removal: AdminRemoval = AdminRemoval(),
+    private val now: () -> Timestamp = { Timestamp.now() }
 ) : ViewModel() {
 
     private val removalState = MutableStateFlow<ProfileRemovalState>(ProfileRemovalState.Idle)
@@ -64,9 +70,10 @@ class AdminProfileViewModel(
         userRepository.observe(userId),
         campsiteRepository.observeAll(),
         entries,
+        reportRepository.observeForOwner(userId),
         removalState
-    ) { user, campsites, entries, removal ->
-        buildAdminProfileState(user, campsites, entries, currentUserId, removal)
+    ) { user, campsites, entries, reports, removal ->
+        buildAdminProfileState(user, campsites, entries, currentUserId, removal, reports, now())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AdminProfileUiState.Loading)
 
     /** Emits once each time the profile is removed, so the screen can go back to the list. */

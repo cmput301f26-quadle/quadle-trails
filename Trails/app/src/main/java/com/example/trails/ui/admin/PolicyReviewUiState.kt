@@ -215,15 +215,38 @@ fun removeOwnerImpactLine(campsiteCount: Int, entryCount: Int): String {
  */
 fun needsReviewLine(openCount: Int, oldestAt: Timestamp?, now: Timestamp): String {
     val count = if (openCount == 1) "1 policy report" else "$openCount policy reports"
-    if (oldestAt == null) return count
+    return listOfNotNull(count, oldestReportLine(oldestAt, now)).joinToString(" · ")
+}
+
+/**
+ * How long the oldest open report has waited, e.g. "Oldest report: 2 days ago".
+ *
+ * @param oldestAt when the oldest open report was filed, or null if unknown.
+ * @param now the current time.
+ * @return "Oldest report: " then "today", "1 day ago" or "n days ago", or null if [oldestAt] is null.
+ */
+fun oldestReportLine(oldestAt: Timestamp?, now: Timestamp): String? {
+    if (oldestAt == null) return null
     val days = TimeUnit.MILLISECONDS.toDays(now.toDate().time - oldestAt.toDate().time).coerceAtLeast(0)
     val ago = when (days) {
         0L -> "today"
         1L -> "1 day ago"
         else -> "$days days ago"
     }
-    return "$count · Oldest report: $ago"
+    return "Oldest report: $ago"
 }
+
+/**
+ * How many open reports from the last [REPORT_WINDOW_DAYS] days are against one owner, the same
+ * reports their Policy review page lists.
+ *
+ * @param reports reports to count; only [ownerId]'s OPEN ones inside the window are counted.
+ * @param ownerId device id of the owner.
+ * @param now the current time, which the window is measured back from.
+ * @return the number of open reports.
+ */
+fun openReportCount(reports: List<Report>, ownerId: String, now: Timestamp): Int =
+    openRecent(reports, now).count { it.ownerId == ownerId }
 
 /** Every situation the reported owners list can be in. */
 sealed interface ReportsUiState {

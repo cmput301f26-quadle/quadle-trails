@@ -1,12 +1,13 @@
-// State and display logic for the admin's Profile page (US 03.05.01) and its
-//   Remove profile dialog (US 03.02.01).
+// State and display logic for the admin's Profile page (US 03.05.01), its Remove profile
+//   dialog (US 03.02.01) and its Reports row (US 03.07.01).
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
 // Outstanding issues:
-//   - No reservation or report rows yet (Part 4).
+//   - No reservation row yet (Part 4).
 //   - The remove message doesn't mention reservations, which don't exist yet (Part 4).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Report
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.model.WaitlistEntry
@@ -30,13 +31,16 @@ sealed interface AdminProfileUiState {
      * @property isSelf true if this is the signed-in admin's own profile, which can't be removed.
      * @property lotteryEntryCount the user's waitlist entries across all lotteries.
      * @property removal where the Remove profile flow is.
+     * @property openReportCount open policy reports against the user from the last
+     *   [REPORT_WINDOW_DAYS] days, the ones their Policy review page lists.
      */
     data class Loaded(
         val user: User,
         val campsiteCount: Int,
         val isSelf: Boolean = false,
         val lotteryEntryCount: Int = 0,
-        val removal: ProfileRemovalState = ProfileRemovalState.Idle
+        val removal: ProfileRemovalState = ProfileRemovalState.Idle,
+        val openReportCount: Int = 0
     ) : AdminProfileUiState
 }
 
@@ -56,7 +60,8 @@ sealed interface ProfileRemovalState {
 }
 
 /**
- * Picks the page state from the latest user, campsites, waitlist entries and removal progress.
+ * Picks the page state from the latest user, campsites, waitlist entries, reports and removal
+ * progress.
  * Kept free of coroutines so it can be unit-tested directly.
  *
  * @param user the profile, or null if no user has the requested id.
@@ -64,6 +69,8 @@ sealed interface ProfileRemovalState {
  * @param entries waitlist entries to count; only ones whose userId is this user's are counted.
  * @param currentUserId device id of the signed-in admin, to tell if this is their own profile.
  * @param removal where the Remove profile flow is.
+ * @param reports reports to count; only this user's OPEN ones inside the report window count.
+ * @param now the current time, which the report window is measured back from.
  * @return [AdminProfileUiState.NotFound] or [AdminProfileUiState.Loaded].
  */
 fun buildAdminProfileState(
@@ -71,7 +78,9 @@ fun buildAdminProfileState(
     campsites: List<Campsite>,
     entries: List<WaitlistEntry> = emptyList(),
     currentUserId: String = "",
-    removal: ProfileRemovalState = ProfileRemovalState.Idle
+    removal: ProfileRemovalState = ProfileRemovalState.Idle,
+    reports: List<Report> = emptyList(),
+    now: Timestamp = Timestamp.now()
 ): AdminProfileUiState =
     if (user == null) AdminProfileUiState.NotFound
     else AdminProfileUiState.Loaded(
@@ -79,7 +88,8 @@ fun buildAdminProfileState(
         campsiteCount = campsites.count { it.ownerId == user.deviceId },
         isSelf = user.deviceId == currentUserId,
         lotteryEntryCount = entries.count { it.userId == user.deviceId },
-        removal = removal
+        removal = removal,
+        openReportCount = openReportCount(reports, user.deviceId, now)
     )
 
 /**

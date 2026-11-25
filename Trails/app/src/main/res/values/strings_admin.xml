@@ -18,6 +18,9 @@
     <string name="admin_profile_not_found">This profile no longer exists</string>
     <string name="admin_profile_phone">Phone</string>
     <string name="admin_profile_campsites_owned">Campsites owned</string>
+    <string name="admin_profile_reports">Reports</string>
+    <string name="admin_profile_reports_none">None</string>
+    <string name="admin_profile_reports_open">%1$d open · Review ›</string>
 
     <!-- Remove profile button and dialog (US 03.02.01) -->
     <string name="admin_profile_remove">Remove profile</string>
@@ -50,6 +53,7 @@
     <!-- Policy reports list and Policy review page (US 03.07.01) -->
     <string name="admin_reports_title">Policy reports</string>
     <string name="admin_reports_empty">No open reports</string>
+    <string name="admin_home_needs_review">Needs review</string>
     <string name="admin_policy_review_title">Policy review</string>
     <string name="admin_policy_review_not_found">This owner no longer exists</string>
     <string name="admin_policy_review_rule_label">RULE BROKEN</string>
