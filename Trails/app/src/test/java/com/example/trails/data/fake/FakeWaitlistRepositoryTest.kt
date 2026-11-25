@@ -207,31 +207,54 @@ class FakeWaitlistRepositoryTest {
     }
 
     @Test
-    fun drawNextReplacement_picksEarliestRegisteredWaitingEntrant(): Unit = runBlocking {
-        val earlierEntry = WaitlistEntry(
+    fun drawNextReplacement_picksRandomWaitingEntrant(): Unit = runBlocking {
+        val entry1 = WaitlistEntry(
             userId = "user-waiting-1",
             lotteryId = lotteryId,
             joinedAt = Timestamp(Date(1000000L)),
             status = WaitlistStatus.WAITING,
             rulesAccepted = true
         )
-        val laterEntry = WaitlistEntry(
+        val entry2 = WaitlistEntry(
             userId = "user-waiting-2",
             lotteryId = lotteryId,
             joinedAt = Timestamp(Date(2000000L)),
             status = WaitlistStatus.WAITING,
             rulesAccepted = true
         )
-        repo.save(laterEntry)
-        repo.save(earlierEntry)
+        repo.save(entry1)
+        repo.save(entry2)
 
         val replacement = repo.drawNextReplacement(lotteryId)
         assertNotNull(replacement)
-        assertEquals("user-waiting-1", replacement?.userId)
+        assertTrue(replacement?.userId in setOf("user-waiting-1", "user-waiting-2"))
         assertEquals(WaitlistStatus.WON, replacement?.status)
 
-        // Verify later entry is still WAITING
-        assertEquals(WaitlistStatus.WAITING, repo.getEntry(lotteryId, "user-waiting-2")?.status)
+        // Verify the remaining entry stays WAITING
+        val remainingUserId = if (replacement?.userId == "user-waiting-1") "user-waiting-2" else "user-waiting-1"
+        assertEquals(WaitlistStatus.WAITING, repo.getEntry(lotteryId, remainingUserId)?.status)
+    }
+
+    @Test
+    fun drawLotteryRound_drawsMultipleRandomWinners(): Unit = runBlocking {
+        for (i in 1..5) {
+            repo.save(
+                WaitlistEntry(
+                    userId = "user-$i",
+                    lotteryId = lotteryId,
+                    status = WaitlistStatus.WAITING,
+                    rulesAccepted = true
+                )
+            )
+        }
+
+        val drawn = repo.drawLotteryRound(lotteryId, 3)
+        assertEquals(3, drawn.size)
+        assertTrue(drawn.all { it.status == WaitlistStatus.WON })
+        // Remaining 2 should stay WAITING
+        val allEntries = repo.getEntriesForLottery(lotteryId)
+        assertEquals(2, allEntries.count { it.status == WaitlistStatus.WAITING })
+        assertEquals(3, allEntries.count { it.status == WaitlistStatus.WON })
     }
 
     @Test

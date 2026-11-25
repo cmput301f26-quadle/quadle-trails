@@ -237,38 +237,61 @@ class FirestoreWaitlistRepository(
     }
 
     /**
-     * Selects the next entrant in the lottery with status [WaitlistStatus.WAITING]
-     * (ordered by registration timestamp) and promotes them to [WaitlistStatus.WON].
+     * Conducts a fair random lottery draw from all remaining entrants with status [WaitlistStatus.WAITING],
+     * promoting the drawn entrant to [WaitlistStatus.WON].
      *
      * @param lotteryId the identifier of the lottery.
-     * @return the newly promoted [WaitlistEntry], or null if no waiting entrants remain.
+     * @return the newly drawn [WaitlistEntry], or null if no waiting entrants remain.
      */
     override suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry? {
-        if (lotteryId.isBlank()) return null
+        return drawLotteryRound(lotteryId, 1).firstOrNull()
+    }
+
+    /**
+     * Conducts a recurring lottery draw round, randomly drawing up to [count] replacement winners
+     * from all remaining entrants with status [WaitlistStatus.WAITING].
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @param count the number of vacant spots to fill in this lottery round.
+     * @return the list of newly drawn [WaitlistEntry] records promoted to WON.
+     */
+    override suspend fun drawLotteryRound(lotteryId: String, count: Int): List<WaitlistEntry> {
+        if (lotteryId.isBlank() || count <= 0) return emptyList()
         val querySnapshot = entriesCollection(lotteryId)
             .whereEqualTo("status", WaitlistStatus.WAITING.name)
             .get()
             .await()
 
-        val nextWaitingDoc = querySnapshot.documents
+        val waitingEntries = querySnapshot.documents
             .mapNotNull { it.toObject(WaitlistEntry::class.java) }
-            .minByOrNull { it.joinedAt?.toDate() ?: Date(Long.MAX_VALUE) }
-            ?: return null
 
-        val docRef = entriesCollection(lotteryId).document(nextWaitingDoc.userId)
-        docRef.update("status", WaitlistStatus.WON.name).await()
-        return docRef.get().await().toObject(WaitlistEntry::class.java)
+        if (waitingEntries.isEmpty()) return emptyList()
+
+        // Fair random lottery draw across all waiting entrants
+        val drawn = waitingEntries.shuffled().take(count)
+        val promoted = mutableListOf<WaitlistEntry>()
+
+        for (entry in drawn) {
+            val docRef = entriesCollection(lotteryId).document(entry.userId)
+            docRef.update("status", WaitlistStatus.WON.name).await()
+            docRef.get().await().toObject(WaitlistEntry::class.java)?.let {
+                promoted.add(it)
+            }
+        }
+
+        return promoted
     }
 
     /**
-     * Declines a won lottery invitation for an entrant and immediately draws the next replacement entrant.
+     * Declines a won lottery invitation for an entrant and immediately executes a new lottery draw
+     * to pick a random replacement winner from the remaining waiting pool.
      *
-     * Updates [userId]'s status to [WaitlistStatus.DECLINED], then draws the next
-     * waiting entrant to preserve full winner capacity without requiring manual organizer redrawing.
+     * Updates [userId]'s status to [WaitlistStatus.DECLINED], then runs a random draw across all
+     * waiting entrants to preserve full winner capacity.
      *
      * @param lotteryId the identifier of the lottery.
      * @param userId the identifier of the declining entrant.
-     * @return the replacement [WaitlistEntry] promoted to WON, or null if no waiting entrants remain.
+     * @return the randomly drawn replacement [WaitlistEntry] promoted to WON, or null if no waiting entrants remain.
      */
     override suspend fun autoRollOnDecline(lotteryId: String, userId: String): WaitlistEntry? {
         if (lotteryId.isBlank() || userId.isBlank()) return null
@@ -278,22 +301,20 @@ class FirestoreWaitlistRepository(
 
     /**
      * Reconciles expired invitations for a lottery by transitioning stale WON entries to DECLINED
-     * and rolling those slots to waiting entrants.
+     * and running a recurring lottery draw to fill all freed slots randomly from the waiting pool.
      *
      * @param lotteryId the identifier of the lottery.
      * @param expiredUserIds the list of user identifiers whose invitation acceptance deadline has lapsed.
-     * @return the list of newly promoted replacement [WaitlistEntry] records.
+     * @return the list of newly drawn replacement [WaitlistEntry] records.
      */
     override suspend fun reconcileExpiredInvites(
         lotteryId: String,
         expiredUserIds: List<String>
     ): List<WaitlistEntry> {
         if (lotteryId.isBlank()) return emptyList()
-        val replacements = mutableListOf<WaitlistEntry>()
         for (userId in expiredUserIds) {
             updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
-            drawNextReplacement(lotteryId)?.let { replacements.add(it) }
         }
-        return replacements
+        return drawLotteryRound(lotteryId, expiredUserIds.size)
     }
 }

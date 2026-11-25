@@ -131,15 +131,26 @@ class FakeWaitlistRepository(
         return updated
     }
 
-    override suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry? {
-        checkFailure()
-        val waitingEntry = entries.value
-            .filter { it.lotteryId == lotteryId && it.status == WaitlistStatus.WAITING }
-            .minByOrNull { it.joinedAt?.toDate() ?: Date(Long.MAX_VALUE) }
-            ?: return null
+    /** Random instance used for lottery draws; tests can supply a seeded random for determinism. */
+    var random: kotlin.random.Random = kotlin.random.Random.Default
 
-        val promoted = waitingEntry.copy(status = WaitlistStatus.WON)
-        save(promoted)
+    override suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry? {
+        return drawLotteryRound(lotteryId, 1).firstOrNull()
+    }
+
+    override suspend fun drawLotteryRound(lotteryId: String, count: Int): List<WaitlistEntry> {
+        checkFailure()
+        if (count <= 0) return emptyList()
+
+        val waitingEntries = entries.value
+            .filter { it.lotteryId == lotteryId && it.status == WaitlistStatus.WAITING }
+
+        if (waitingEntries.isEmpty()) return emptyList()
+
+        // Fair random lottery draw across the remaining waiting pool
+        val drawn = waitingEntries.shuffled(random).take(count)
+        val promoted = drawn.map { it.copy(status = WaitlistStatus.WON) }
+        promoted.forEach { save(it) }
         return promoted
     }
 
@@ -154,11 +165,9 @@ class FakeWaitlistRepository(
         expiredUserIds: List<String>
     ): List<WaitlistEntry> {
         checkFailure()
-        val replacements = mutableListOf<WaitlistEntry>()
         for (userId in expiredUserIds) {
             updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
-            drawNextReplacement(lotteryId)?.let { replacements.add(it) }
         }
-        return replacements
+        return drawLotteryRound(lotteryId, expiredUserIds.size)
     }
 }

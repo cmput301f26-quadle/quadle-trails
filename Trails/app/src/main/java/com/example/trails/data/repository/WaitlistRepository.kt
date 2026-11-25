@@ -129,7 +129,7 @@ interface WaitlistRepository {
         status: WaitlistStatus
     ): WaitlistEntry?
 
-    // --- Rolling Lottery (Auto-refill and invite recycling) ---
+    // --- Rolling Lottery (Fair random re-draws and invite recycling) ---
     // NOTE FOR TEAMMATES:
     // - Skanda (Organizer Lottery Screens): observeForLottery automatically streams newly promoted
     //   replacement winners when an entrant declines, so your entrant counts update in real time.
@@ -137,33 +137,44 @@ interface WaitlistRepository {
     //   WAITING to WON, which triggers observeEntry to emit win notifications.
 
     /**
-     * Selects the next entrant in the lottery with status [WaitlistStatus.WAITING]
-     * (ordered by registration timestamp) and promotes them to [WaitlistStatus.WON].
+     * Conducts a fair random lottery draw from all remaining entrants with status [WaitlistStatus.WAITING],
+     * promoting the drawn entrant to [WaitlistStatus.WON].
      *
      * @param lotteryId the identifier of the lottery.
-     * @return the newly promoted [WaitlistEntry], or null if no waiting entrants remain.
+     * @return the newly drawn [WaitlistEntry], or null if no waiting entrants remain.
      */
     suspend fun drawNextReplacement(lotteryId: String): WaitlistEntry?
 
     /**
-     * Declines a won lottery invitation for an entrant and immediately draws the next replacement entrant.
+     * Conducts a recurring lottery draw round, randomly drawing up to [count] replacement winners
+     * from all remaining entrants with status [WaitlistStatus.WAITING].
      *
-     * Updates [userId]'s status to [WaitlistStatus.DECLINED], then draws the next
-     * waiting entrant to preserve full winner capacity without requiring manual organizer redrawing.
+     * @param lotteryId the identifier of the lottery.
+     * @param count the number of vacant spots to fill in this lottery round.
+     * @return the list of newly drawn [WaitlistEntry] records promoted to WON.
+     */
+    suspend fun drawLotteryRound(lotteryId: String, count: Int): List<WaitlistEntry>
+
+    /**
+     * Declines a won lottery invitation for an entrant and immediately executes a new lottery draw
+     * to pick a random replacement winner from the remaining waiting pool.
+     *
+     * Updates [userId]'s status to [WaitlistStatus.DECLINED], then runs a random draw across all
+     * waiting entrants to preserve full winner capacity.
      *
      * @param lotteryId the identifier of the lottery.
      * @param userId the identifier of the declining entrant.
-     * @return the replacement [WaitlistEntry] promoted to WON, or null if no waiting entrants remain.
+     * @return the randomly drawn replacement [WaitlistEntry] promoted to WON, or null if no waiting entrants remain.
      */
     suspend fun autoRollOnDecline(lotteryId: String, userId: String): WaitlistEntry?
 
     /**
      * Reconciles expired invitations for a lottery by transitioning stale WON entries to DECLINED
-     * and rolling those slots to waiting entrants.
+     * and running a recurring lottery draw to fill all freed slots randomly from the waiting pool.
      *
      * @param lotteryId the identifier of the lottery.
      * @param expiredUserIds the list of user identifiers whose invitation acceptance deadline has lapsed.
-     * @return the list of newly promoted replacement [WaitlistEntry] records.
+     * @return the list of newly drawn replacement [WaitlistEntry] records.
      */
     suspend fun reconcileExpiredInvites(lotteryId: String, expiredUserIds: List<String>): List<WaitlistEntry>
 }
