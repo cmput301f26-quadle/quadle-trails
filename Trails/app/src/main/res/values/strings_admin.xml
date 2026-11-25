@@ -27,7 +27,7 @@
     <string name="admin_profile_remove_title">Remove profile?</string>
     <string name="admin_profile_remove_error">Couldn\'t remove this profile. Please try again.</string>
 
-    <!-- Shared Remove dialog buttons (US 03.01.01, 03.02.01, 03.09.01) -->
+    <!-- Shared Remove dialog buttons (US 03.01.01, 03.02.01, 03.09.01, 03.10.01) -->
     <string name="admin_remove_cancel">Cancel</string>
     <string name="admin_remove_confirm">Remove</string>
 
@@ -56,6 +56,12 @@
     <string name="admin_campsite_remove_rating">Remove rating</string>
     <string name="admin_campsite_remove_rating_title">Remove rating?</string>
     <string name="admin_campsite_remove_rating_error">Couldn\'t remove this rating. Please try again.</string>
+
+    <!-- Remove review button, dialog and removed line on the admin Campsite page (US 03.10.01) -->
+    <string name="admin_campsite_remove_review">Remove review</string>
+    <string name="admin_campsite_remove_review_title">Remove review?</string>
+    <string name="admin_campsite_remove_review_error">Couldn\'t remove this review. Please try again.</string>
+    <string name="admin_campsite_review_removed">Review removed for breaking the app policy</string>
 
     <!-- Policy reports list and Policy review page (US 03.07.01) -->
     <string name="admin_reports_title">Policy reports</string>
@@ -86,4 +92,6 @@
     <string name="rating_submit">Submit rating</string>
     <string name="rating_cancel">Cancel</string>
     <string name="rating_error">Couldn\'t save your rating. Please try again.</string>
+    <!-- Shown on the user's own rating after an admin removed their review (US 03.10.01) -->
+    <string name="rating_review_removed">Your review was removed for breaking the app policy.</string>
 </resources>

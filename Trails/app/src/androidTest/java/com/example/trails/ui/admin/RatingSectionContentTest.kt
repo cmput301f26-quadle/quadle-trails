@@ -1,6 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01
-// PURPOSE: UI (intent) tests for the rating section on a campsite's details page.
+// USER STORIES: 01.13.01, 03.10.01
+// PURPOSE: UI (intent) tests for the rating section on a campsite's details page,
+//   including the line shown after an admin removed the user's review.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
@@ -67,5 +68,16 @@ class RatingSectionContentTest {
         show(RatingSectionUiState(canRate = true), onRateClick = { clicked = true })
         composeRule.onNodeWithTag(RatingTags.RATE_BUTTON).performClick()
         assertTrue(clicked)
+    }
+
+    // This checks that after an admin removed the user's review, the removed line shows under their stars
+    // instead of the text, and they can still edit their rating.
+    @Test
+    fun removedReview_showsRemovedLine() {
+        show(RatingSectionUiState(canRate = true, myRating = priyasRating.copy(review = "", reviewRemoved = true)))
+        composeRule.onNodeWithTag(RatingTags.REVIEW_REMOVED).assertIsDisplayed()
+        composeRule.onNodeWithText("Your review was removed for breaking the app policy.").assertIsDisplayed()
+        composeRule.onNodeWithText(priyasRating.review).assertDoesNotExist()
+        composeRule.onNodeWithTag(RatingTags.EDIT_BUTTON).assertIsDisplayed()
     }
 }

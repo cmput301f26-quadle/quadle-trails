@@ -1,9 +1,10 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: Unit tests for AdminRemoval, which removes a campsite or a user
 //   profile together with the campsites, lotteries and waitlist entries that
 //   depend on it, closes policy reports against a reviewed owner, and removes
-//   single ratings while keeping the campsite's average and count right.
+//   single ratings while keeping the campsite's average and count right, or
+//   only a rating's review text while keeping its stars.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
@@ -419,5 +420,54 @@ class AdminRemovalTest {
         assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
         assertEquals(pinesRated, campsites.getById("jasper-pines"))
         assertEquals(wapitiFlats, campsites.getById("wapiti-flats"))
+    }
+
+    // ---- Remove review (US 03.10.01) ----
+
+    // This checks that removing a review empties the text and marks it removed, but keeps the score and date.
+    @Test
+    fun removeReview_clearsTextKeepsScore() = runBlocking {
+        val result = removal.removeReview("tunnel-mountain", "device-priya")
+        assertTrue(result.isSuccess)
+        val saved = ratings.getRating("tunnel-mountain", "device-priya")!!
+        assertEquals("", saved.review)
+        assertTrue(saved.reviewRemoved)
+        assertEquals(priyaTunnelRating.copy(review = "", reviewRemoved = true), saved)
+        assertEquals(1, saved.score)
+        assertEquals(priyaTunnelRating.createdAt, saved.createdAt)
+    }
+
+    // This checks that removing a review leaves the campsite's average, count and the other ratings as they were.
+    @Test
+    fun removeReview_averageUnchanged() = runBlocking {
+        removal.removeReview("tunnel-mountain", "device-priya")
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
+        val stats = ratingStats(ratings.observeForCampsite("tunnel-mountain").first())
+        assertEquals(10.0 / 3, stats.average, 0.0001)
+        assertEquals(3, stats.count)
+        assertEquals(avaTunnelRating, ratings.getRating("tunnel-mountain", "device-ava"))
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
+    }
+
+    // This checks that a rating with no review text can't have its review removed, and is left as it was.
+    @Test
+    fun removeReview_noReviewText_fails() = runBlocking {
+        val starsOnly = rating("jasper-pines", "device-jordan", 2, "")
+        ratings.save(starsOnly)
+        assertTrue(removal.removeReview("jasper-pines", "device-jordan").isFailure)
+        assertEquals(starsOnly, ratings.getRating("jasper-pines", "device-jordan"))
+
+        removal.removeReview("tunnel-mountain", "device-priya")
+        assertTrue(removal.removeReview("tunnel-mountain", "device-priya").isFailure)
+    }
+
+    // This checks that removing the review of a rating that doesn't exist fails and changes nothing.
+    @Test
+    fun removeReview_missing_fails() = runBlocking {
+        assertTrue(removal.removeReview("tunnel-mountain", "device-jordan").isFailure)
+        assertTrue(removal.removeReview("no-such-site", "device-priya").isFailure)
+        assertNull(ratings.getRating("tunnel-mountain", "device-jordan"))
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(tunnelRated, campsites.getById("tunnel-mountain"))
     }
 }

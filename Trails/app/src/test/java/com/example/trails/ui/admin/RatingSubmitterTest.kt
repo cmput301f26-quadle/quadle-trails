@@ -1,6 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01
-// PURPOSE: Unit tests for RatingSubmitter, which saves ratings and updates campsite stats.
+// USER STORIES: 01.13.01, 03.10.01
+// PURPOSE: Unit tests for RatingSubmitter, which saves ratings and updates campsite stats,
+//   and clears an admin's review removal once the user writes a new review.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
@@ -8,9 +9,11 @@ package com.example.trails.ui.admin
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeRatingRepository
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Rating
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -124,5 +127,21 @@ class RatingSubmitterTest {
 
         submitter.submit("jasper-pines", "device-ava", 4, "  Nice and quiet.  ")
         assertEquals("Nice and quiet.", ratings.getRating("jasper-pines", "device-ava")!!.review)
+    }
+
+    // This checks that after an admin removed the review, editing only the stars keeps it marked removed,
+    // and writing a new review clears the mark.
+    @Test
+    fun newReview_clearsReviewRemoved() = runBlocking {
+        ratings.save(Rating(userId = "device-ava", campsiteId = "jasper-pines", score = 1, reviewRemoved = true))
+
+        submitter.submit("jasper-pines", "device-ava", 2, "   ")
+        assertTrue(ratings.getRating("jasper-pines", "device-ava")!!.reviewRemoved)
+
+        submitter.submit("jasper-pines", "device-ava", 3, "Came back, the site was tidy this time.")
+        val saved = ratings.getRating("jasper-pines", "device-ava")!!
+        assertFalse(saved.reviewRemoved)
+        assertEquals("Came back, the site was tidy this time.", saved.review)
+        assertEquals(3, saved.score)
     }
 }

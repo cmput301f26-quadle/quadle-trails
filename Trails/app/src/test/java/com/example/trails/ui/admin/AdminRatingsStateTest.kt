@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.09.01
+// USER STORIES: 03.09.01, 03.10.01
 // PURPOSE: Unit tests for the admin Campsite page's "Ratings & reviews" state and
-//   the "Remove rating?" dialog text.
+//   the "Remove rating?" and "Remove review?" dialog text.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
@@ -84,6 +84,15 @@ class AdminRatingsStateTest {
             "Unknown user's 1-star rating is removed and the campsite's average is updated. " +
                 "This can't be undone.",
             removeRatingMessage("Unknown user", 1)
+        )
+    }
+
+    // This checks that the "Remove review?" text names the reviewer, says the stars stay and that it can't be undone.
+    @Test
+    fun removeReviewMessage_namesReviewer() {
+        assertEquals(
+            "Priya Sharma's review text is removed. Their star rating stays. This can't be undone.",
+            removeReviewMessage("Priya Sharma")
         )
     }
 }

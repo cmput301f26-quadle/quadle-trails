@@ -1,8 +1,8 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.09.01
+// USER STORIES: 03.09.01, 03.10.01
 // PURPOSE: State and display logic for the "Ratings & reviews" section on the
-//   admin's Campsite page, where an administrator removes ratings that violate
-//   app policy.
+//   admin's Campsite page, where an administrator removes ratings, or only their
+//   review text, when they violate app policy.
 // Outstanding issues:
 //   - There is no way for campers to flag a rating yet, so the admin reads
 //     every rating to find the ones that break policy.
@@ -29,16 +29,20 @@ data class AdminRatingItem(
 )
 
 /**
- * Progress of removing one rating. The dialog is open while [confirmingUserId] is set.
+ * Progress of removing one rating, or only its review text. The dialog is open while
+ * [confirmingUserId] is set.
  *
- * @property confirmingUserId reviewer whose rating the "Remove rating?" dialog is about, or null.
+ * @property confirmingUserId reviewer whose rating the dialog is about, or null.
  * @property removing true while the removal runs; the dialog buttons are disabled.
  * @property failed true if the last attempt failed, so an error message is shown.
+ * @property reviewOnly true when the admin is removing only the review text (US 03.10.01), so
+ *   the "Remove review?" dialog and error are shown instead of the rating ones.
  */
 data class AdminRatingRemoveState(
     val confirmingUserId: String? = null,
     val removing: Boolean = false,
-    val failed: Boolean = false
+    val failed: Boolean = false,
+    val reviewOnly: Boolean = false
 )
 
 /**
@@ -79,3 +83,12 @@ fun buildAdminRatingItems(
 fun removeRatingMessage(reviewerName: String, score: Int): String =
     "$reviewerName's $score-star rating is removed and the campsite's average is updated. " +
         "This can't be undone."
+
+/**
+ * The body of the "Remove review?" dialog (US 03.10.01).
+ *
+ * @param reviewerName who wrote the review.
+ * @return e.g. "Priya Sharma's review text is removed. Their star rating stays. This can't be undone."
+ */
+fun removeReviewMessage(reviewerName: String): String =
+    "$reviewerName's review text is removed. Their star rating stays. This can't be undone."

@@ -1,7 +1,8 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.09.01
+// USER STORIES: 03.01.01, 03.09.01, 03.10.01
 // PURPOSE: Controller for the admin's Campsite page: loads one campsite with its
-//   ratings, and runs the removal of the campsite or of a single rating.
+//   ratings, and runs the removal of the campsite, of a single rating, or of
+//   only a rating's review text.
 // Outstanding issues:
 //   - The entry count refreshes when the campsite, users or lotteries change,
 //     not when someone joins or leaves a waitlist.
@@ -29,7 +30,7 @@ import kotlinx.coroutines.launch
 /**
  * Controller for [AdminCampsiteScreen]: watches one campsite by id, every user (for the owner's
  * and reviewers' names), every lottery (for the removal counts) and the campsite's ratings, and
- * removes the campsite or one rating on request.
+ * removes the campsite, one rating, or one rating's review text on request.
  *
  * @param campsiteId id of the campsite to show.
  * @param campsiteRepository where campsites are stored.
@@ -94,7 +95,21 @@ class AdminCampsiteViewModel(
         _ratingRemoveState.value = AdminRatingRemoveState(confirmingUserId = userId)
     }
 
-    /** Closes the "Remove rating?" dialog without removing anything; ignored while a removal runs. */
+    /**
+     * Opens the "Remove review?" dialog for one reviewer's review text (US 03.10.01); ignored
+     * while a removal runs.
+     *
+     * @param userId device id of the reviewer whose review text the admin wants to remove.
+     */
+    fun onRemoveReviewClick(userId: String) {
+        if (_ratingRemoveState.value.removing) return
+        _ratingRemoveState.value = AdminRatingRemoveState(confirmingUserId = userId, reviewOnly = true)
+    }
+
+    /**
+     * Closes the "Remove rating?" or "Remove review?" dialog without removing anything; ignored
+     * while a removal runs.
+     */
     fun onDismiss() {
         _ratingRemoveState.update { if (it.removing) it else it.copy(confirmingUserId = null) }
     }
@@ -107,11 +122,27 @@ class AdminCampsiteViewModel(
     fun onConfirmRemoveRating() {
         val current = _ratingRemoveState.value
         val userId = current.confirmingUserId ?: return
-        if (current.removing) return
+        if (current.removing || current.reviewOnly) return
         _ratingRemoveState.value = current.copy(removing = true, failed = false)
         viewModelScope.launch {
             val result = removal.removeRating(campsiteId, userId)
             _ratingRemoveState.value = AdminRatingRemoveState(failed = result.isFailure)
+        }
+    }
+
+    /**
+     * Removes the review text the "Remove review?" dialog is about after the admin confirmed
+     * (US 03.10.01). The dialog closes when it finishes; on failure an error message is shown.
+     * Ignored if no review is being confirmed or a removal is already running.
+     */
+    fun onConfirmRemoveReview() {
+        val current = _ratingRemoveState.value
+        val userId = current.confirmingUserId ?: return
+        if (current.removing || !current.reviewOnly) return
+        _ratingRemoveState.value = current.copy(removing = true, failed = false)
+        viewModelScope.launch {
+            val result = removal.removeReview(campsiteId, userId)
+            _ratingRemoveState.value = AdminRatingRemoveState(failed = result.isFailure, reviewOnly = true)
         }
     }
 }

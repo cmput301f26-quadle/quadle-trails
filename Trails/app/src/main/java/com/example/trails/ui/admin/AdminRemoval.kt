@@ -1,11 +1,11 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: Removes campsites and user profiles an administrator takes down,
 //   and everything that depends on them, so no lottery or waitlist entry is
 //   left pointing at something that no longer exists. Also closes policy
 //   reports when the admin removes a reported owner or dismisses the reports,
 //   and removes single ratings that break app policy, keeping the campsite's
-//   average and count in step.
+//   average and count in step, or only a rating's review text, keeping its stars.
 // Outstanding issues:
 //   - Reservations and notifications to affected guests don't exist yet (Part 4).
 //   - The removed campsite's ratings stay in storage.
@@ -184,6 +184,23 @@ class AdminRemoval(
             ?: throw IllegalArgumentException("Rating not found")
         ratingRepository.delete(campsiteId, userId)
         syncRatingStats(campsite, ratingRepository, campsiteRepository)
+    }
+
+    /**
+     * Removes the written review of one rating that violates app policy (US 03.10.01). The
+     * rating is saved again with an empty review and reviewRemoved set; its score and createdAt
+     * stay, so the campsite's ratingAverage and ratingCount don't change and aren't rewritten.
+     *
+     * @param campsiteId id of the rated campsite.
+     * @param userId device id of the reviewer whose review text is removed.
+     * @return success, or a failure (with nothing changed) if the rating doesn't exist or has
+     *   no review text, or a failure if the write fails.
+     */
+    suspend fun removeReview(campsiteId: String, userId: String): Result<Unit> = runCatching {
+        val rating = ratingRepository.getRating(campsiteId, userId)
+            ?: throw IllegalArgumentException("Rating not found")
+        require(rating.review.isNotBlank()) { "Rating has no review text" }
+        ratingRepository.save(rating.copy(review = "", reviewRemoved = true))
     }
 
     /** Every lottery whose campsiteIds include [campsiteId]. */

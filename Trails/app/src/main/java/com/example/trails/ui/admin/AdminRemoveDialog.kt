@@ -1,8 +1,9 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01
+// USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: The "Remove ...?" confirmation dialog and the muted red Remove button
 //   shared by the admin Campsite, Profile and Policy review pages (Figma Scenario 8), so they all look the same;
-//   the Remove rating dialog on the Campsite page uses it too (US 03.09.01).
+//   the Remove rating and Remove review dialogs on the Campsite page use it too
+//   (US 03.09.01, 03.10.01).
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 

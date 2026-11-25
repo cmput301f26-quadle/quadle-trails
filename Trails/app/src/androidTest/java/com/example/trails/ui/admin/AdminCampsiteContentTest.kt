@@ -1,7 +1,7 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.09.01
+// USER STORIES: 03.01.01, 03.09.01, 03.10.01
 // PURPOSE: UI (intent) tests for the admin Campsite page, its Remove campsite dialog,
-//   and its Ratings & reviews section with the Remove rating dialog.
+//   and its Ratings & reviews section with the Remove rating and Remove review dialogs.
 // Outstanding issues: none.
 package com.example.trails.ui.admin
 
@@ -244,5 +244,90 @@ class AdminCampsiteContentTest {
         composeRule.onNodeWithTag(AdminCampsiteTags.RATING_ERROR, useUnmergedTree = true).assertExists()
         composeRule.onNodeWithText("Couldn't remove this rating. Please try again.", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(AdminCampsiteTags.RATING_DIALOG).assertDoesNotExist()
+    }
+
+    // ---- Remove review (US 03.10.01) ----
+
+    private val removedRating = AdminRatingItem(
+        Rating(userId = "device-omar", campsiteId = "campsite-banff-tunnel", score = 2, reviewRemoved = true),
+        reviewerName = "Omar Haddad",
+        dateLabel = "Aug 30, 2026"
+    )
+
+    /**
+     * Shows the page with a small stand-in for the ViewModel, so tapping Remove review really opens
+     * the "Remove review?" dialog. Returns the reviewer ids confirmed as review removals and as
+     * rating removals.
+     */
+    private fun showReviewsInteractive(): Pair<MutableList<String>, MutableList<String>> {
+        val reviewConfirms = mutableListOf<String>()
+        val ratingConfirms = mutableListOf<String>()
+        composeRule.setContent {
+            var removeState by remember { mutableStateOf(AdminRatingRemoveState()) }
+            TrailsTheme {
+                AdminCampsiteContent(
+                    withRatings, AdminCampsiteRemoveState(), onBack = {}, onOpenPublicPage = {}, onConfirmRemove = {},
+                    ratingRemoveState = removeState,
+                    onRemoveRatingClick = { removeState = AdminRatingRemoveState(confirmingUserId = it) },
+                    onDismissRemoveRating = { removeState = AdminRatingRemoveState() },
+                    onConfirmRemoveRating = { removeState.confirmingUserId?.let(ratingConfirms::add) },
+                    onRemoveReviewClick = { removeState = AdminRatingRemoveState(confirmingUserId = it, reviewOnly = true) },
+                    onConfirmRemoveReview = { removeState.confirmingUserId?.let(reviewConfirms::add) }
+                )
+            }
+        }
+        return reviewConfirms to ratingConfirms
+    }
+
+    // This checks that a rating with review text has a Remove review button next to Remove rating.
+    @Test
+    fun reviewText_showsRemoveReviewButton() {
+        showRatings(AdminRatingRemoveState())
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeReview("device-priya"), useUnmergedTree = true).assertExists()
+        inCard("device-priya", hasText("Remove review")).assertExists()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeRating("device-priya"), useUnmergedTree = true).assertExists()
+    }
+
+    // This checks that a rating with only stars has no Remove review button but still has Remove rating.
+    @Test
+    fun noReviewText_hidesRemoveReviewButton() {
+        showRatings(AdminRatingRemoveState())
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeReview("device-ava"), useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeRating("device-ava"), useUnmergedTree = true).assertExists()
+    }
+
+    // This checks that a review an admin already removed shows the muted removed line instead of text,
+    // with no Remove review button, while the stars and Remove rating stay.
+    @Test
+    fun reviewRemoved_showsRemovedLine() {
+        showRatings(AdminRatingRemoveState(), state = loaded.copy(ratings = listOf(removedRating)))
+        composeRule.onNodeWithTag(AdminCampsiteTags.reviewRemoved("device-omar"), useUnmergedTree = true)
+            .assertTextEquals("Review removed for breaking the app policy")
+        inCard("device-omar", hasContentDescription("2 out of 5 stars")).assertExists()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeReview("device-omar"), useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeRating("device-omar"), useUnmergedTree = true).assertExists()
+    }
+
+    // This checks that tapping Remove review opens the "Remove review?" dialog naming the reviewer.
+    @Test
+    fun tapRemoveReview_showsDialog() {
+        showReviewsInteractive()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeReview("device-priya"), useUnmergedTree = true).performScrollTo().performClick()
+        composeRule.onNodeWithText("Remove review?").assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminCampsiteTags.REVIEW_DIALOG_MESSAGE).assertTextEquals(
+            "Priya Sharma's review text is removed. Their star rating stays. This can't be undone."
+        )
+        composeRule.onNodeWithTag(AdminCampsiteTags.RATING_DIALOG).assertDoesNotExist()
+    }
+
+    // This checks that tapping Remove in the "Remove review?" dialog confirms a review removal for that
+    // reviewer, once, and not a rating removal.
+    @Test
+    fun dialogRemove_reportsConfirmReview() {
+        val (reviewConfirms, ratingConfirms) = showReviewsInteractive()
+        composeRule.onNodeWithTag(AdminCampsiteTags.removeReview("device-priya"), useUnmergedTree = true).performScrollTo().performClick()
+        composeRule.onNodeWithTag(AdminCampsiteTags.REVIEW_DIALOG_REMOVE).performClick()
+        assertEquals(listOf("device-priya"), reviewConfirms)
+        assertTrue(ratingConfirms.isEmpty())
     }
 }

@@ -1,9 +1,10 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.01.01, 03.09.01
+// USER STORIES: 03.01.01, 03.09.01, 03.10.01
 // PURPOSE: Admin's view of one campsite, opened from the Campsites list, with a
 //   Remove campsite button and confirmation dialog (Figma Scenario 8 · Remove campsite?),
-//   and a Ratings & reviews section where each rating can be removed (US 03.09.01; no
-//   Figma mockup, so it follows this page's card style).
+//   and a Ratings & reviews section where each rating can be removed (US 03.09.01), or
+//   only its review text, keeping the stars (US 03.10.01). No Figma mockup for either,
+//   so they follow this page's card style.
 // Outstanding issues:
 //   - Guests with reservations aren't notified, since reservations and
 //     notifications don't exist yet (Part 4).
@@ -97,6 +98,8 @@ fun AdminCampsiteScreen(
         onRemoveRatingClick = viewModel::onRemoveRatingClick,
         onDismissRemoveRating = viewModel::onDismiss,
         onConfirmRemoveRating = viewModel::onConfirmRemoveRating,
+        onRemoveReviewClick = viewModel::onRemoveReviewClick,
+        onConfirmRemoveReview = viewModel::onConfirmRemoveReview,
         modifier = modifier
     )
 }
@@ -114,8 +117,11 @@ fun AdminCampsiteScreen(
  * @param onConfirmRemove called when the admin taps Remove in the dialog.
  * @param ratingRemoveState which rating the "Remove rating?" dialog is about and its progress.
  * @param onRemoveRatingClick called with the reviewer's device id when "Remove rating" is tapped.
- * @param onDismissRemoveRating called when Cancel is tapped in the "Remove rating?" dialog.
+ * @param onDismissRemoveRating called when Cancel is tapped in the "Remove rating?" or
+ *   "Remove review?" dialog.
  * @param onConfirmRemoveRating called when Remove is tapped in the "Remove rating?" dialog.
+ * @param onRemoveReviewClick called with the reviewer's device id when "Remove review" is tapped.
+ * @param onConfirmRemoveReview called when Remove is tapped in the "Remove review?" dialog.
  */
 @Composable
 fun AdminCampsiteContent(
@@ -128,7 +134,9 @@ fun AdminCampsiteContent(
     ratingRemoveState: AdminRatingRemoveState = AdminRatingRemoveState(),
     onRemoveRatingClick: (String) -> Unit = {},
     onDismissRemoveRating: () -> Unit = {},
-    onConfirmRemoveRating: () -> Unit = {}
+    onConfirmRemoveRating: () -> Unit = {},
+    onRemoveReviewClick: (String) -> Unit = {},
+    onConfirmRemoveReview: () -> Unit = {}
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     Scaffold(
@@ -164,7 +172,8 @@ fun AdminCampsiteContent(
                         ratingRemoveState = ratingRemoveState,
                         onOpenPublicPage = { onOpenPublicPage(state.campsite.id) },
                         onRemove = { showDialog = true },
-                        onRemoveRating = onRemoveRatingClick
+                        onRemoveRating = onRemoveRatingClick,
+                        onRemoveReview = onRemoveReviewClick
                     )
                     if (showDialog || removeState.removing) {
                         AdminRemoveDialog(
@@ -182,7 +191,16 @@ fun AdminCampsiteContent(
                         )
                     }
                     val confirming = state.ratings.find { it.rating.userId == ratingRemoveState.confirmingUserId }
-                    if (confirming != null) {
+                    if (confirming != null && ratingRemoveState.reviewOnly) {
+                        AdminRemoveDialog(
+                            title = stringResource(R.string.admin_campsite_remove_review_title),
+                            message = removeReviewMessage(confirming.reviewerName),
+                            removing = ratingRemoveState.removing,
+                            tags = AdminCampsiteTags.reviewDialogTags,
+                            onCancel = onDismissRemoveRating,
+                            onRemove = onConfirmRemoveReview
+                        )
+                    } else if (confirming != null) {
                         AdminRemoveDialog(
                             title = stringResource(R.string.admin_campsite_remove_rating_title),
                             message = removeRatingMessage(confirming.reviewerName, confirming.rating.score),
@@ -209,7 +227,8 @@ private fun CampsiteDetails(
     ratingRemoveState: AdminRatingRemoveState,
     onOpenPublicPage: () -> Unit,
     onRemove: () -> Unit,
-    onRemoveRating: (String) -> Unit
+    onRemoveRating: (String) -> Unit,
+    onRemoveReview: (String) -> Unit
 ) {
     val campsite = state.campsite
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
@@ -239,7 +258,7 @@ private fun CampsiteDetails(
             )
             Spacer(Modifier.height(16.dp))
             InfoCard(state)
-            RatingsSection(state.ratings, ratingRemoveState, onRemoveRating)
+            RatingsSection(state.ratings, ratingRemoveState, onRemoveRating, onRemoveReview)
             TextButton(
                 onClick = onOpenPublicPage,
                 modifier = Modifier.testTag(AdminCampsiteTags.OPEN_PUBLIC)
@@ -305,12 +324,14 @@ private fun InfoCard(state: AdminCampsiteUiState.Loaded) {
  * @param ratings the campsite's ratings, newest first.
  * @param removeState used to disable the Remove rating buttons and show the error.
  * @param onRemoveRating called with the reviewer's device id when Remove rating is tapped.
+ * @param onRemoveReview called with the reviewer's device id when Remove review is tapped.
  */
 @Composable
 private fun RatingsSection(
     ratings: List<AdminRatingItem>,
     removeState: AdminRatingRemoveState,
-    onRemoveRating: (String) -> Unit
+    onRemoveRating: (String) -> Unit,
+    onRemoveReview: (String) -> Unit
 ) {
     Column(
         Modifier
@@ -322,7 +343,10 @@ private fun RatingsSection(
         Text(stringResource(R.string.admin_campsite_ratings_heading), style = MaterialTheme.typography.titleMedium)
         if (removeState.failed) {
             Text(
-                stringResource(R.string.admin_campsite_remove_rating_error),
+                stringResource(
+                    if (removeState.reviewOnly) R.string.admin_campsite_remove_review_error
+                    else R.string.admin_campsite_remove_rating_error
+                ),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.testTag(AdminCampsiteTags.RATING_ERROR)
@@ -337,21 +361,34 @@ private fun RatingsSection(
             )
         }
         ratings.forEach { item ->
-            RatingCard(item, enabled = !removeState.removing, onRemove = { onRemoveRating(item.rating.userId) })
+            RatingCard(
+                item,
+                enabled = !removeState.removing,
+                onRemove = { onRemoveRating(item.rating.userId) },
+                onRemoveReview = { onRemoveReview(item.rating.userId) }
+            )
         }
     }
 }
 
 /**
- * One rating: reviewer and date, stars, the review if there is one, and a small muted red
- * "Remove rating" button. Same card style as the info card.
+ * One rating: reviewer and date, stars, the review if there is one, and small muted red
+ * "Remove review" (only when there is review text, US 03.10.01) and "Remove rating" buttons.
+ * A review an admin already removed shows a muted "Review removed ..." line instead of the text.
+ * Same card style as the info card.
  *
  * @param item the rating to show.
- * @param enabled false to grey out Remove rating while a removal runs.
+ * @param enabled false to grey out the Remove buttons while a removal runs.
  * @param onRemove called when Remove rating is tapped.
+ * @param onRemoveReview called when Remove review is tapped.
  */
 @Composable
-private fun RatingCard(item: AdminRatingItem, enabled: Boolean, onRemove: () -> Unit) {
+private fun RatingCard(
+    item: AdminRatingItem,
+    enabled: Boolean,
+    onRemove: () -> Unit,
+    onRemoveReview: () -> Unit
+) {
     val userId = item.rating.userId
     OutlinedCard(
         shape = RoundedCornerShape(12.dp),
@@ -381,7 +418,18 @@ private fun RatingCard(item: AdminRatingItem, enabled: Boolean, onRemove: () -> 
             Row(Modifier.clearAndSetSemantics { contentDescription = starsDesc }) {
                 for (n in 1..5) StarIcon(filled = n <= item.rating.score, size = 16.dp)
             }
-            if (item.rating.review.isNotBlank()) {
+            val hasReview = !item.rating.reviewRemoved && item.rating.review.isNotBlank()
+            if (item.rating.reviewRemoved) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.admin_campsite_review_removed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .testTag(AdminCampsiteTags.reviewRemoved(userId))
+                )
+            } else if (hasReview) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     item.rating.review,
@@ -390,15 +438,25 @@ private fun RatingCard(item: AdminRatingItem, enabled: Boolean, onRemove: () -> 
                     modifier = Modifier.padding(end = 8.dp)
                 )
             }
-            TextButton(
-                onClick = onRemove,
-                enabled = enabled,
-                colors = ButtonDefaults.textButtonColors(contentColor = Ember),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .testTag(AdminCampsiteTags.removeRating(userId))
-            ) {
-                Text(stringResource(R.string.admin_campsite_remove_rating), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.align(Alignment.End)) {
+                if (hasReview) {
+                    TextButton(
+                        onClick = onRemoveReview,
+                        enabled = enabled,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Ember),
+                        modifier = Modifier.testTag(AdminCampsiteTags.removeReview(userId))
+                    ) {
+                        Text(stringResource(R.string.admin_campsite_remove_review), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                TextButton(
+                    onClick = onRemove,
+                    enabled = enabled,
+                    colors = ButtonDefaults.textButtonColors(contentColor = Ember),
+                    modifier = Modifier.testTag(AdminCampsiteTags.removeRating(userId))
+                ) {
+                    Text(stringResource(R.string.admin_campsite_remove_rating), style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
     }
@@ -442,6 +500,10 @@ object AdminCampsiteTags {
     const val RATING_DIALOG_MESSAGE = "admin_campsite_rating_dialog_message"
     const val RATING_DIALOG_CANCEL = "admin_campsite_rating_dialog_cancel"
     const val RATING_DIALOG_REMOVE = "admin_campsite_rating_dialog_remove"
+    const val REVIEW_DIALOG = "admin_campsite_review_dialog"
+    const val REVIEW_DIALOG_MESSAGE = "admin_campsite_review_dialog_message"
+    const val REVIEW_DIALOG_CANCEL = "admin_campsite_review_dialog_cancel"
+    const val REVIEW_DIALOG_REMOVE = "admin_campsite_review_dialog_remove"
 
     /** Tag for the card of the rating written by [userId]. */
     fun rating(userId: String) = "admin_campsite_rating_card_$userId"
@@ -449,12 +511,23 @@ object AdminCampsiteTags {
     /** Tag for the Remove rating button on the card of the rating written by [userId]. */
     fun removeRating(userId: String) = "admin_campsite_remove_rating_$userId"
 
+    /** Tag for the Remove review button on the card of the rating written by [userId]. */
+    fun removeReview(userId: String) = "admin_campsite_remove_review_$userId"
+
+    /** Tag for the "Review removed ..." line on the card of the rating written by [userId]. */
+    fun reviewRemoved(userId: String) = "admin_campsite_review_removed_$userId"
+
     /** The Remove campsite dialog's tags, bundled for [AdminRemoveDialog]. */
     internal val dialogTags = AdminRemoveDialogTags(DIALOG, DIALOG_MESSAGE, DIALOG_CANCEL, DIALOG_REMOVE)
 
     /** The Remove rating dialog's tags, bundled for [AdminRemoveDialog]. */
     internal val ratingDialogTags = AdminRemoveDialogTags(
         RATING_DIALOG, RATING_DIALOG_MESSAGE, RATING_DIALOG_CANCEL, RATING_DIALOG_REMOVE
+    )
+
+    /** The Remove review dialog's tags, bundled for [AdminRemoveDialog]. */
+    internal val reviewDialogTags = AdminRemoveDialogTags(
+        REVIEW_DIALOG, REVIEW_DIALOG_MESSAGE, REVIEW_DIALOG_CANCEL, REVIEW_DIALOG_REMOVE
     )
 }
 
@@ -514,6 +587,28 @@ private fun AdminCampsiteRemoveRatingPreview() {
             removeState = AdminCampsiteRemoveState(),
             onBack = {}, onOpenPublicPage = {}, onConfirmRemove = {},
             ratingRemoveState = AdminRatingRemoveState(confirmingUserId = TestUsers.ENTRANT_ID)
+        )
+    }
+}
+
+/** Design-time preview of the "Remove review?" dialog open over the Banff campsite's ratings. */
+@Preview(showBackground = true, heightDp = 800)
+@Composable
+private fun AdminCampsiteRemoveReviewPreview() {
+    TrailsTheme {
+        AdminCampsiteContent(
+            state = buildAdminCampsiteState(
+                TestCampsites.all.first { it.id == TestCampsites.BANFF_ID },
+                TestUsers.all,
+                CampsiteImpact("Tunnel Mountain Site 14", 1, 2),
+                buildAdminRatingItems(
+                    TestRatings.all.filter { it.campsiteId == TestCampsites.BANFF_ID },
+                    TestUsers.all
+                )
+            ),
+            removeState = AdminCampsiteRemoveState(),
+            onBack = {}, onOpenPublicPage = {}, onConfirmRemove = {},
+            ratingRemoveState = AdminRatingRemoveState(confirmingUserId = TestUsers.ENTRANT_ID, reviewOnly = true)
         )
     }
 }
