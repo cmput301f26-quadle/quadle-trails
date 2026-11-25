@@ -117,7 +117,7 @@ class FirestoreReservationRepository(
             if (error != null) {
                 Log.w(TAG, "Couldn't observe reservations", error)
                 trySend(emptyList())
-                close(error)
+                close()
                 return@addSnapshotListener
             }
             val items = snapshot?.documents.orEmpty().mapNotNull { doc ->
