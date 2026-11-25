@@ -44,6 +44,7 @@
     <string name="admin_campsite_owner">Owner: %1$s</string>
     <string name="admin_campsite_lotteries">Lotteries</string>
     <string name="admin_campsite_entries">Lottery entries</string>
+    <string name="admin_campsite_ratings_count">Ratings</string>
     <string name="admin_campsite_rating">Rating</string>
     <string name="admin_campsite_open_public">Open public page</string>
     <string name="admin_campsite_remove">Remove campsite</string>

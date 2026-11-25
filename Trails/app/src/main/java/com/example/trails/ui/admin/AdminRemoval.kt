@@ -7,12 +7,13 @@
 //   and removes single ratings that break app policy, keeping the campsite's
 //   average and count in step, or only a rating's review text, keeping its stars.
 // Outstanding issues:
-//   - Reservations and notifications to affected guests don't exist yet (Part 4).
-//   - The removed campsite's ratings stay in storage.
+//   - Guests with reservations aren't notified and reservations aren't cancelled
+//     (needs reservations and notifications, Part 4).
 //   - The removed user's ratings stay in storage.
 //   - The steps are separate writes, not one Firestore batch, so a failure
-//     part-way through can leave some lotteries already changed (or a rating
-//     deleted before the campsite's average is saved).
+//     part-way through can leave some lotteries already changed, some of a
+//     removed campsite's ratings already deleted (or a rating deleted before
+//     the campsite's average is saved).
 //   - AppContainer still uses FakeRatingRepository; FirestoreRatingRepository
 //     isn't switched on until ratings are seeded in Firestore.
 package com.example.trails.ui.admin
@@ -33,8 +34,9 @@ import kotlinx.coroutines.flow.first
  * @property name the campsite's display name.
  * @property lotteryCount lotteries that will be deleted because this is their only campsite.
  * @property entryCount waitlist entries in those lotteries, deleted with them.
+ * @property ratingCount the campsite's ratings, deleted with it.
  */
-data class CampsiteImpact(val name: String, val lotteryCount: Int, val entryCount: Int)
+data class CampsiteImpact(val name: String, val lotteryCount: Int, val entryCount: Int, val ratingCount: Int = 0)
 
 /**
  * What removing a user profile takes with it, shown in the confirmation dialog.
@@ -67,21 +69,22 @@ class AdminRemoval(
      * Counts what [removeCampsite] would delete, without changing anything.
      *
      * @param campsiteId id of the campsite the admin is about to remove.
-     * @return the campsite's name with the number of lotteries and waitlist entries that
-     *   go with it, or null if the campsite doesn't exist.
+     * @return the campsite's name with the number of lotteries, waitlist entries and ratings
+     *   that go with it, or null if the campsite doesn't exist.
      */
     suspend fun campsiteImpact(campsiteId: String): CampsiteImpact? {
         val campsite = campsiteRepository.getById(campsiteId) ?: return null
         val doomed = lotteriesFor(campsiteId).filter { it.campsiteIds.size == 1 }
         val entries = doomed.sumOf { waitlistRepository.getEntryCount(it.id) }
-        return CampsiteImpact(campsite.name, doomed.size, entries)
+        val ratings = ratingRepository.observeForCampsite(campsiteId).first().size
+        return CampsiteImpact(campsite.name, doomed.size, entries, ratings)
     }
 
     /**
      * Removes a campsite for everyone (US 03.01.01). Each lottery covering it either loses
      * it from [com.example.trails.data.model.Lottery.campsiteIds], or, if it was the
      * lottery's only campsite, is deleted together with every waitlist entry in it.
-     * The campsite itself is deleted last.
+     * Then every rating of the campsite is deleted, and the campsite itself is deleted last.
      *
      * @param campsiteId id of the campsite to remove.
      * @return success, or a failure if the campsite doesn't exist or a write fails.
@@ -99,6 +102,7 @@ class AdminRemoval(
                 lotteryRepository.save(lottery.copy(campsiteIds = lottery.campsiteIds - campsiteId))
             }
         }
+        ratingRepository.deleteForCampsite(campsiteId)
         campsiteRepository.delete(campsiteId)
     }
 

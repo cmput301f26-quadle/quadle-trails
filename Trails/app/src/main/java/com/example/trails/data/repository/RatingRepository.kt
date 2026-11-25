@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01, 03.09.01
+// USER STORIES: 01.13.01, 03.01.01, 03.09.01
 // PURPOSE: Read/write access to ratings, which live under campsites/{id}/ratings.
 // FIRESTORE IMPLEMENTATION: Zainab (zsaghir)
 // Outstanding issues: AppContainer still uses FakeRatingRepository; FirestoreRatingRepository
@@ -46,4 +46,12 @@ interface RatingRepository {
      * @param userId device id of the reviewer whose rating is deleted.
      */
     suspend fun delete(campsiteId: String, userId: String)
+
+    /**
+     * Deletes every rating of one campsite, e.g. when an admin removes the campsite
+     * (US 03.01.01). Does nothing if the campsite has no ratings.
+     *
+     * @param campsiteId id of the campsite whose ratings are deleted.
+     */
+    suspend fun deleteForCampsite(campsiteId: String)
 }

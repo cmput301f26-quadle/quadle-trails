@@ -2,7 +2,7 @@
 // USER STORIES: 03.01.01, 03.02.01, 03.07.01, 03.09.01, 03.10.01
 // PURPOSE: Unit tests for AdminRemoval, which removes a campsite or a user
 //   profile together with the campsites, lotteries and waitlist entries that
-//   depend on it, closes policy reports against a reviewed owner, and removes
+//   depend on it (including the campsite's ratings), closes policy reports against a reviewed owner, and removes
 //   single ratings while keeping the campsite's average and count right, or
 //   only a rating's review text while keeping its stars.
 // Outstanding issues: none.
@@ -228,9 +228,42 @@ class AdminRemovalTest {
     // This checks that the impact counts only the lotteries that would be deleted and the entries in them.
     @Test
     fun campsiteImpact_countsLotteriesAndEntries() = runBlocking {
-        assertEquals(CampsiteImpact("Jasper Pines", 1, 2), removal.campsiteImpact("jasper-pines"))
-        assertEquals(CampsiteImpact("Wapiti Flats", 0, 0), removal.campsiteImpact("wapiti-flats"))
-        assertEquals(CampsiteImpact("Tunnel Mountain Village", 1, 1), removal.campsiteImpact("tunnel-mountain"))
+        assertEquals(CampsiteImpact("Jasper Pines", 1, 2, 1), removal.campsiteImpact("jasper-pines"))
+        assertEquals(CampsiteImpact("Wapiti Flats", 0, 0, 0), removal.campsiteImpact("wapiti-flats"))
+        assertEquals(CampsiteImpact("Tunnel Mountain Village", 1, 1, 3), removal.campsiteImpact("tunnel-mountain"))
+    }
+
+    // This checks that the impact counts every rating of the campsite, and 0 for a campsite nobody rated.
+    @Test
+    fun campsiteImpact_countsRatings() = runBlocking {
+        assertEquals(3, removal.campsiteImpact("tunnel-mountain")!!.ratingCount)
+        assertEquals(1, removal.campsiteImpact("jasper-pines")!!.ratingCount)
+        assertEquals(0, removal.campsiteImpact("wapiti-flats")!!.ratingCount)
+    }
+
+    // This checks that removing a campsite deletes every one of its ratings.
+    @Test
+    fun removeCampsite_deletesItsRatings() = runBlocking {
+        val result = removal.removeCampsite("tunnel-mountain")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("tunnel-mountain").first().isEmpty())
+        assertNull(ratings.getRating("tunnel-mountain", "device-priya"))
+    }
+
+    // This checks that removing a campsite keeps the ratings of other campsites, even by the same reviewers.
+    @Test
+    fun removeCampsite_otherCampsitesRatingsKept() = runBlocking {
+        removal.removeCampsite("tunnel-mountain")
+        assertEquals(avaPinesRating, ratings.getRating("jasper-pines", "device-ava"))
+        assertEquals(listOf(avaPinesRating), ratings.observeForCampsite("jasper-pines").first())
+    }
+
+    // This checks that removing a campsite that doesn't exist deletes no ratings.
+    @Test
+    fun removeCampsite_missing_keepsRatings() = runBlocking {
+        removal.removeCampsite("no-such-site")
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(1, ratings.observeForCampsite("jasper-pines").first().size)
     }
 
     // This checks that the impact of a campsite that doesn't exist is null.
@@ -331,6 +364,18 @@ class AdminRemovalTest {
             ),
             statuses()
         )
+    }
+
+    // This checks that removing a reported owner deletes the ratings of their campsites, and keeps
+    // other owners' campsite ratings and the ratings the removed owner wrote of other campsites.
+    @Test
+    fun removeOwner_deletesRatingsOfTheirCampsites() = runBlocking {
+        val result = removal.removeOwner("device-maya", "device-jordan")
+        assertTrue(result.isSuccess)
+        assertTrue(ratings.observeForCampsite("jasper-pines").first().isEmpty())
+        assertTrue(ratings.observeForCampsite("wapiti-flats").first().isEmpty())
+        assertEquals(3, ratings.observeForCampsite("tunnel-mountain").first().size)
+        assertEquals(mayaTunnelRating, ratings.getRating("tunnel-mountain", "device-maya"))
     }
 
     // This checks that an admin can't remove themselves as a reported owner, and their reports stay open.

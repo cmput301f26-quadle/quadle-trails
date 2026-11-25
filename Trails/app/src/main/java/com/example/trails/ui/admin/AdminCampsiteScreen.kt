@@ -6,9 +6,8 @@
 //   only its review text, keeping the stars (US 03.10.01). No Figma mockup for either,
 //   so they follow this page's card style.
 // Outstanding issues:
-//   - Guests with reservations aren't notified, since reservations and
-//     notifications don't exist yet (Part 4).
-//   - The campsite's ratings stay in storage after removal.
+//   - Guests with reservations aren't notified and reservations aren't cancelled
+//     (needs reservations and notifications, Part 4).
 //   - Ratings come from FakeRatingRepository until AppContainer is switched to
 //     FirestoreRatingRepository (once ratings are seeded).
 //   - Every rating is listed; there is no way for campers to flag one yet.
@@ -179,7 +178,7 @@ fun AdminCampsiteContent(
                         AdminRemoveDialog(
                             title = stringResource(R.string.admin_campsite_remove_title),
                             message = removeCampsiteMessage(
-                                state.campsite.name, state.lotteryCount, state.entryCount
+                                state.campsite.name, state.lotteryCount, state.entryCount, state.ratingCount
                             ),
                             removing = removeState.removing,
                             tags = AdminCampsiteTags.dialogTags,
@@ -300,7 +299,7 @@ private fun Photo(url: String?) {
     }
 }
 
-/** Card with the Lotteries, Lottery entries and Rating rows. */
+/** Card with the Lotteries, Lottery entries, Ratings and Rating rows. */
 @Composable
 private fun InfoCard(state: AdminCampsiteUiState.Loaded) {
     OutlinedCard(
@@ -313,6 +312,8 @@ private fun InfoCard(state: AdminCampsiteUiState.Loaded) {
         InfoRow(stringResource(R.string.admin_campsite_lotteries), state.lotteryCount.toString(), AdminCampsiteTags.LOTTERIES)
         HorizontalDivider(color = divider)
         InfoRow(stringResource(R.string.admin_campsite_entries), state.entryCount.toString(), AdminCampsiteTags.ENTRIES)
+        HorizontalDivider(color = divider)
+        InfoRow(stringResource(R.string.admin_campsite_ratings_count), state.ratingCount.toString(), AdminCampsiteTags.RATINGS_COUNT)
         HorizontalDivider(color = divider)
         InfoRow(stringResource(R.string.admin_campsite_rating), ratingLabel(state.campsite), AdminCampsiteTags.RATING)
     }
@@ -485,6 +486,7 @@ object AdminCampsiteTags {
     const val NAME = "admin_campsite_name"
     const val LOTTERIES = "admin_campsite_lotteries"
     const val ENTRIES = "admin_campsite_entries"
+    const val RATINGS_COUNT = "admin_campsite_ratings_count"
     const val RATING = "admin_campsite_rating"
     const val OPEN_PUBLIC = "admin_campsite_open_public"
     const val REMOVE_BUTTON = "admin_campsite_remove"
@@ -540,7 +542,7 @@ private fun AdminCampsitePreview() {
             state = buildAdminCampsiteState(
                 TestCampsites.all.first { it.id == TestCampsites.BANFF_ID },
                 TestUsers.all,
-                CampsiteImpact("Tunnel Mountain Site 14", 1, 2),
+                CampsiteImpact("Tunnel Mountain Site 14", 1, 2, 3),
                 buildAdminRatingItems(
                     TestRatings.all.filter { it.campsiteId == TestCampsites.BANFF_ID },
                     TestUsers.all
@@ -578,7 +580,7 @@ private fun AdminCampsiteRemoveRatingPreview() {
             state = buildAdminCampsiteState(
                 TestCampsites.all.first { it.id == TestCampsites.BANFF_ID },
                 TestUsers.all,
-                CampsiteImpact("Tunnel Mountain Site 14", 1, 2),
+                CampsiteImpact("Tunnel Mountain Site 14", 1, 2, 3),
                 buildAdminRatingItems(
                     TestRatings.all.filter { it.campsiteId == TestCampsites.BANFF_ID },
                     TestUsers.all
@@ -600,7 +602,7 @@ private fun AdminCampsiteRemoveReviewPreview() {
             state = buildAdminCampsiteState(
                 TestCampsites.all.first { it.id == TestCampsites.BANFF_ID },
                 TestUsers.all,
-                CampsiteImpact("Tunnel Mountain Site 14", 1, 2),
+                CampsiteImpact("Tunnel Mountain Site 14", 1, 2, 3),
                 buildAdminRatingItems(
                     TestRatings.all.filter { it.campsiteId == TestCampsites.BANFF_ID },
                     TestUsers.all

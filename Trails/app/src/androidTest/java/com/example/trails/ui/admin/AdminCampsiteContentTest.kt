@@ -39,7 +39,9 @@ class AdminCampsiteContentTest {
         id = "campsite-banff-tunnel", ownerId = "owner-daniel", name = "Tunnel Mountain Site 14",
         locationName = "Banff, AB", maxOccupancy = 6, ratingAverage = 4.5, ratingCount = 12
     )
-    private val loaded = AdminCampsiteUiState.Loaded(tunnel, "Daniel Whitehorse", lotteryCount = 2, entryCount = 7)
+    private val loaded = AdminCampsiteUiState.Loaded(
+        tunnel, "Daniel Whitehorse", lotteryCount = 2, entryCount = 7, ratingCount = 12
+    )
 
     private fun show(
         state: AdminCampsiteUiState,
@@ -71,8 +73,26 @@ class AdminCampsiteContentTest {
         composeRule.onNodeWithTag(AdminCampsiteTags.REMOVE_BUTTON).performClick()
         composeRule.onNodeWithText("Remove campsite?").assertIsDisplayed()
         composeRule.onNodeWithTag(AdminCampsiteTags.DIALOG_MESSAGE).assertTextEquals(
-            "Tunnel Mountain Site 14 is removed for everyone. Its 2 lotteries and 7 lottery entries " +
-                "are removed too. This can't be undone."
+            "Tunnel Mountain Site 14 is removed for everyone. Its 2 lotteries, 7 lottery entries and " +
+                "12 ratings are removed too. This can't be undone."
+        )
+    }
+
+    // This checks that the info card shows a Ratings row with the number of ratings removed with the campsite.
+    @Test
+    fun ratingsRow_showsCount() {
+        show(loaded)
+        composeRule.onNodeWithText("Ratings").assertIsDisplayed()
+        composeRule.onNodeWithTag(AdminCampsiteTags.RATINGS_COUNT).assertTextEquals("12")
+    }
+
+    // This checks that the Remove campsite dialog says the campsite's ratings are removed too, in the singular for one.
+    @Test
+    fun removeDialog_mentionsRatings() {
+        show(loaded.copy(lotteryCount = 0, entryCount = 0, ratingCount = 1))
+        composeRule.onNodeWithTag(AdminCampsiteTags.REMOVE_BUTTON).performClick()
+        composeRule.onNodeWithTag(AdminCampsiteTags.DIALOG_MESSAGE).assertTextEquals(
+            "Tunnel Mountain Site 14 is removed for everyone. Its 1 rating is removed too. This can't be undone."
         )
     }
 

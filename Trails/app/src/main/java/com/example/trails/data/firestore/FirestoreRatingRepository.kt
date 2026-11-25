@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01, 03.09.01
+// USER STORIES: 01.13.01, 03.01.01, 03.09.01
 // PURPOSE: Firestore-backed RatingRepository for ratings stored under
 //   campsites/{campsiteId}/ratings/{userId}, one document per reviewer per campsite.
 // Outstanding issues:
@@ -7,6 +7,8 @@
 //  - Needs a live Firestore, so it isn't unit-tested itself; FakeRatingRepository is.
 //  - Read errors (e.g. PERMISSION_DENIED) are logged and treated as "no ratings" so the app
 //    doesn't crash; write errors are logged and passed on to the caller.
+//  - deleteForCampsite deletes one document at a time, not in a batch, so a failure part-way
+//    through can leave some of the campsite's ratings in storage.
 // AI assistance: Used AI (Claude Code) to help write this file.
 package com.example.trails.data.firestore
 
@@ -124,6 +126,26 @@ class FirestoreRatingRepository(
             ratingsOf(campsiteId).document(userId).delete().await()
         } catch (e: Exception) {
             Log.w(TAG, "Couldn't delete rating of $campsiteId by $userId", e)
+            throw e
+        }
+    }
+
+    /**
+     * Deletes every document in campsites/{campsiteId}/ratings. Firestore doesn't delete a
+     * subcollection with its parent document, so this must run before the campsite is deleted.
+     *
+     * @param campsiteId id of the campsite whose ratings are deleted; a blank id does nothing.
+     * @throws Exception if the read or a delete fails (logged first).
+     */
+    override suspend fun deleteForCampsite(campsiteId: String) {
+        if (campsiteId.isBlank()) return
+        try {
+            val snapshot = ratingsOf(campsiteId).get().await()
+            for (doc in snapshot.documents) {
+                doc.reference.delete().await()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Couldn't delete ratings of $campsiteId", e)
             throw e
         }
     }
