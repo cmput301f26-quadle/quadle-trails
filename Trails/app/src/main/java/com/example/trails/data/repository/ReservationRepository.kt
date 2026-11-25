@@ -21,6 +21,8 @@ interface ReservationRepository {
      * Observes all reservations confirmed for a specific campsite in real time.
      *
      * Used by campsite availability calendars and search filtering to determine booked dates.
+     * Returns reservations in every status (cancelled and rejected too); for dates that are
+     * actually booked, keep only status == [ReservationStatus.ACTIVE].
      *
      * @param campsiteId unique identifier of the campsite.
      * @return a [Flow] emitting the list of [Reservation] records associated with this campsite.
@@ -31,6 +33,7 @@ interface ReservationRepository {
      * Observes all reservations held by a specific user in real time.
      *
      * Used by entrant profile and trips screens to display booked campsites.
+     * Returns reservations in every status; filter by [Reservation.status] as needed.
      *
      * @param userId device identifier of the user.
      * @return a [Flow] emitting the list of [Reservation] records held by this user.

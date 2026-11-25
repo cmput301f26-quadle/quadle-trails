@@ -1,4 +1,4 @@
-// Controller for the Register / Edit campsite form (US 02.01.01, 02.01.03).
+// Controller for the Register / Edit campsite form (US 02.01.01, 02.01.03; booked days locked, 02.06.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // Outstanding issues: picking a photo makes the save fail until Firebase Storage is enabled
 //  (see FirestoreCampsiteRepository); saving without a photo works.
@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
  * @property notFound true if the campsite being edited does not exist.
  * @property savedId the campsite's id once saved; the screen navigates when this is set.
  * @property saveFailed true if the last save failed; the screen shows a retry message.
+ * @property bookedDays days already reserved; shown red and locked when editing (US 02.06.01).
  */
 data class CampsiteFormUiState(
     val fields: CampsiteFormFields = CampsiteFormFields(),
@@ -37,7 +38,8 @@ data class CampsiteFormUiState(
     val isSaving: Boolean = false,
     val notFound: Boolean = false,
     val savedId: String? = null,
-    val saveFailed: Boolean = false
+    val saveFailed: Boolean = false,
+    val bookedDays: Set<Long> = emptySet()
 )
 
 /**
@@ -48,11 +50,13 @@ data class CampsiteFormUiState(
  * @param repository where campsites are stored.
  * @param ownerId owner assigned to newly registered campsites.
  * @param campsiteId campsite to edit, or null to register a new one.
+ * @param reservations the campsite's reservations, so booked days can't be edited (US 02.06.01).
  */
 class CampsiteFormViewModel(
     private val repository: CampsiteRepository,
     private val ownerId: String,
-    campsiteId: String?
+    campsiteId: String?,
+    reservations: CampsiteReservations = appReservations
 ) : ViewModel() {
 
     private var base: Campsite? = null
@@ -65,6 +69,11 @@ class CampsiteFormViewModel(
 
     init {
         if (campsiteId != null) {
+            viewModelScope.launch {
+                reservations(campsiteId).collect { list ->
+                    _state.update { it.copy(bookedDays = bookedDayKeys(list, campsiteId)) }
+                }
+            }
             viewModelScope.launch {
                 val campsite = repository.getById(campsiteId)
                 base = campsite
