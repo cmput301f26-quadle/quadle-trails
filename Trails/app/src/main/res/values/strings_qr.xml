@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Neaz (NeazMZ06) — QR codes — strings for ui/qr (US 02.02.01, 01.12.01). -->
+<resources>
+    <!-- QR code card on the owner's campsite page (US 02.02.01) -->
+    <string name="qr_card_title">Campsite QR code</string>
+    <string name="qr_card_help">Entrants scan this to open the listing.</string>
+    <string name="qr_download">Download</string>
+    <string name="qr_share">Share</string>
+    <string name="qr_image_desc">QR code for this campsite</string>
+    <string name="qr_saved">QR code saved to Photos</string>
+    <string name="qr_save_failed">Couldn\'t save the QR code.</string>
+    <string name="qr_share_title">Share campsite QR code</string>
+    <string name="qr_share_text">Scan this QR code in Trails to open %1$s.</string>
+
+    <!-- Scanning a QR code from Browse (US 01.12.01) -->
+    <string name="qr_scan_button">Scan a campsite QR code</string>
+    <string name="qr_scan_prompt">Point the camera at a campsite QR code</string>
+    <string name="qr_scan_not_trails">That QR code isn\'t a Trails campsite.</string>
+</resources>
