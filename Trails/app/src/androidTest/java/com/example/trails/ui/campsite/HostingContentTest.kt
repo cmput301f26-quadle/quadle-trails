@@ -4,6 +4,7 @@
 package com.example.trails.ui.campsite
 
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -11,6 +12,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Role
+import com.example.trails.ui.profile.ModePillChip
+import com.example.trails.ui.profile.ModePillTags
 import com.example.trails.ui.theme.TrailsTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -39,8 +43,11 @@ class HostingContentTest {
         state: HostingUiState?,
         onQuery: (String) -> Unit = {},
         onAdd: () -> Unit = {},
-        onOpen: (String) -> Unit = {}
-    ) = composeRule.setContent { TrailsTheme { HostingContent(state, onQuery, onAdd, onOpen) } }
+        onOpen: (String) -> Unit = {},
+        modePill: @Composable () -> Unit = { ModePillChip(Role.OWNER, onClick = {}) }
+    ) = composeRule.setContent {
+        TrailsTheme { HostingContent(state, onQuery, onAdd, onOpen, modePill = modePill) }
+    }
 
     @Test
     fun campsites_shownWithDetailsAndLotteryStatus() {
@@ -95,6 +102,16 @@ class HostingContentTest {
         composeRule.onNodeWithText("Hosting").assertIsDisplayed()
         composeRule.onNodeWithTag(HostingTags.ROLE_PILL).assertIsDisplayed()
         composeRule.onNodeWithText("Owner").assertIsDisplayed()
+    }
+
+    // This checks that the mode pill slot is shown in the header and its pill can be tapped (US 03.11.01).
+    @Test
+    fun modePillSlot_isShown() {
+        var taps = 0
+        show(twoSites, modePill = { ModePillChip(Role.OWNER, onClick = { taps++ }) })
+        composeRule.onNodeWithTag(HostingTags.ROLE_PILL).assertIsDisplayed()
+        composeRule.onNodeWithTag(ModePillTags.PILL).assertIsDisplayed().performClick()
+        assertEquals(1, taps)
     }
 
     @Test

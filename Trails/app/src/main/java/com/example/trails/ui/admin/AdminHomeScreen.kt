@@ -1,9 +1,8 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.04.01, 03.05.01
+// USER STORIES: 03.04.01, 03.05.01, 03.11.01
 // PURPOSE: Admin's home screen (Home tab in Admin mode, Figma Scenario 8 · Admin home): greeting
-//   and live Campsites / Profiles counts that open the admin lists.
-// Outstanding issues: no mode pill in the header yet (US 03.11.01 is Aarav's); the Images, Logs
-//   and Needs review parts come in Part 4.
+//   with the mode pill at the top right, and live Campsites / Profiles counts that open the admin lists.
+// Outstanding issues: the Images, Logs and Needs review parts come in Part 4.
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -35,12 +34,16 @@ import androidx.navigation.NavController
 import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestUsers
+import com.example.trails.data.model.Role
+import com.example.trails.ui.profile.ModePill
+import com.example.trails.ui.profile.ModePillChip
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
  * Connects [AdminHomeViewModel] to navigation and renders [AdminHomeContent].
  *
- * @param navController used to open the admin campsites and profiles screens.
+ * @param navController used to open the admin campsites and profiles screens, and by the
+ *   mode pill to go to the new mode's home after a switch (US 03.11.01).
  * @param modifier modifier for the screen.
  * @param viewModel supplies the greeting and the counts.
  */
@@ -55,7 +58,8 @@ fun AdminHomeScreen(
         state = state,
         onCampsitesClick = { navController.navigate(AdminRoutes.ADMIN_CAMPSITES) },
         onProfilesClick = { navController.navigate(AdminRoutes.ADMIN_PROFILES) },
-        modifier = modifier
+        modifier = modifier,
+        modePill = { ModePill(navController) }
     )
 }
 
@@ -66,13 +70,16 @@ fun AdminHomeScreen(
  * @param onCampsitesClick called when the Campsites tile is tapped (US 03.04.01).
  * @param onProfilesClick called when the Profiles tile is tapped (US 03.05.01).
  * @param modifier modifier for the screen.
+ * @param modePill the mode pill shown at the top right of the header (US 03.11.01); empty by
+ *   default so tests and previews don't need a ViewModel.
  */
 @Composable
 fun AdminHomeContent(
     state: AdminHomeUiState?,
     onCampsitesClick: () -> Unit,
     onProfilesClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    modePill: @Composable () -> Unit = {}
 ) {
     Column(
         modifier
@@ -87,18 +94,27 @@ fun AdminHomeContent(
             }
             return@Column
         }
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                state.greeting,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.testTag(AdminHomeTags.GREETING)
-            )
-            Text(
-                stringResource(R.string.admin_home_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    state.greeting,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.testTag(AdminHomeTags.GREETING)
+                )
+                Text(
+                    stringResource(R.string.admin_home_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
+                modePill()
+            }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CountTile(
@@ -151,9 +167,10 @@ object AdminHomeTags {
     const val CAMPSITES = "admin_home_campsites"
     const val PROFILES = "admin_home_profiles"
     const val LOADING = "admin_home_loading"
+    const val MODE_PILL = "admin_home_mode_pill"
 }
 
-/** Design-time preview of the admin home with the sample campsites and users. */
+/** Design-time preview of the admin home with the sample campsites and users, and the Admin pill. */
 @Preview(showBackground = true, heightDp = 800)
 @Composable
 private fun AdminHomeContentPreview() {
@@ -166,7 +183,8 @@ private fun AdminHomeContentPreview() {
                 hour = 9
             ),
             onCampsitesClick = {},
-            onProfilesClick = {}
+            onProfilesClick = {},
+            modePill = { ModePillChip(Role.ADMIN, onClick = {}) }
         )
     }
 }

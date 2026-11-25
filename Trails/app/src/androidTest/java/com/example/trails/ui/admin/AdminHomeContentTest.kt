@@ -1,5 +1,5 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.04.01, 03.05.01
+// USER STORIES: 03.04.01, 03.05.01, 03.11.01
 // PURPOSE: UI (intent) tests for the admin home screen.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
@@ -10,6 +10,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.example.trails.data.model.Role
+import com.example.trails.ui.profile.ModePillChip
+import com.example.trails.ui.profile.ModePillTags
 import com.example.trails.ui.theme.TrailsTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -59,5 +62,24 @@ class AdminHomeContentTest {
         composeRule.onNodeWithTag(AdminHomeTags.PROFILES).performClick()
         assertEquals(0, campsites)
         assertEquals(1, profiles)
+    }
+
+    // This checks that the mode pill slot is shown in the header and its pill can be tapped (US 03.11.01).
+    @Test
+    fun modePillSlot_isShownAndTappable() {
+        var taps = 0
+        composeRule.setContent {
+            TrailsTheme {
+                AdminHomeContent(
+                    state = state,
+                    onCampsitesClick = {},
+                    onProfilesClick = {},
+                    modePill = { ModePillChip(Role.ADMIN, onClick = { taps++ }) }
+                )
+            }
+        }
+        composeRule.onNodeWithTag(AdminHomeTags.MODE_PILL).assertIsDisplayed()
+        composeRule.onNodeWithTag(ModePillTags.PILL).assertIsDisplayed().performClick()
+        assertEquals(1, taps)
     }
 }
