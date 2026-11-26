@@ -3,8 +3,7 @@
 // USER STORIES: 02.01.02 (campsite promo photo), 01.08.02 (profile photo); listAll is for
 //   Zainab's image moderation (03.06.01 / 03.03.01).
 // Implemented by FirebaseImageRepository (used by the app) and FakeImageRepository (tests).
-// Outstanding issues: Firebase Storage must be enabled on the project (Blaze plan) before
-//   uploads work in the app.
+// Outstanding issues: none.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.repository
 

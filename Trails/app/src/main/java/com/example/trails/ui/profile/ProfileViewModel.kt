@@ -1,10 +1,10 @@
 // Handles loading, editing and deleting the profile, and switching modes (US 01.09.01, 01.07.03, 01.08.01, 01.08.02, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: deleting a profile does not remove reservations yet. Profile photo upload
-//   (US 01.08.02, added by Ibrahim) needs Firebase Storage enabled (Blaze plan).
+// Outstanding issues: deleting a profile does not remove reservations yet.
 // AI assistance: Used AI to help implement profile updates, deletion, and related data handling.
 package com.example.trails.ui.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trails.data.AppContainer
@@ -240,6 +240,7 @@ class ProfileViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                Log.e("ProfilePhoto", "Profile photo change failed", e)
                 PhotoState.Failed(e.message)
             }
         }
@@ -258,6 +259,7 @@ class ProfileViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                Log.e("ProfilePhoto", "Profile photo change failed", e)
                 PhotoState.Failed(e.message)
             }
         }

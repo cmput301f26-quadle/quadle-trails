@@ -1,8 +1,9 @@
 // Firebase Storage-backed ImageRepository.
 // OWNER: Ibrahim (ibr2309) — Campsite Management (shared image upload)
 // USER STORIES: 02.01.02, 01.08.02; listAll supports 03.06.01 / 03.03.01.
+// Signs in anonymously before writing if nobody is signed in, since the Storage rules only
+// accept uploads and deletes from signed-in users.
 // Outstanding issues:
-//  - Firebase Storage isn't enabled on the project yet (Blaze plan), so calls fail until it is.
 //  - Needs a live Storage bucket, so it isn't unit-tested itself; FakeImageRepository is.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.data.firestore
@@ -12,6 +13,7 @@ import com.example.trails.data.repository.ImageFolder
 import com.example.trails.data.repository.ImageRepository
 import com.example.trails.data.repository.StoredImage
 import com.example.trails.data.repository.isStorageUrl
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.tasks.await
@@ -26,14 +28,23 @@ import java.util.UUID
  * Written in assistance with Claude AI by Anthropic.
  *
  * @param storage the Storage instance; defaults to the app's default instance.
+ * @param auth signs in anonymously before writes; defaults to the app's default instance.
  */
 class FirebaseImageRepository(
-    storage: Lazy<FirebaseStorage> = lazy { FirebaseStorage.getInstance() }
+    storage: Lazy<FirebaseStorage> = lazy { FirebaseStorage.getInstance() },
+    auth: Lazy<FirebaseAuth> = lazy { FirebaseAuth.getInstance() }
 ) : ImageRepository {
 
     private val storage by storage
+    private val auth by auth
+
+    /** The Storage rules need a signed-in user to write; sign in anonymously if nobody is. */
+    private suspend fun ensureSignedIn() {
+        if (auth.currentUser == null) auth.signInAnonymously().await()
+    }
 
     override suspend fun upload(localUri: String, folder: ImageFolder): String {
+        ensureSignedIn()
         val ref = storage.reference.child("${folder.path}/${UUID.randomUUID()}.jpg")
         ref.putFile(Uri.parse(localUri)).await()
         return ref.downloadUrl.await().toString()
@@ -41,6 +52,7 @@ class FirebaseImageRepository(
 
     override suspend fun delete(url: String) {
         if (!isStorageUrl(url)) return
+        ensureSignedIn()
         try {
             storage.getReferenceFromUrl(url).delete().await()
         } catch (e: StorageException) {

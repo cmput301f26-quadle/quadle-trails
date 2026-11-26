@@ -1,7 +1,6 @@
 // Controller for the Register / Edit campsite form (US 02.01.01, 02.01.03; booked days locked, 02.06.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// Outstanding issues: picking a photo makes the save fail until Firebase Storage is enabled
-//  (see FirebaseImageRepository); saving without a photo works.
+// Outstanding issues: none.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 

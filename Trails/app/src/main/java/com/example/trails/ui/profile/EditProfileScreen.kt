@@ -1,7 +1,7 @@
 // Handles profile editing and deletion on the Profile screen (US 01.07.03, 01.08.01, 01.08.02).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 //   (profile photo, US 01.08.02: Ibrahim, using the shared image picker and uploader)
-// Outstanding issues: photo upload fails until Firebase Storage is enabled (Blaze plan).
+// Outstanding issues: none.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.background
