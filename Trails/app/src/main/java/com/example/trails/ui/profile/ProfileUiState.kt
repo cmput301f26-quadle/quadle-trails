@@ -1,6 +1,7 @@
 // UI state, form validation and role rules for the profile screens (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
+// AI assistance: Used AI to help write the role rules for switching modes and becoming a host.
 package com.example.trails.ui.profile
 
 import com.example.trails.data.model.Role
@@ -195,6 +196,28 @@ fun effectiveMode(user: User): Role =
  */
 fun switchMode(user: User, role: Role): User =
     if (canSwitchTo(user, role)) user.copy(activeMode = role) else user
+
+/**
+ * Whether to offer "Become a host" (US 03.11.01): only to users who don't hold the
+ * OWNER role yet. Anyone may start hosting; ADMIN is never offered.
+ *
+ * @param user the profile.
+ * @return true when the user is not an owner yet.
+ */
+fun canBecomeHost(user: User): Boolean = Role.OWNER !in user.roles
+
+/**
+ * The profile after the user starts hosting: OWNER added (once) and Owner mode active.
+ * Mirrors UserRepository.becomeHost, so the rule can be unit-tested without a repository.
+ *
+ * @param user the profile to change.
+ * @return the updated profile; roles other than OWNER are never added.
+ */
+fun becomeHost(user: User): User =
+    user.copy(
+        roles = if (Role.OWNER in user.roles) user.roles else user.roles + Role.OWNER,
+        activeMode = Role.OWNER
+    )
 
 /** Progress of saving profile edits. */
 sealed interface SaveState {

@@ -1,7 +1,8 @@
-// Handles loading, editing and deleting the profile, and switching modes (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Handles loading, editing and deleting the profile, switching modes and becoming a host
+// (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: Profile photos are not supported, and deleting a profile does not remove reservations yet.
-// AI assistance: Used AI to help implement profile updates, deletion, and related data handling.
+// AI assistance: Used AI to help implement profile updates, deletion, mode switching and becoming a host.
 package com.example.trails.ui.profile
 
 import androidx.lifecycle.ViewModel
@@ -232,6 +233,30 @@ class ProfileViewModel(
             _modeSwitch.value = try {
                 repository.updateActiveMode(deviceId, role)
                 ModeSwitchState.Switched(role)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                ModeSwitchState.Failed(e.message)
+            }
+        }
+    }
+
+    /**
+     * Starts hosting (US 03.11.01): gives this camper the OWNER role and switches to
+     * Owner mode. Reported through [modeSwitch], so the screen goes to Hosting once saved.
+     * Ignored for users who are already owners.
+     */
+    fun onBecomeHost() {
+        if (_modeSwitch.value == ModeSwitchState.Switching) return
+        val current = (uiState.value as? ProfileUiState.Loaded)?.user ?: return
+        if (!canBecomeHost(current)) return // already an owner
+
+        // Same progress state as a mode switch, so the screen navigates to Hosting when done.
+        _modeSwitch.value = ModeSwitchState.Switching
+        viewModelScope.launch {
+            _modeSwitch.value = try {
+                repository.becomeHost(deviceId)
+                ModeSwitchState.Switched(Role.OWNER)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

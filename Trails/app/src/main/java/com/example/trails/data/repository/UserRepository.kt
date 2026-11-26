@@ -1,7 +1,7 @@
-// Read and write access to user profiles (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Read and write access to user profiles, including becoming a host (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
-// AI assistance: Used AI to help design profile update, deletion, and role-switching operations.
+// AI assistance: Used AI to help design profile update, deletion, role-switching and become-a-host operations.
 package com.example.trails.data.repository
 
 import com.example.trails.data.model.Role
@@ -64,6 +64,24 @@ interface UserRepository {
      * @throws Exception if the profile does not exist or the write fails.
      */
     suspend fun updateActiveMode(deviceId: String, mode: Role)
+
+    /**
+     * Lets a camper start hosting (US 03.11.01): adds the OWNER role if the profile
+     * does not hold it yet, and switches the profile into Owner mode. This is the only
+     * role a user can give themselves; ADMIN is granted by the team in the Firebase console.
+     *
+     * The default reads the profile and writes it back; Firestore overrides it with a
+     * single update so other fields are never rewritten.
+     *
+     * @param deviceId the profile to change.
+     * @throws NoSuchElementException if the profile does not exist.
+     * @throws Exception if the write fails.
+     */
+    suspend fun becomeHost(deviceId: String) {
+        val user = getById(deviceId) ?: throw NoSuchElementException("No profile for $deviceId.")
+        if (Role.OWNER !in user.roles) save(user.copy(roles = user.roles + Role.OWNER))
+        updateActiveMode(deviceId, Role.OWNER)
+    }
 
     /**
      * Removes a profile: by the user themselves (US 01.08.01) or by an admin (US 03.02.01).

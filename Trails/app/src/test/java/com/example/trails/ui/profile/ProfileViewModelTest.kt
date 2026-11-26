@@ -1,7 +1,7 @@
 // Unit tests for the profile ViewModel (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
-// AI assistance: Used AI to help write coroutine-based profile ViewModel tests.
+// AI assistance: Used AI to help write coroutine-based profile ViewModel tests, including becoming a host.
 package com.example.trails.ui.profile
 
 import com.example.trails.data.fake.FakeLotteryRepository
@@ -416,6 +416,48 @@ class ProfileViewModelTest {
         viewModel.onModeSelected(Role.OWNER)
         advanceUntilIdle()
         assertEquals(Role.OWNER, repo.getById(deviceId)?.activeMode)
+        job.cancel()
+    }
+
+    // US 03.11.01: becoming a host
+
+    // A camper who taps "Become a host" is saved as an owner and sent to Hosting.
+    @Test
+    fun becomeHost_camperGetsOwnerRoleAndSignalsNavigation() = runTest {
+        val job = start(listOf(priya))
+        viewModel.onBecomeHost()
+        advanceUntilIdle()
+
+        val stored = repo.getById(deviceId)!!
+        assertEquals(listOf(Role.ENTRANT, Role.OWNER), stored.roles)
+        assertEquals(Role.OWNER, stored.activeMode)
+        assertEquals(ModeSwitchState.Switched(Role.OWNER), viewModel.modeSwitch.value)
+        job.cancel()
+    }
+
+    // An existing owner is left unchanged.
+    @Test
+    fun becomeHost_existingOwner_doesNothing() = runTest {
+        val daniel = priya.copy(roles = listOf(Role.ENTRANT, Role.OWNER))
+        val job = start(listOf(daniel))
+        viewModel.onBecomeHost()
+        advanceUntilIdle()
+
+        assertEquals(daniel, repo.getById(deviceId))
+        assertEquals(ModeSwitchState.Idle, viewModel.modeSwitch.value)
+        job.cancel()
+    }
+
+    // If saving fails, the user stays a camper and the error is shown.
+    @Test
+    fun becomeHost_failure_keepsCamperAndReportsError() = runTest {
+        val job = start(listOf(priya))
+        repo.modeFailure = IOException("offline")
+        viewModel.onBecomeHost()
+        advanceUntilIdle()
+
+        assertEquals(ModeSwitchState.Failed("offline"), viewModel.modeSwitch.value)
+        assertEquals(listOf(Role.ENTRANT), repo.getById(deviceId)?.roles)
         job.cancel()
     }
 }

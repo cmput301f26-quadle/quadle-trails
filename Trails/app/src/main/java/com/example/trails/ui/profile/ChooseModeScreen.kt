@@ -1,11 +1,13 @@
-// Handles switching between the roles a user holds, the "Use Quadle as" list (US 03.11.01).
+// Handles switching between the roles a user holds, the "Use Quadle as" list, and lets a
+// camper start hosting (US 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
-// AI assistance: Used AI to help implement authorized Admin, Owner, and Camper mode selection.
+// AI assistance: Used AI to help implement authorized Admin, Owner, and Camper mode selection and the Become a host option.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -96,6 +98,7 @@ fun ChooseModeScreen(
                 modeSwitch = modeSwitch,
                 onSwitch = viewModel::onModeSelected,
                 onProfile = { navController.navigate(ProfileRoutes.DEVICE_PROFILE) },
+                onBecomeHost = viewModel::onBecomeHost,
                 modifier = Modifier.verticalScroll(rememberScrollState())
             )
             ProfileUiState.Loading -> ProfileLoadingContent()
@@ -113,6 +116,8 @@ fun ChooseModeScreen(
  * @param onSwitch called with the selected mode from "Switch to …".
  * @param onProfile opens the device profile, or null to hide the "Profile" link.
  * @param modifier modifier for the list.
+ * @param onBecomeHost called from "Become a host"; the card is shown only when this is
+ *  set and the user is not an owner yet.
  */
 @Composable
 fun ChooseModeContent(
@@ -120,7 +125,8 @@ fun ChooseModeContent(
     modeSwitch: ModeSwitchState,
     onSwitch: (Role) -> Unit,
     onProfile: (() -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBecomeHost: (() -> Unit)? = null
 ) {
     val current = effectiveMode(user)
     var selected by rememberSaveable(user.deviceId) { mutableStateOf(current) }
@@ -170,6 +176,11 @@ fun ChooseModeContent(
                 enabled = !switching,
                 onSelect = { selected = role }
             )
+        }
+
+        // Campers who don't host yet can start here; Admin is never offered.
+        if (onBecomeHost != null && canBecomeHost(user)) {
+            BecomeHostOption(enabled = !switching, onClick = onBecomeHost)
         }
 
         if (modeSwitch is ModeSwitchState.Failed) {
@@ -255,6 +266,49 @@ private fun ModeOption(role: Role, isCurrent: Boolean, isSelected: Boolean, enab
 }
 
 /**
+ * "Become a host" card under the modes, for campers who don't own campsites yet.
+ * Tapping it adds the Owner role and opens Hosting.
+ *
+ * @param enabled false while a switch is being saved.
+ * @param onClick starts hosting.
+ */
+@Composable
+private fun BecomeHostOption(enabled: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, Moss, shape)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(12.dp)
+            .testTag(ChooseModeTags.BECOME_HOST),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "+",
+            style = MaterialTheme.typography.titleLarge,
+            color = TrailGreen,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(32.dp)
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                stringResource(R.string.profile_become_host),
+                style = MaterialTheme.typography.titleSmall,
+                color = TrailGreen
+            )
+            Text(
+                stringResource(R.string.profile_become_host_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = Mist
+            )
+        }
+    }
+}
+
+/**
  * Round avatar showing the user's initials, e.g. "ZS".
  *
  * @param name the user's name.
@@ -282,6 +336,7 @@ object ChooseModeTags {
     const val ERROR = "choose_mode_error"
     const val PROFILE_LINK = "choose_mode_profile"
     const val CURRENT_BADGE = "choose_mode_current"
+    const val BECOME_HOST = "choose_mode_become_host"
 
     /** Tag of the option row for [role]. */
     fun option(role: Role): String = "choose_mode_${role.name.lowercase()}"

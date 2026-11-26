@@ -102,4 +102,42 @@ class TestingRoleViewModelTest {
         advanceUntilIdle()
         assertEquals(listOf(TestUsers.OWNER_ID), activations)
     }
+
+    // US 01.09.01: real device identity in a debug build
+
+    // "This device" switches to the real identity and does not start a sample session.
+    @Test fun thisDevice_usesRealIdentityWithoutTouchingSamples() = runTest {
+        var deviceSelected = 0
+        val controller = TestingRoleViewModel(
+            SavedStateHandle(), users,
+            useThisDevice = { deviceSelected++ },
+            activateUser = { activatedId = it }
+        )
+        controller.selectThisDevice()
+        advanceUntilIdle()
+        assertEquals(1, deviceSelected)
+        assertNull(activatedId)
+        assertTrue(controller.state.value.ready)
+        assertTrue(controller.state.value.usesDevice)
+    }
+
+    // "This device" is remembered if Android kills and restores the app.
+    @Test fun thisDevice_restoredAfterProcessDeath() = runTest {
+        val saved = SavedStateHandle()
+        TestingRoleViewModel(saved, users, useThisDevice = {}, activateUser = {}).selectThisDevice()
+        var deviceSelected = 0
+        val restored = TestingRoleViewModel(saved, users, useThisDevice = { deviceSelected++ }, activateUser = {})
+        advanceUntilIdle()
+        assertEquals(1, deviceSelected)
+        assertTrue(restored.state.value.usesDevice)
+    }
+
+    // Picking any sample role puts all three sample profiles back into an empty database.
+    @Test fun anySampleRole_restoresAllMissingSampleProfiles() = runTest {
+        val empty = FakeUserRepository(emptyList())
+        val controller = TestingRoleViewModel(SavedStateHandle(), empty) { activatedId = it }
+        controller.selectRole(Role.ENTRANT)
+        advanceUntilIdle()
+        for (sample in TestUsers.all) assertNotNull(empty.getById(sample.deviceId))
+    }
 }
