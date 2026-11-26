@@ -2,8 +2,8 @@
 // USER STORIES: 02.01.04, 02.06.01 (red days, and "View booked dates" opens Booked dates)
 // PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner),
 //  with booked days red on the availability calendar.
-// Outstanding issues: the "Published" chip is always shown (no published flag in the model);
-//  the QR code card is US 02.02.01, final part.
+// Outstanding issues: the "Published" chip is always shown (no published flag in the model).
+// The QR code card is Neaz's CampsiteQrCard (ui/qr, US 02.02.01).
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -55,6 +55,7 @@ import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.ui.lottery.LotteryRoutes
+import com.example.trails.ui.qr.CampsiteQrCard
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -240,6 +241,9 @@ private fun CampsiteDetails(
 
         Section(stringResource(R.string.campsite_section_rules)) { Body(c.rules) }
         Section(stringResource(R.string.campsite_section_cancellation)) { Body(c.cancellationPolicy) }
+
+        Spacer(Modifier.height(20.dp))
+        CampsiteQrCard(campsiteId = c.id, campsiteName = c.name)
 
         Spacer(Modifier.height(24.dp))
         Button(
