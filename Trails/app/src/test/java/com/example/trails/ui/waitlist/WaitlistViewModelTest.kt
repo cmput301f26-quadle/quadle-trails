@@ -1,7 +1,7 @@
 // Unit test suite verifying WaitlistViewModel state flows, capacity checks, and operations (MVVM pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.09.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -448,6 +448,45 @@ class WaitlistViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         vm.leaveWaitlist()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state is WaitlistUiState.Error)
+        val error = state as WaitlistUiState.Error
+        assertEquals("This campsite is not in a lottery right now.", error.message)
+    }
+
+    @Test
+    fun declineWin_updatesStatusToDeclined() {
+        val entry = WaitlistEntry(
+            userId = currentUserId,
+            userName = "Chitkarsh",
+            lotteryId = lotteryId,
+            status = WaitlistStatus.WON,
+            rulesAccepted = true
+        )
+        kotlinx.coroutines.runBlocking { waitlistRepo.save(entry) }
+
+        var successCalled = false
+        viewModel.declineWin(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(successCalled)
+        val updated = kotlinx.coroutines.runBlocking { waitlistRepo.getEntry(lotteryId, currentUserId) }
+        assertEquals(WaitlistStatus.DECLINED, updated?.status)
+    }
+
+    @Test
+    fun declineWin_noActiveLottery_setsErrorMessage() {
+        val vm = WaitlistViewModel(
+            lotteryId = "",
+            userId = currentUserId,
+            waitlistRepository = waitlistRepo,
+            lotteryRepository = lotteryRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.declineWin()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = vm.uiState.value

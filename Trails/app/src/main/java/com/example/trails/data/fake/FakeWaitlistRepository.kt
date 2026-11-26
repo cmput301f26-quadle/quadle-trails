@@ -1,5 +1,7 @@
 // in memory waitlist repository seeded from test entries
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
+// outstanding issues: none
+// owner: chitkarsh (chitkarshrathi) - waitlist & booking
 // used antigravity to scaffold this in-memory test fake
 package com.example.trails.data.fake
 
@@ -115,5 +117,17 @@ class FakeWaitlistRepository(
     override suspend fun leaveWaitlist(lotteryId: String, userId: String) {
         checkFailure()
         deleteEntry(lotteryId, userId)
+    }
+
+    override suspend fun updateStatus(
+        lotteryId: String,
+        userId: String,
+        status: WaitlistStatus
+    ): WaitlistEntry? {
+        checkFailure()
+        val entry = getEntry(lotteryId, userId) ?: return null
+        val updated = entry.copy(status = status)
+        save(updated)
+        return updated
     }
 }

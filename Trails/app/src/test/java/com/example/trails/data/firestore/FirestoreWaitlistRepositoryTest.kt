@@ -1,7 +1,7 @@
 // Unit test suite for FirestoreWaitlistRepository verifying collections and CRUD logic (Repository pattern).
-// implements US 01.02.01, US 01.02.02, US 02.09.01
+// implements US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -380,5 +380,39 @@ class FirestoreWaitlistRepositoryTest {
             assertEquals(FirebaseFirestoreException.Code.PERMISSION_DENIED, e.code)
         }
         verify(reg).remove()
+    }
+
+    @Test
+    fun updateStatus_documentExists_updatesFieldAndReturnsEntry(): Unit = runBlocking {
+        val snap1 = mock(DocumentSnapshot::class.java)
+        `when`(snap1.exists()).thenReturn(true)
+        val snap2 = mock(DocumentSnapshot::class.java)
+        `when`(snap2.exists()).thenReturn(true)
+        val updatedEntry = WaitlistEntry(userId = userId, lotteryId = lotteryId, status = WaitlistStatus.WON)
+        `when`(snap2.toObject(WaitlistEntry::class.java)).thenReturn(updatedEntry)
+
+        `when`(entryDoc.get()).thenReturn(Tasks.forResult(snap1)).thenReturn(Tasks.forResult(snap2))
+        `when`(entryDoc.update("status", "WON")).thenReturn(Tasks.forResult(null))
+
+        val result = repo.updateStatus(lotteryId, userId, WaitlistStatus.WON)
+        assertNotNull(result)
+        assertEquals(WaitlistStatus.WON, result?.status)
+        verify(entryDoc).update("status", "WON")
+    }
+
+    @Test
+    fun updateStatus_documentDoesNotExist_returnsNull(): Unit = runBlocking {
+        val snap = mock(DocumentSnapshot::class.java)
+        `when`(snap.exists()).thenReturn(false)
+        `when`(entryDoc.get()).thenReturn(Tasks.forResult(snap))
+
+        val result = repo.updateStatus(lotteryId, userId, WaitlistStatus.WON)
+        assertNull(result)
+    }
+
+    @Test
+    fun updateStatus_blankParams_returnsNull(): Unit = runBlocking {
+        assertNull(repo.updateStatus("", userId, WaitlistStatus.WON))
+        assertNull(repo.updateStatus(lotteryId, "", WaitlistStatus.WON))
     }
 }

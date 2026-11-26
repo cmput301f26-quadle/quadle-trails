@@ -1,7 +1,7 @@
 // UI Controller composable displaying waitlist status, rules agreement, and join/leave lottery actions (UI Controller in MVVM).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.01, US 01.04.02, US 01.04.03, US 02.04.02, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -106,6 +106,21 @@ fun WaitlistScreen(
         onViewEntrants = { targetLotteryId ->
             navController.navigate(WaitlistRoutes.waitlistEntrants(targetLotteryId))
         },
+        onClaimWinClick = {
+            val lottery = (state as? WaitlistUiState.Waitlisted)?.lottery
+            val lotteryId = lottery?.id.orEmpty()
+            val campsiteId = (state as? WaitlistUiState.Waitlisted)?.campsite?.id
+                ?: lottery?.campsiteIds?.firstOrNull().orEmpty()
+
+            if ((lottery?.campsiteIds?.size ?: 0) > 1) {
+                navController.navigate(WaitlistRoutes.selectCampsite(lotteryId))
+            } else {
+                navController.navigate(WaitlistRoutes.reserveDates(lotteryId, campsiteId))
+            }
+        },
+        onDeclineWinClick = {
+            viewModel.declineWin()
+        },
         modifier = modifier
     )
 }
@@ -125,6 +140,8 @@ fun WaitlistScreen(
  * @param onBack callback triggered when the back navigation button is clicked.
  * @param onClearError callback triggered when dismissing an error banner.
  * @param onViewEntrants callback triggered to view all entrants enrolled in the lottery.
+ * @param onClaimWinClick callback triggered when a winner clicks to claim their reservation.
+ * @param onDeclineWinClick callback triggered when a winner clicks to decline their lottery win.
  * @param modifier optional [Modifier] for layout adjustments.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,6 +154,8 @@ fun WaitlistContent(
     onBack: () -> Unit,
     onClearError: () -> Unit,
     onViewEntrants: (String) -> Unit = {},
+    onClaimWinClick: () -> Unit = {},
+    onDeclineWinClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -376,11 +395,13 @@ fun WaitlistContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // embedded join and leave action section (stories 01.02.01 and 01.02.02)
+                    // embedded join, leave, claim, and decline actions
                     JoinLotterySection(
                         uiState = state,
                         onJoinClick = onJoinClick,
-                        onLeaveClick = onLeaveClick
+                        onLeaveClick = onLeaveClick,
+                        onClaimWinClick = onClaimWinClick,
+                        onDeclineWinClick = onDeclineWinClick
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

@@ -1,7 +1,7 @@
 // Navigation routing and graph builder for waitlist destinations (Navigation Graph pattern).
-// implements US 01.01.06, US 01.02.01, US 02.09.01, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.04.01, US 01.04.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.navigation.NavController
@@ -18,11 +18,26 @@ object WaitlistRoutes {
     const val CONFIRM_RESERVATION = "confirm_reservation/{campsiteId}"
     const val WAITLIST_SCREEN = "waitlist_screen/{campsiteId}"
     const val WAITLIST_ENTRANTS = "waitlist_entrants/{lotteryId}"
+    const val SELECT_CAMPSITE = "select_campsite/{lotteryId}"
+    const val RESERVE_DATES = "reserve_dates/{lotteryId}/{campsiteId}"
+    const val CONFIRM_RESERVATION_DETAILS = "confirm_reservation_details/{campsiteId}/{lotteryId}/{startDay}/{endDay}/{guests}"
 
     fun lotteryWaitlist(lotteryId: String) = "lottery_waitlist/$lotteryId"
     fun confirmReservation(campsiteId: String) = "confirm_reservation/$campsiteId"
     fun waitlistScreen(campsiteId: String) = "waitlist_screen/$campsiteId"
     fun waitlistEntrants(lotteryId: String) = "waitlist_entrants/$lotteryId"
+    fun selectCampsite(lotteryId: String) = "select_campsite/$lotteryId"
+    fun reserveDates(lotteryId: String, campsiteId: String) = "reserve_dates/$lotteryId/$campsiteId"
+    fun confirmReservationWithDetails(
+        campsiteId: String,
+        lotteryId: String,
+        startDay: Long,
+        endDay: Long,
+        guests: Int,
+        contactName: String = "",
+        contactEmail: String = "",
+        contactPhone: String = ""
+    ) = "confirm_reservation_details/$campsiteId/$lotteryId/$startDay/$endDay/$guests"
 }
 
 // based on android developer guide for compose navigation graph
@@ -49,5 +64,40 @@ fun NavGraphBuilder.waitlistGraph(navController: NavController) {
 
     composable(WaitlistRoutes.WAITLIST_SCREEN, arguments = listOf(requiredId("campsiteId"))) { entry ->
         WaitlistScreen(navController, campsiteId = entry.requireArg("campsiteId"))
+    }
+
+    composable(WaitlistRoutes.SELECT_CAMPSITE, arguments = listOf(requiredId("lotteryId"))) { entry ->
+        SelectCampsiteScreen(navController, lotteryId = entry.requireArg("lotteryId"))
+    }
+
+    composable(
+        WaitlistRoutes.RESERVE_DATES,
+        arguments = listOf(requiredId("lotteryId"), requiredId("campsiteId"))
+    ) { entry ->
+        ReserveDatesScreen(
+            navController = navController,
+            lotteryId = entry.requireArg("lotteryId"),
+            campsiteId = entry.requireArg("campsiteId")
+        )
+    }
+
+    composable(
+        WaitlistRoutes.CONFIRM_RESERVATION_DETAILS,
+        arguments = listOf(
+            requiredId("campsiteId"),
+            requiredId("lotteryId"),
+            requiredId("startDay"),
+            requiredId("endDay"),
+            requiredId("guests")
+        )
+    ) { entry ->
+        ConfirmReservationScreen(
+            navController = navController,
+            campsiteId = entry.requireArg("campsiteId"),
+            lotteryId = entry.requireArg("lotteryId"),
+            startDayKey = entry.requireArg("startDay").toLongOrNull(),
+            endDayKey = entry.requireArg("endDay").toLongOrNull(),
+            guests = entry.requireArg("guests").toIntOrNull() ?: 1
+        )
     }
 }

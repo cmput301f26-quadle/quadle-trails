@@ -1,10 +1,11 @@
 // Repository interface defining reactive streams and data access operations for waitlist entries (Repository pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.repository
 
 import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.data.model.WaitlistStatus
 import kotlinx.coroutines.flow.Flow
 
 // based on kotlin flow documentation for repository streaming
@@ -112,4 +113,19 @@ interface WaitlistRepository {
      * @param userId the identifier of the user leaving.
      */
     suspend fun leaveWaitlist(lotteryId: String, userId: String)
+
+    // updates status of an entrant's waitlist entry
+    /**
+     * Updates the status of an entrant's waitlist entry (e.g. WON, DECLINED, RESERVED).
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @param userId the identifier of the user.
+     * @param status the new [WaitlistStatus] to set.
+     * @return the updated [WaitlistEntry], or null if no entry exists.
+     */
+    suspend fun updateStatus(
+        lotteryId: String,
+        userId: String,
+        status: WaitlistStatus
+    ): WaitlistEntry?
 }
