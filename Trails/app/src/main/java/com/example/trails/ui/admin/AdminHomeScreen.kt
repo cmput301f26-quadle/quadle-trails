@@ -99,33 +99,34 @@ fun AdminHomeContent(
             .testTag(AdminHomeTags.SCREEN),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stringResource(R.string.profile_mode_admin), style = MaterialTheme.typography.titleLarge)
+            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
+                modePill()
+            }
+        }
         if (state == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.testTag(AdminHomeTags.LOADING))
             }
             return@Column
         }
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    state.greeting,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.testTag(AdminHomeTags.GREETING)
-                )
-                Text(
-                    stringResource(R.string.admin_home_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
-                modePill()
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                state.greeting,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag(AdminHomeTags.GREETING)
+            )
+            Text(
+                stringResource(R.string.admin_home_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         if (state.openReportCount > 0) {
             NeedsReviewCard(state, onNeedsReviewClick)

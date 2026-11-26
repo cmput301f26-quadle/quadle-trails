@@ -9,6 +9,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import com.example.trails.ui.navigation.TrailsApp
 import com.example.trails.ui.theme.TrailsTheme
+import com.example.trails.ui.testing.TestingRoleGate
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,7 +19,9 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
         setContent {
-            TrailsTheme { TrailsApp() }
+            TrailsTheme {
+                TestingRoleGate { TrailsApp() }
+            }
         }
     }
 }

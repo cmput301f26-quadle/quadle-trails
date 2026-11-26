@@ -22,6 +22,7 @@ import com.example.trails.R
 import com.example.trails.ui.admin.AdminRoutes
 import com.example.trails.ui.profile.ProfileRoutes
 import com.example.trails.ui.theme.TrailsTheme
+import com.example.trails.ui.testing.rememberTestingRoleRestart
 
 /**
  * Connects the settings list to navigation and renders [SettingsContent].
@@ -37,7 +38,8 @@ fun SettingsScreen(
     SettingsContent(
         onProfileClick = { navController.navigate(ProfileRoutes.PROFILE) },
         onPolicyClick = { navController.navigate(AdminRoutes.POLICY) },
-        modifier = modifier
+        modifier = modifier,
+        onTestingRoleClick = rememberTestingRoleRestart()
     )
 }
 
@@ -52,7 +54,8 @@ fun SettingsScreen(
 fun SettingsContent(
     onProfileClick: () -> Unit,
     onPolicyClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTestingRoleClick: (() -> Unit)? = null
 ) {
     Column(
         modifier
@@ -67,6 +70,10 @@ fun SettingsContent(
         SettingsRow(stringResource(R.string.shell_settings_profile), onProfileClick, SettingsTags.PROFILE_ROW)
         HorizontalDivider()
         SettingsRow(stringResource(R.string.shell_settings_policy), onPolicyClick, SettingsTags.POLICY_ROW)
+        if (onTestingRoleClick != null) {
+            HorizontalDivider()
+            SettingsRow(stringResource(R.string.testing_change_role), onTestingRoleClick, SettingsTags.TESTING_ROLE_ROW)
+        }
     }
 }
 
@@ -90,6 +97,7 @@ object SettingsTags {
     const val SCREEN = "settings_screen"
     const val PROFILE_ROW = "settings_profile_row"
     const val POLICY_ROW = "settings_policy_row"
+    const val TESTING_ROLE_ROW = "settings_testing_role_row"
 }
 
 /** Design-time preview of the settings list. */

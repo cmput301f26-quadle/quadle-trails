@@ -6,6 +6,7 @@
 package com.example.trails.ui.admin
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -81,6 +82,20 @@ class AdminHomeContentTest {
         composeRule.onNodeWithTag(AdminHomeTags.PROFILES).performClick()
         assertEquals(0, campsites)
         assertEquals(1, profiles)
+    }
+
+    @Test
+    fun modeSelector_remainsAvailableWhileAdminDataLoads() {
+        var clicks = 0
+        composeRule.setContent {
+            TrailsTheme {
+                AdminHomeContent(null, {}, {}, modePill = {
+                    ModePillChip(Role.ADMIN, onClick = { clicks++ })
+                })
+            }
+        }
+        composeRule.onNodeWithTag(ModePillTags.PILL).assertIsDisplayed().performClick()
+        assertEquals(1, clicks)
     }
 
     // This checks that with open reports the Needs review card shows its chip, count and oldest report.
