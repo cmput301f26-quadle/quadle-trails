@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.trails.R
 import com.example.trails.ui.notification.NotificationList
-import com.example.trails.ui.reservation.ReservationList
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -35,7 +35,7 @@ fun NotificationsScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    NotificationsContent(modifier = modifier)
+    NotificationsContent(modifier = modifier, navController = navController)
 }
 
 /**
@@ -44,7 +44,7 @@ fun NotificationsScreen(
  * @param modifier modifier for the screen.
  */
 @Composable
-fun NotificationsContent(modifier: Modifier = Modifier) {
+fun NotificationsContent(modifier: Modifier = Modifier, navController: NavController) {
     if (NotificationList().emptyCheck()) {
         ShellEmptyState(
             title = stringResource(R.string.shell_notifications_title),
@@ -66,7 +66,7 @@ fun NotificationsContent(modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center)
             }
-            NotificationList().RenderList()
+            NotificationList().RenderList(navController)
         }
     }
 }
@@ -81,5 +81,5 @@ object NotificationsTags {
 @Preview(showBackground = true, heightDp = 800)
 @Composable
 private fun NotificationsContentPreview() {
-    TrailsTheme { NotificationsContent() }
+    TrailsTheme { NotificationsContent(navController = NavController(LocalContext.current)) }
 }

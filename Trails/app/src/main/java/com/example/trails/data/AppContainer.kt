@@ -2,7 +2,6 @@
 // OWNER: shared — anyone can add via a small PR reviewed by any teammate.
 package com.example.trails.data
 
-import com.example.trails.data.fake.FakeNotificationRepository
 import com.example.trails.data.fake.FakeRatingRepository
 import com.example.trails.data.fake.FakeReportRepository
 import com.example.trails.data.fake.FakeUserRepository
@@ -46,5 +45,6 @@ object AppContainer {
     // Report — Zainab swaps this for the Firestore version when reports exist in Firestore.
     val reportRepository: ReportRepository = FakeReportRepository()
 
+    //Temporary version made by Kasey, can be changed/removed
     val notificationRepository: NotificationRepository by lazy { FirestoreNotificationRepository() }
 }

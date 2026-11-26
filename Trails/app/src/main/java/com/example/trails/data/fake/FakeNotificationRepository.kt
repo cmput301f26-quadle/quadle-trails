@@ -1,6 +1,5 @@
 package com.example.trails.data.fake
 
-import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Notification
 import com.example.trails.data.model.NotificationType
 import com.example.trails.data.model.Reservation
@@ -25,6 +24,10 @@ class FakeNotificationRepository(
     }
 
     override suspend fun checkNotif(related: Reservation) : Boolean {
+        return true
+    }
+
+    override suspend fun checkCancelledNotif(related: Reservation): Boolean {
         return true
     }
 }
