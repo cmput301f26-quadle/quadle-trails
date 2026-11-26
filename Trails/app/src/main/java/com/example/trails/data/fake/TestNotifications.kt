@@ -1,11 +1,9 @@
 package com.example.trails.data.fake
 
-import com.example.trails.data.AppContainer
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Notification
 import com.example.trails.data.model.NotificationType
 import com.google.firebase.Timestamp
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 val currentTime = Timestamp.now()
