@@ -56,6 +56,16 @@ interface UserRepository {
     suspend fun updateProfile(deviceId: String, name: String, email: String, phone: String)
 
     /**
+     * Sets or clears only the profile photo of an existing profile (US 01.08.02).
+     * Every other field is left as stored.
+     *
+     * @param deviceId the profile to change.
+     * @param url the uploaded photo's URL, or null to remove the photo.
+     * @throws Exception if the profile does not exist or the write fails.
+     */
+    suspend fun updateProfileImage(deviceId: String, url: String?)
+
+    /**
      * Changes which of its roles the profile is acting as (US 03.11.01).
      *
      * @param deviceId the profile to change.

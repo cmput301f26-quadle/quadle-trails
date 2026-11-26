@@ -87,6 +87,12 @@ class FirestoreUserRepository(
             .await()
     }
 
+    override suspend fun updateProfileImage(deviceId: String, url: String?) {
+        require(deviceId.isNotBlank()) { "A device id is required." }
+        // update() writes only this field and fails if the document does not exist.
+        usersCollection().document(deviceId).update("profileImageUrl", url).await()
+    }
+
     override suspend fun updateActiveMode(deviceId: String, mode: Role) {
         val user = getById(deviceId) ?: throw NoSuchElementException("No profile for $deviceId.")
         require(mode in user.roles) { "Profile $deviceId does not hold the $mode role." }

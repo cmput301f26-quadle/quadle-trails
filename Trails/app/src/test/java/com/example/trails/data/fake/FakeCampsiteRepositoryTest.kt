@@ -75,11 +75,6 @@ class FakeCampsiteRepositoryTest {
     }
 
     @Test
-    fun uploadImage_returnsUsableUrl() = runBlocking {
-        assertEquals("content://media/picker/0/42", repo.uploadImage("content://media/picker/0/42"))
-    }
-
-    @Test
     fun observeById_unknownId_emitsNull() = runBlocking {
         assertNull(repo.observeById("does-not-exist").first())
     }

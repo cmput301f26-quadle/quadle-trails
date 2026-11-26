@@ -47,6 +47,12 @@
     <!-- US 01.07.03: Profile -->
     <string name="profile_title">Profile</string>
     <string name="profile_change_photo">Change photo</string>
+    <!-- US 01.08.02: profile photo (Ibrahim) -->
+    <string name="profile_add_photo">Add photo</string>
+    <string name="profile_remove_photo">Remove photo</string>
+    <string name="profile_photo_uploading">Uploading photo…</string>
+    <string name="profile_photo_removing">Removing photo…</string>
+    <string name="profile_error_photo">Couldn\'t update your photo. Try again.</string>
     <string name="profile_name_label">Name</string>
     <string name="profile_email_label">Email</string>
     <string name="profile_phone_label">Phone (optional)</string>

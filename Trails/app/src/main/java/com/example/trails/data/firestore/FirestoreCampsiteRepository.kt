@@ -3,8 +3,6 @@
 // Outstanding issues:
 //  - Read errors (e.g. PERMISSION_DENIED from the security rules) are logged and treated as
 //    "no data" so the app doesn't crash; screens don't show a dedicated error state yet.
-//  - Photo upload needs Firebase Storage, which isn't enabled on the project yet (Blaze plan),
-//    so uploadImage fails for now; deferred to the final part.
 //  - Needs a live Firestore, so it isn't unit-tested itself; the document mapping it relies
 //    on (CampsiteDocument.kt) is.
 // AI assistance: written in assistance with Claude AI by Anthropic.
@@ -13,16 +11,13 @@ package com.example.trails.data.firestore
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Collections
 import com.example.trails.data.repository.CampsiteRepository
-import android.net.Uri
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.util.UUID
 
 /**
  * Reads and writes [Campsite]s in the [Collections.CAMPSITES] Firestore collection.
@@ -33,15 +28,12 @@ import java.util.UUID
  * Written in assistance with Claude AI by Anthropic.
  *
  * @param db the Firestore instance; defaults to the app's default instance.
- * @param storage the Storage instance for promo photos; defaults to the app's default instance.
  */
 class FirestoreCampsiteRepository(
-    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance() },
-    storage: Lazy<FirebaseStorage> = lazy { FirebaseStorage.getInstance() }
+    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance() }
 ) : CampsiteRepository {
 
     private val campsites by lazy { db.value.collection(Collections.CAMPSITES) }
-    private val storage by storage
 
     override fun observeAll(): Flow<List<Campsite>> = observe(campsites)
 
@@ -78,13 +70,6 @@ class FirestoreCampsiteRepository(
     /** Firestore's delete already succeeds when the document doesn't exist. */
     override suspend fun delete(id: String) {
         campsites.document(id).delete().await()
-    }
-
-    /** Uploads to Firebase Storage under campsite-images/ and returns the download URL. */
-    override suspend fun uploadImage(localUri: String): String {
-        val ref = storage.reference.child("campsite-images/${UUID.randomUUID()}.jpg")
-        ref.putFile(Uri.parse(localUri)).await()
-        return ref.downloadUrl.await().toString()
     }
 
     private companion object {

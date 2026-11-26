@@ -1,6 +1,7 @@
-// Handles profile editing and deletion on the Profile screen (US 01.07.03, 01.08.01).
+// Handles profile editing and deletion on the Profile screen (US 01.07.03, 01.08.01, 01.08.02).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: "Change photo" is shown but disabled because Firebase Storage is not enabled.
+//   (profile photo, US 01.08.02: Ibrahim, using the shared image picker and uploader)
+// Outstanding issues: none.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.background
@@ -35,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,6 +59,7 @@ import com.example.trails.R
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.ui.common.TrailsTopBar
+import com.example.trails.ui.common.rememberImagePicker
 import com.example.trails.ui.discovery.DiscoveryRoutes
 import com.example.trails.ui.navigation.goToHomeFor
 import com.example.trails.ui.theme.Ember
@@ -86,6 +89,8 @@ fun EditProfileScreen(
     val errors by viewModel.errors.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val deleteState by viewModel.deleteState.collectAsState()
+    val photoState by viewModel.photoState.collectAsState()
+    val pickPhoto = rememberImagePicker(viewModel::onPhotoPicked)
 
     val loaded = (state as? ProfileUiState.Loaded)?.user
     LaunchedEffect(loaded?.deviceId) {
@@ -124,6 +129,9 @@ fun EditProfileScreen(
             onSave = viewModel::onSaveClicked,
             onDeleteConfirmed = viewModel::onDeleteConfirmed,
             onOpenDeviceProfile = { navController.navigate(ProfileRoutes.DEVICE_PROFILE) },
+            photoState = photoState,
+            onPickPhoto = pickPhoto,
+            onRemovePhoto = viewModel::onPhotoRemoved,
             topBarActions = {
                 ModePill(navController, viewModel = viewModel)
                 Spacer(Modifier.width(12.dp))
@@ -148,6 +156,9 @@ fun EditProfileScreen(
  * @param onSave called from "Save Changes".
  * @param onDeleteConfirmed called when deletion is confirmed in the dialog.
  * @param onOpenDeviceProfile called from the "Signed in with this device" card.
+ * @param photoState progress of adding, changing or removing the photo (US 01.08.02).
+ * @param onPickPhoto called from the photo or "Add/Change photo"; opens the picker.
+ * @param onRemovePhoto called from "Remove photo".
  * @param modifier modifier for the screen.
  * @param topBarActions shown at the right of the top bar; the mode pill in the app.
  */
@@ -165,12 +176,17 @@ fun EditProfileContent(
     onSave: () -> Unit,
     onDeleteConfirmed: () -> Unit,
     onOpenDeviceProfile: () -> Unit,
+    photoState: PhotoState = PhotoState.Idle,
+    onPickPhoto: () -> Unit = {},
+    onRemovePhoto: () -> Unit = {},
     modifier: Modifier = Modifier,
     topBarActions: @Composable RowScope.() -> Unit = {}
 ) {
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val saving = saveState == SaveState.Saving
     val deleting = deleteState == DeleteState.Deleting
+    val photoBusy = photoState == PhotoState.Uploading || photoState == PhotoState.Removing
+    val hasPhoto = !user.profileImageUrl.isNullOrBlank()
 
     Column(modifier.fillMaxSize()) {
         TrailsTopBar(
@@ -191,19 +207,43 @@ fun EditProfileContent(
                 Box(
                     Modifier
                         .size(96.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = !photoBusy, onClick = onPickPhoto)
                         .border(2.dp, TrailGreen, CircleShape)
-                        .padding(4.dp),
+                        .padding(4.dp)
+                        .testTag(EditProfileTags.PHOTO),
                     contentAlignment = Alignment.Center
                 ) {
                     Avatar(user.profileImageUrl, size = 86.dp)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    stringResource(R.string.profile_change_photo),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Mist.copy(alpha = 0.6f),
-                    modifier = Modifier.testTag(EditProfileTags.CHANGE_PHOTO)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = onPickPhoto,
+                        enabled = !photoBusy,
+                        modifier = Modifier.testTag(EditProfileTags.CHANGE_PHOTO)
+                    ) {
+                        Text(
+                            stringResource(if (hasPhoto) R.string.profile_change_photo else R.string.profile_add_photo),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                    if (hasPhoto) {
+                        TextButton(
+                            onClick = onRemovePhoto,
+                            enabled = !photoBusy,
+                            modifier = Modifier.testTag(EditProfileTags.REMOVE_PHOTO)
+                        ) {
+                            Text(stringResource(R.string.profile_remove_photo), style = MaterialTheme.typography.labelMedium, color = Ember)
+                        }
+                    }
+                }
+                when (photoState) {
+                    PhotoState.Uploading -> StatusText(stringResource(R.string.profile_photo_uploading), EditProfileTags.PHOTO_STATUS, Mist)
+                    PhotoState.Removing -> StatusText(stringResource(R.string.profile_photo_removing), EditProfileTags.PHOTO_STATUS, Mist)
+                    is PhotoState.Failed -> StatusText(stringResource(R.string.profile_error_photo), EditProfileTags.PHOTO_ERROR, Ember)
+                    PhotoState.Idle -> Unit
+                }
             }
 
             ProfileField(stringResource(R.string.profile_name_label), form.name, errors.name, onNameChange, EditProfileTags.NAME)
@@ -368,7 +408,11 @@ private fun ProfileFieldError.message(): String = stringResource(
 object EditProfileTags {
     const val SCREEN = "edit_profile"
     const val BACK = "edit_profile_back"
+    const val PHOTO = "edit_profile_photo"
     const val CHANGE_PHOTO = "edit_profile_change_photo"
+    const val REMOVE_PHOTO = "edit_profile_remove_photo"
+    const val PHOTO_STATUS = "edit_profile_photo_status"
+    const val PHOTO_ERROR = "edit_profile_photo_error"
     const val NAME = "edit_profile_name"
     const val EMAIL = "edit_profile_email"
     const val PHONE = "edit_profile_phone"

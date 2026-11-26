@@ -4,6 +4,8 @@ package com.example.trails.data
 
 import com.example.trails.data.fake.FakeRatingRepository
 import com.example.trails.data.fake.FakeReportRepository
+import com.example.trails.data.fake.FakeUserRepository
+import com.example.trails.data.firestore.FirebaseImageRepository
 import com.example.trails.data.firestore.FirestoreCampsiteRepository
 import com.example.trails.data.firestore.FirestoreLotteryRepository
 import com.example.trails.data.firestore.FirestoreNotificationRepository
@@ -12,6 +14,7 @@ import com.example.trails.data.firestore.FirestoreReservationRepository
 import com.example.trails.data.firestore.FirestoreUserRepository
 import com.example.trails.data.firestore.FirestoreWaitlistRepository
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.repository.ImageRepository
 import com.example.trails.data.repository.LotteryRepository
 import com.example.trails.data.repository.NotificationRepository
 import com.example.trails.data.repository.MessageRepository
@@ -35,6 +38,9 @@ object AppContainer {
 
     // Campsite — Ibrahim.
     val campsiteRepository: CampsiteRepository by lazy { FirestoreCampsiteRepository() }
+
+    // Images (campsite and profile photos, admin image moderation) — Ibrahim. Firebase Storage.
+    val imageRepository: ImageRepository by lazy { FirebaseImageRepository() }
 
     // Lottery — Skanda.
     val lotteryRepository: LotteryRepository by lazy { FirestoreLotteryRepository() }

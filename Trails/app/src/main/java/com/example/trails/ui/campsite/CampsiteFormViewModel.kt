@@ -1,14 +1,17 @@
 // Controller for the Register / Edit campsite form (US 02.01.01, 02.01.03; booked days locked, 02.06.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// Outstanding issues: picking a photo makes the save fail until Firebase Storage is enabled
-//  (see FirestoreCampsiteRepository); saving without a photo works.
+// Outstanding issues: none.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.trails.data.AppContainer
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.repository.ImageFolder
+import com.example.trails.data.repository.ImageRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,12 +53,14 @@ data class CampsiteFormUiState(
  * @param repository where campsites are stored.
  * @param ownerId owner assigned to newly registered campsites.
  * @param campsiteId campsite to edit, or null to register a new one.
+ * @param images where promo photos are uploaded (shared with profile photos).
  * @param reservations the campsite's reservations, so booked days can't be edited (US 02.06.01).
  */
 class CampsiteFormViewModel(
     private val repository: CampsiteRepository,
     private val ownerId: String,
     campsiteId: String?,
+    private val images: ImageRepository = AppContainer.imageRepository,
     reservations: CampsiteReservations = appReservations
 ) : ViewModel() {
 
@@ -95,6 +100,7 @@ class CampsiteFormViewModel(
 
     /**
      * Validates and, if valid, saves the campsite, uploading a newly picked photo first.
+     * Once saved, a photo that was replaced or removed is deleted from storage.
      * Ignored while a save is in progress.
      */
     fun onSave() {
@@ -108,17 +114,30 @@ class CampsiteFormViewModel(
                     try {
                         val image = result.campsite.imageUrl
                         val toSave = if (image != null && isLocalImage(image)) {
-                            result.campsite.copy(imageUrl = repository.uploadImage(image))
+                            result.campsite.copy(imageUrl = images.upload(image, ImageFolder.CAMPSITES))
                         } else {
                             result.campsite
                         }
                         val id = repository.save(toSave)
+                        val oldImage = base?.imageUrl
+                        if (oldImage != null && oldImage != toSave.imageUrl) deleteQuietly(oldImage)
                         _state.update { it.copy(isSaving = false, savedId = id) }
                     } catch (e: Exception) {
                         _state.update { it.copy(isSaving = false, saveFailed = true) }
                     }
                 }
             }
+        }
+    }
+
+    /** Deletes an old photo; if that fails the photo is just left in storage for moderation. */
+    private suspend fun deleteQuietly(url: String) {
+        try {
+            images.delete(url)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Left behind in storage; not worth failing a save that already succeeded.
         }
     }
 }
