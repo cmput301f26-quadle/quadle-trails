@@ -76,6 +76,7 @@ import java.util.Locale
  *
  * @param lotteryId the identifier of the lottery whose entrants are shown.
  * @param onBack callback triggered to navigate back to the previous screen.
+ * @param onNotifyClick callback triggered by "Notify Entrants" (US 02.10.01).
  * @param modifier optional [Modifier] for screen styling.
  * @param viewModel scoped [WaitlistViewModel] instance managing waitlist state.
  */
@@ -83,6 +84,7 @@ import java.util.Locale
 fun WaitlistEntrantsScreen(
     lotteryId: String,
     onBack: () -> Unit,
+    onNotifyClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: WaitlistViewModel = viewModel(key = lotteryId) { WaitlistViewModel(lotteryId = lotteryId) }
 ) {
@@ -101,6 +103,7 @@ fun WaitlistEntrantsScreen(
         isLoading = isLoading,
         errorMessage = errorMessage,
         onBack = onBack,
+        onNotifyClick = onNotifyClick,
         modifier = modifier
     )
 }

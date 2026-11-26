@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Aarav (aarav-kapoor-cs) — strings for ui/ownernotify (US 02.10.01, 02.10.02). -->
+<resources>
+    <!-- New notification (US 02.10.01) -->
+    <string name="notify_title">New notification</string>
+    <string name="notify_history">History</string>
+    <plurals name="notify_to">
+        <item quantity="one">To: %1$d entrant</item>
+        <item quantity="other">To: %1$d entrants</item>
+    </plurals>
+    <string name="notify_no_entrants">Nobody has joined this waitlist yet.</string>
+    <string name="notify_unknown_entrant">Entrant</string>
+    <string name="notify_subject">Subject</string>
+    <string name="notify_subject_hint">e.g. Lottery draw date update</string>
+    <string name="notify_message">Message</string>
+    <string name="notify_message_hint">Write your message to the waitlist</string>
+    <string name="notify_limit">Up to 500 characters</string>
+    <string name="notify_counter">%1$d / %2$d</string>
+    <string name="notify_send">Review and send</string>
+    <string name="notify_sending">Sending…</string>
+    <string name="notify_send_failed">Couldn\'t send the notification. Try again.</string>
+    <string name="notify_not_found">This lottery no longer exists.</string>
+    <string name="notify_load_failed">Couldn\'t load the waitlist. Check your connection.</string>
+    <string name="notify_retry">Try again</string>
+    <string name="notify_error_subject_required">Subject is required</string>
+    <string name="notify_error_subject_long">Subject must be 80 characters or fewer</string>
+    <string name="notify_error_message_required">Message is required</string>
+    <string name="notify_error_message_long">Message must be 500 characters or fewer</string>
+    <string name="notify_sent_title">Notification sent</string>
+    <plurals name="notify_sent_body">
+        <item quantity="one">\"%1$s\" was sent to %2$d entrant on the %3$s.</item>
+        <item quantity="other">\"%1$s\" was sent to %2$d entrants on the %3$s.</item>
+    </plurals>
+    <string name="notify_done">Done</string>
+    <string name="notify_view_sent">View sent</string>
+
+    <!-- Sent notifications (US 02.10.02) -->
+    <string name="sent_title">Sent notifications</string>
+    <string name="sent_filter_all">All history</string>
+    <string name="sent_filter_week">This week</string>
+    <string name="sent_filter_month">This month</string>
+    <plurals name="sent_count">
+        <item quantity="one">%1$d sent • Latest first</item>
+        <item quantity="other">%1$d sent • Latest first</item>
+    </plurals>
+    <string name="sent_when">%1$s • Sent</string>
+    <string name="sent_empty">You haven\'t sent any notifications yet.</string>
+    <string name="sent_load_failed">Couldn\'t load your sent notifications.</string>
+    <string name="sent_details_title">Notification</string>
+    <string name="sent_badge">SENT</string>
+    <string name="sent_not_found">This notification no longer exists.</string>
+    <string name="sent_recipients">Recipients (%1$d)</string>
+    <string name="sent_recipient_party">Waitlist entrant · Party of %1$d</string>
+</resources>

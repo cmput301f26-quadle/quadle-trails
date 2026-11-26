@@ -109,6 +109,8 @@ class NotificationList {
                             NotificationRoutes.RESERVATION_LIST
                         )
                     }
+
+                    NotificationType.OWNER_MESSAGE -> LotteryWinCard(item) {}
                 }
             }
         }
