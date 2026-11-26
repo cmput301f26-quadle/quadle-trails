@@ -11,6 +11,7 @@ import com.example.trails.data.model.Role
 import com.example.trails.ui.admin.AdminRoutes
 import com.example.trails.ui.campsite.CampsiteRoutes
 import com.example.trails.ui.discovery.DiscoveryRoutes
+import com.example.trails.ui.messaging.MessagingRoutes
 import com.example.trails.ui.profile.ProfileRoutes
 
 /** The four tabs on the bottom bar; the same for every role. */
@@ -54,8 +55,8 @@ fun routeFor(tab: BottomNavTab, mode: Role): String = when (tab) {
 /**
  * Which tab to highlight for the screen being shown. Profile, edit profile,
  * device profile, choose a mode, app policy and camping guidelines are all
- * opened from Settings, so they count as Settings; every other screen counts
- * as Home.
+ * opened from Settings, so they count as Settings; a chat is opened from
+ * Messages, so it counts as Messages; every other screen counts as Home.
  *
  * @param route the current route pattern (e.g. `NavDestination.route`), or null if none.
  * @return the selected tab, or null when there is no route.
@@ -63,7 +64,8 @@ fun routeFor(tab: BottomNavTab, mode: Role): String = when (tab) {
 fun selectedTab(route: String?): BottomNavTab? = when (route) {
     null -> null
     ShellRoutes.NOTIFICATIONS -> BottomNavTab.NOTIFICATIONS
-    ShellRoutes.MESSAGES -> BottomNavTab.MESSAGES
+    ShellRoutes.MESSAGES,
+    MessagingRoutes.CHAT -> BottomNavTab.MESSAGES
     ShellRoutes.SETTINGS,
     ProfileRoutes.PROFILE,
     ProfileRoutes.EDIT_PROFILE,
