@@ -6,6 +6,72 @@
     <string name="campsite_role_owner">Owner</string>
     <string name="campsite_tab_campsites">Campsites</string>
     <string name="campsite_tab_lotteries">Lotteries</string>
+    <string name="campsite_tab_reservations">Reservations</string>
+
+    <!-- US 02.07.01–03: owner reservations -->
+    <string name="reservations_title">My Reservations</string>
+    <string name="reservations_campsite_label">Campsite</string>
+    <string name="reservations_all_campsites">All campsites</string>
+    <string name="reservations_filter_active">Active</string>
+    <string name="reservations_filter_past">Past</string>
+    <string name="reservations_filter_cancelled">Cancelled</string>
+    <!-- Args: count label (e.g. "2 upcoming reservations"), today's date. -->
+    <string name="reservations_summary">%1$s • As of %2$s</string>
+    <plurals name="reservations_count_active">
+        <item quantity="one">%1$d upcoming reservation</item>
+        <item quantity="other">%1$d upcoming reservations</item>
+    </plurals>
+    <plurals name="reservations_count_past">
+        <item quantity="one">%1$d completed reservation</item>
+        <item quantity="other">%1$d completed reservations</item>
+    </plurals>
+    <plurals name="reservations_count_cancelled">
+        <item quantity="one">%1$d cancelled reservation</item>
+        <item quantity="other">%1$d cancelled reservations</item>
+    </plurals>
+    <plurals name="reservations_nights">
+        <item quantity="one">%1$d night</item>
+        <item quantity="other">%1$d nights</item>
+    </plurals>
+    <!-- Args: party size, total price without the $. -->
+    <plurals name="reservations_guests_total">
+        <item quantity="one">%1$d guest · $%2$s total</item>
+        <item quantity="other">%1$d guests · $%2$s total</item>
+    </plurals>
+    <string name="reservations_reference">Reservation #%1$s</string>
+    <string name="reservations_status_confirmed">CONFIRMED</string>
+    <string name="reservations_status_completed">COMPLETED</string>
+    <string name="reservations_status_cancelled">CANCELLED</string>
+    <string name="reservations_status_rejected">REJECTED</string>
+    <string name="reservations_view_details">View details</string>
+    <string name="reservations_unknown_guest">Guest</string>
+    <string name="reservations_unknown_campsite">Removed campsite</string>
+    <string name="reservations_empty_active">No upcoming reservations.</string>
+    <string name="reservations_empty_past">No completed reservations yet.</string>
+    <string name="reservations_empty_cancelled">No cancelled reservations.</string>
+
+    <!-- US 02.06.01: Booked dates screen -->
+    <string name="booked_title">Booked dates</string>
+    <string name="booked_open">View booked dates</string>
+    <string name="booked_no_campsites">You don\'t host any campsites yet.</string>
+    <string name="booked_legend_available">Available</string>
+    <string name="booked_legend_booked">Booked</string>
+    <string name="booked_legend_unavailable">Unavailable</string>
+    <string name="booked_legend_selected">Selected</string>
+    <plurals name="booked_summary_reservations">
+        <item quantity="one">%1$d reservation</item>
+        <item quantity="other">%1$d reservations</item>
+    </plurals>
+    <!-- Args: booked nights, open nights in the month. -->
+    <string name="booked_summary_nights">%1$d of %2$d open nights booked</string>
+    <string name="booked_tap_hint">Tap a booked date to see its reservation.</string>
+    <!-- Arg: e.g. "Saturday, May 15". -->
+    <string name="booked_day_booked">%1$s · Booked</string>
+    <string name="booked_view_reservation">View reservation</string>
+    <string name="booked_empty_title">No booked dates</string>
+    <!-- Args: campsite name, month e.g. "July 2027". -->
+    <string name="booked_empty_body">%1$s has no reservations in %2$s. Booked nights will appear on this calendar.</string>
+    <string name="booked_edit_availability">Edit availability</string>
     <string name="campsite_search_hint">Search campsites</string>
     <plurals name="campsite_count">
         <item quantity="one">%1$d campsite</item>
