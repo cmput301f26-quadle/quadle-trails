@@ -11,6 +11,7 @@ import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
 import com.example.trails.data.model.WaitlistStatus
+import com.example.trails.ui.campsite.formatStayDates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
