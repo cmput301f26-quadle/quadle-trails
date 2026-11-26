@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.trails.data.AppContainer
 import com.example.trails.data.device.FirebaseDeviceIdProvider
 import com.example.trails.data.device.FixedDeviceIdProvider
+import com.example.trails.data.device.ensureFirebaseSession
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
@@ -23,6 +24,8 @@ class TestingRoleViewModel(
     private val useThisDevice: () -> Unit = {
         if (CurrentUser.canUseSampleUsers) CurrentUser.install(FirebaseDeviceIdProvider())
     },
+    /** Signs in to Firebase in the background, so sample sessions also have request.auth. */
+    private val signIn: suspend () -> Unit = { ensureFirebaseSession() },
     private val activateUser: (String) -> Unit = { id ->
         // Back to sample identities, even if this process used the real device before.
         CurrentUser.install(FixedDeviceIdProvider(id))
@@ -56,6 +59,7 @@ class TestingRoleViewModel(
                     Role.OWNER -> TestUsers.OWNER_ID
                     Role.ADMIN -> TestUsers.ADMIN_ID
                 }
+                signInQuietly()
                 // Put back any sample profile that is missing (first run on a fresh Firestore,
                 // or a tester deleted it), so admin and owner screens have all three people.
                 TestUsers.all.forEach { sample ->
@@ -70,6 +74,16 @@ class TestingRoleViewModel(
             } catch (_: Exception) {
                 _state.value = TestingRoleState(failed = true)
             }
+        }
+    }
+
+    // A sample session must still start when Firebase sign-in is unavailable (e.g. offline).
+    private suspend fun signInQuietly() {
+        try {
+            signIn()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 

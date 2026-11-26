@@ -27,7 +27,7 @@ class TestingRoleViewModelTest {
     @After fun tearDown() { Dispatchers.resetMain() }
 
     @Test fun freshLaunch_waitsForSelection() = runTest {
-        val controller = TestingRoleViewModel(SavedStateHandle(), users) { activatedId = it }
+        val controller = TestingRoleViewModel(SavedStateHandle(), users, signIn = {}) { activatedId = it }
         advanceUntilIdle()
         assertFalse(controller.state.value.ready)
         assertNull(activatedId)
@@ -40,7 +40,7 @@ class TestingRoleViewModelTest {
             Role.ADMIN to TestUsers.ADMIN_ID
         )) {
             users.updateActiveMode(id, Role.ENTRANT)
-            val controller = TestingRoleViewModel(SavedStateHandle(), users) {
+            val controller = TestingRoleViewModel(SavedStateHandle(), users, signIn = {}) {
                 // Activation must happen only after the mode has been saved.
                 activatedId = it
             }
@@ -54,7 +54,7 @@ class TestingRoleViewModelTest {
 
     @Test fun deletedSample_canBeSelectedAgain() = runTest {
         users.delete(TestUsers.OWNER_ID)
-        val controller = TestingRoleViewModel(SavedStateHandle(), users) { activatedId = it }
+        val controller = TestingRoleViewModel(SavedStateHandle(), users, signIn = {}) { activatedId = it }
         controller.selectRole(Role.OWNER)
         advanceUntilIdle()
         assertTrue(controller.state.value.ready)
@@ -63,11 +63,11 @@ class TestingRoleViewModelTest {
 
     @Test fun savedSelection_restoresSessionAfterProcessDeath() = runTest {
         val saved = SavedStateHandle()
-        val first = TestingRoleViewModel(saved, users) { activatedId = it }
+        val first = TestingRoleViewModel(saved, users, signIn = {}) { activatedId = it }
         first.selectRole(Role.ADMIN)
         advanceUntilIdle()
         activatedId = null
-        val restored = TestingRoleViewModel(saved, FakeUserRepository()) { activatedId = it }
+        val restored = TestingRoleViewModel(saved, FakeUserRepository(), signIn = {}) { activatedId = it }
         advanceUntilIdle()
         assertTrue(restored.state.value.ready)
         assertEquals(TestUsers.ADMIN_ID, activatedId)
@@ -81,7 +81,7 @@ class TestingRoleViewModelTest {
                 users.updateActiveMode(deviceId, mode)
             }
         }
-        val controller = TestingRoleViewModel(SavedStateHandle(), flaky) { activatedId = it }
+        val controller = TestingRoleViewModel(SavedStateHandle(), flaky, signIn = {}) { activatedId = it }
         controller.selectRole(Role.ADMIN)
         advanceUntilIdle()
         assertTrue(controller.state.value.failed)
@@ -96,7 +96,7 @@ class TestingRoleViewModelTest {
 
     @Test fun repeatedTaps_cannotStartTwoSessions() = runTest {
         val activations = mutableListOf<String>()
-        val controller = TestingRoleViewModel(SavedStateHandle(), users) { activations.add(it) }
+        val controller = TestingRoleViewModel(SavedStateHandle(), users, signIn = {}) { activations.add(it) }
         controller.selectRole(Role.OWNER)
         controller.selectRole(Role.ADMIN)
         advanceUntilIdle()
@@ -111,6 +111,7 @@ class TestingRoleViewModelTest {
         val controller = TestingRoleViewModel(
             SavedStateHandle(), users,
             useThisDevice = { deviceSelected++ },
+            signIn = {},
             activateUser = { activatedId = it }
         )
         controller.selectThisDevice()
@@ -124,9 +125,9 @@ class TestingRoleViewModelTest {
     // "This device" is remembered if Android kills and restores the app.
     @Test fun thisDevice_restoredAfterProcessDeath() = runTest {
         val saved = SavedStateHandle()
-        TestingRoleViewModel(saved, users, useThisDevice = {}, activateUser = {}).selectThisDevice()
+        TestingRoleViewModel(saved, users, useThisDevice = {}, signIn = {}, activateUser = {}).selectThisDevice()
         var deviceSelected = 0
-        val restored = TestingRoleViewModel(saved, users, useThisDevice = { deviceSelected++ }, activateUser = {})
+        val restored = TestingRoleViewModel(saved, users, useThisDevice = { deviceSelected++ }, signIn = {}, activateUser = {})
         advanceUntilIdle()
         assertEquals(1, deviceSelected)
         assertTrue(restored.state.value.usesDevice)
@@ -135,9 +136,50 @@ class TestingRoleViewModelTest {
     // Picking any sample role puts all three sample profiles back into an empty database.
     @Test fun anySampleRole_restoresAllMissingSampleProfiles() = runTest {
         val empty = FakeUserRepository(emptyList())
-        val controller = TestingRoleViewModel(SavedStateHandle(), empty) { activatedId = it }
+        val controller = TestingRoleViewModel(SavedStateHandle(), empty, signIn = {}) { activatedId = it }
         controller.selectRole(Role.ENTRANT)
         advanceUntilIdle()
         for (sample in TestUsers.all) assertNotNull(empty.getById(sample.deviceId))
+    }
+
+    // Firebase session for sample users, so rules that need request.auth work
+
+    @Test fun sampleRole_signsInToFirebaseBeforeStartingTheSession() = runTest {
+        val order = mutableListOf<String>()
+        val controller = TestingRoleViewModel(
+            SavedStateHandle(), users,
+            signIn = { order.add("signIn") },
+            activateUser = { order.add("activate") }
+        )
+        controller.selectRole(Role.OWNER)
+        advanceUntilIdle()
+        assertEquals(listOf("signIn", "activate"), order)
+        assertTrue(controller.state.value.ready)
+    }
+
+    @Test fun sampleRole_signInFailure_stillStartsTheSession() = runTest {
+        val controller = TestingRoleViewModel(
+            SavedStateHandle(), users,
+            signIn = { throw java.io.IOException("offline") },
+            activateUser = { activatedId = it }
+        )
+        controller.selectRole(Role.ENTRANT)
+        advanceUntilIdle()
+        assertTrue(controller.state.value.ready)
+        assertEquals(TestUsers.ENTRANT_ID, activatedId)
+    }
+
+    @Test fun thisDevice_doesNotUseTheSampleSignIn() = runTest {
+        var signIns = 0
+        val controller = TestingRoleViewModel(
+            SavedStateHandle(), users,
+            useThisDevice = {},
+            signIn = { signIns++ },
+            activateUser = {}
+        )
+        controller.selectThisDevice()
+        advanceUntilIdle()
+        assertEquals(0, signIns)
+        assertTrue(controller.state.value.usesDevice)
     }
 }

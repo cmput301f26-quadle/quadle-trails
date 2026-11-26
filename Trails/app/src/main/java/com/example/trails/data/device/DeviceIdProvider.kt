@@ -1,12 +1,14 @@
 // Identifies the user by device, with no username or password (US 01.09.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: FirebaseDeviceIdProvider needs Anonymous sign-in enabled in Firebase and has no automated tests.
-// AI assistance: Used AI to help implement Firebase anonymous authentication for device identity.
+// Outstanding issues: Needs Anonymous sign-in enabled in Firebase. FirebaseDeviceIdProvider has no automated tests.
+// AI assistance: Used AI to help implement Firebase anonymous authentication for device identity and sample sessions.
 package com.example.trails.data.device
 
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Supplies the id that identifies the person using this device.
@@ -76,6 +78,38 @@ class FirebaseDeviceIdProvider(
         }
     }
 }
+
+/** How long [ensureFirebaseSession] waits for Firebase before giving up. */
+const val FIREBASE_SIGN_IN_TIMEOUT_MS = 5_000L
+
+/**
+ * Makes sure Firebase has a signed-in (anonymous) session, without changing who the app
+ * treats as the current user. Sample users keep their fixed ids, but Storage and Firestore
+ * rules that check `request.auth` still work for them.
+ *
+ * Never throws for a Firebase problem (offline, Anonymous sign-in disabled): the caller
+ * can carry on, and requests are simply unauthenticated as before.
+ *
+ * @param timeoutMs how long to wait for the sign-in.
+ * @param auth supplies the Firebase Auth instance; replaceable in tests.
+ * @return true if a Firebase session exists afterwards.
+ */
+suspend fun ensureFirebaseSession(
+    timeoutMs: Long = FIREBASE_SIGN_IN_TIMEOUT_MS,
+    auth: () -> FirebaseAuth = { FirebaseAuth.getInstance() }
+): Boolean =
+    try {
+        val firebase = auth()
+        if (firebase.currentUser != null) {
+            true
+        } else {
+            withTimeoutOrNull(timeoutMs) { firebase.signInAnonymously().await() }?.user != null
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        false
+    }
 
 /**
  * Masks an id for display, for example "QD-••••-1A2F".
