@@ -23,4 +23,8 @@ class FakeNotificationRepository(
             currentList + Notification(recipient = userId, title = title, content = content, timestamp = Timestamp.now(), type = type, related = related)
         }
     }
+
+    override suspend fun checkNotif(related: Reservation) : Boolean {
+        return true
+    }
 }

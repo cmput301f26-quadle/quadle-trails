@@ -49,6 +49,10 @@ import java.util.Locale
 
 class NotificationList {
     val viewModel = NotificationViewModel()
+
+    fun emptyCheck() : Boolean {
+        return viewModel.fetchAll(CurrentUser.id()).isEmpty()
+    }
     @Composable
     fun RenderList() {
         Column(modifier = Modifier.fillMaxSize())

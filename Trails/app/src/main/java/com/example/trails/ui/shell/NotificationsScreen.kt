@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.trails.R
 import com.example.trails.ui.notification.NotificationList
+import com.example.trails.ui.reservation.ReservationList
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -44,27 +45,29 @@ fun NotificationsScreen(
  */
 @Composable
 fun NotificationsContent(modifier: Modifier = Modifier) {
-//    ShellEmptyState(
-//        title = stringResource(R.string.shell_notifications_title),
-//        icon = R.drawable.ic_nav_notifications,
-//        message = stringResource(R.string.shell_notifications_empty),
-//        hint = stringResource(R.string.shell_notifications_empty_hint),
-//        screenTag = NotificationsTags.SCREEN,
-//        messageTag = NotificationsTags.EMPTY,
-//        modifier = modifier
-//    )
-
-    Column(modifier = Modifier.fillMaxSize())
-    {
-        Row(modifier = Modifier.fillMaxWidth().padding(all = 5.dp)) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Notifications",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center)
+    if (NotificationList().emptyCheck()) {
+        ShellEmptyState(
+            title = stringResource(R.string.shell_notifications_title),
+            icon = R.drawable.ic_nav_notifications,
+            message = stringResource(R.string.shell_notifications_empty),
+            hint = stringResource(R.string.shell_notifications_empty_hint),
+            screenTag = NotificationsTags.SCREEN,
+            messageTag = NotificationsTags.EMPTY,
+            modifier = modifier
+        )
+    } else {
+        Column(modifier = Modifier.fillMaxSize())
+        {
+            Row(modifier = Modifier.fillMaxWidth().padding(all = 5.dp)) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Notifications",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center)
+            }
+            NotificationList().RenderList()
         }
-        NotificationList().RenderList()
     }
 }
 

@@ -21,4 +21,5 @@ object Collections {
     const val ENTRIES = "entries"   // under lotteries/{id}
     const val RESERVATIONS = "reservations" // added by chitkarsh on 11/05/2026
     const val REPORTS = "reports" // policy reports against owners; added by Zainab (US 03.07.01)
+    const val NOTIFICATIONS = "notifications"
 }

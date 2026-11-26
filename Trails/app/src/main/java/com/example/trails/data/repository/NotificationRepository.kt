@@ -9,4 +9,6 @@ interface NotificationRepository {
     fun getNotif(userId: String) : List<Notification>
 
     fun sendNotif(userId: String, title: String, content: String, type: NotificationType, related: Reservation?)
+
+    suspend fun checkNotif(related: Reservation) : Boolean
 }
