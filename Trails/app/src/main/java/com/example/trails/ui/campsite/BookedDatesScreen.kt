@@ -3,7 +3,7 @@
 // PURPOSE: Booked dates (Figma · US 02.06.01 · View booked dates): pick a campsite, see its
 //  month with booked nights red, tap a booked night to see its reservation. Opened from the
 //  owner's campsite page.
-// Outstanding issues: "View reservation" opens nothing yet (Reservation details is US 02.08.01).
+// Outstanding issues: none. "View reservation" opens Reservation details (US 02.08.01).
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -90,7 +90,7 @@ fun BookedDatesScreen(
         onMonthChange = viewModel::onMonthChange,
         onDayClick = viewModel::onDayClick,
         onEditAvailability = { id -> navController.navigate(CampsiteRoutes.campsiteForm(id)) },
-        onViewReservation = {}, // Reservation details comes with US 02.08.01
+        onViewReservation = { id -> navController.navigate(CampsiteRoutes.reservationDetails(id)) },
         modifier = modifier
     )
 }

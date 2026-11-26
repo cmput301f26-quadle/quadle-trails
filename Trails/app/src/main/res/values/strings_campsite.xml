@@ -50,6 +50,41 @@
     <string name="reservations_empty_past">No completed reservations yet.</string>
     <string name="reservations_empty_cancelled">No cancelled reservations.</string>
 
+    <!-- US 02.08.01: rejected banner on My Reservations -->
+    <string name="reservations_rejected_title">Reservation rejected</string>
+    <string name="reservations_rejected_moved">Moved from Active to Cancelled.</string>
+
+    <!-- US 02.08.01: Reservation details and rejecting -->
+    <string name="details_title">Reservation details</string>
+    <string name="details_not_found">This reservation no longer exists.</string>
+    <string name="details_dates">Dates</string>
+    <string name="details_guests">Guests</string>
+    <string name="details_total">Total</string>
+    <plurals name="details_guests_count">
+        <item quantity="one">%1$d guest</item>
+        <item quantity="other">%1$d guests</item>
+    </plurals>
+    <string name="details_entrant">Entrant</string>
+    <string name="details_entrant_role">Entrant</string>
+    <!-- Arg: booking date, e.g. "Apr 12, 2027". -->
+    <string name="details_entrant_booked">Entrant · Booked %1$s</string>
+    <!-- Arg: stay dates, e.g. "Apr 16 – 18, 2027". -->
+    <string name="details_entrant_stayed">Entrant · Stayed %1$s</string>
+    <string name="details_reject">Reject reservation</string>
+    <string name="details_message">Message entrant</string>
+    <string name="details_cant_reject_past">Completed stays can\'t be rejected.</string>
+    <string name="details_cant_reject_cancelled">This reservation is already cancelled.</string>
+    <string name="details_confirm_title">Reject reservation?</string>
+    <!-- Args: guest, campsite, dates. -->
+    <string name="details_confirm_body">Reject %1$s\'s reservation at %2$s for %3$s? This can\'t be undone.</string>
+    <string name="details_confirm_body_short">Reject %1$s\'s reservation? This can\'t be undone.</string>
+    <string name="details_confirm_cancel">Cancel</string>
+    <string name="details_confirm_reject">Reject</string>
+    <string name="details_failed_title">Couldn\'t reject reservation</string>
+    <!-- Arg: guest name. -->
+    <string name="details_failed_body">We couldn\'t reach the server. %1$s\'s reservation is unchanged. Check your connection and try again.</string>
+    <string name="details_failed_retry">Try again</string>
+
     <!-- US 02.06.01: Booked dates screen -->
     <string name="booked_title">Booked dates</string>
     <string name="booked_open">View booked dates</string>
