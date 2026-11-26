@@ -10,11 +10,15 @@ import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.repository.LotteryCollaborationRepository
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -82,8 +86,18 @@ data class LotteryFormUiState(
     val savedChange: LotteryChange? = null,
     val isDeleting: Boolean = false,
     val deleted: Boolean = false,
-    val deleteFailed: Boolean = false
+    val deleteFailed: Boolean = false,
+    val otherCampsites: List<Campsite> = emptyList(),
+    val ownerNames: Map<String, String> = emptyMap(),
+    val inviteIds: Set<String> = emptySet(),
+    val invitesFailed: Boolean = false
 ) {
+    /** Other owners must approve before registration opens, so invites need a future start (US 02.04.08). */
+    val invitesTooLate: Boolean get() = inviteIds.isNotEmpty() && (draft.registrationStart ?: 0L) <= now
+
+    /** Names of the other owners' campsites picked for invitation. */
+    val invitedNames: List<String> get() = otherCampsites.filter { it.id in inviteIds }.map { it.name }
+
     /** Status of the lottery being edited; null for a new one. */
     val status: LotteryStatus? get() = original?.let { lotteryStatus(it, entrantCount, now) }
 
@@ -91,7 +105,7 @@ data class LotteryFormUiState(
     val openedAt: Long? get() = original?.registrationStart.millis()?.takeIf { it <= now }
 
     /** True if the lottery has closed and can't be edited any more. */
-    val isLocked: Boolean get() = status?.isClosed == true
+    val isLocked: Boolean get() = status?.isClosed == true || original?.collaborationLocked == true || original?.drawStatus?.let { it != "PENDING" } == true
 
     /** What's stopping the lottery from being saved, by field. */
     val problems: Map<LotteryField, LotteryProblem> get() = draft.problems(now, entrantCount, openedAt)
@@ -106,7 +120,7 @@ data class LotteryFormUiState(
         }
 
     /** True if Publish / Save changes can be tapped. */
-    val canSave: Boolean get() = problems.isEmpty() && !isSaving && !isLoading && !notFound && !isLocked
+    val canSave: Boolean get() = problems.isEmpty() && !isSaving && !isLoading && !notFound && !isLocked && !invitesTooLate
 
     /** True if Delete lottery can be offered: editing, and nobody has joined the waiting list. */
     val canDelete: Boolean get() = original != null && entrantCount == 0 && !isLocked && !isSaving && !isDeleting
@@ -137,7 +151,10 @@ class LotteryFormViewModel(
     private val lotteryId: String? = null,
     private val campsiteId: String? = null,
     private val reuseLotteryId: String? = null,
-    private val clock: () -> Long = System::currentTimeMillis
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val userRepository: UserRepository = AppContainer.userRepository,
+    // Lazy so tests without Firebase never create it unless invitations are sent.
+    private val collaboration: Lazy<LotteryCollaborationRepository> = lazy { AppContainer.lotteryCollaborationRepository }
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -158,6 +175,7 @@ class LotteryFormViewModel(
                 campsiteOptions(campsites, lotteries, lotteryId, clock())
             }.collect(::onCampsitesLoaded)
         }
+        if (lotteryId == null) viewModelScope.launch { observeOtherOwnersCampsites() }
         if (lotteryId != null) viewModelScope.launch { loadForEdit(lotteryId) }
         if (reuseLotteryId != null) viewModelScope.launch { loadForReuse(reuseLotteryId) }
     }
@@ -179,11 +197,25 @@ class LotteryFormViewModel(
         }
     }
 
+    /** Other owners' free campsites, which a new lottery can invite when it is published (US 02.04.08). */
+    private suspend fun observeOtherOwnersCampsites() {
+        combine(campsiteRepository.observeAll(), lotteryRepository.observeAll(), userRepository.observeAll()) { sites, lotteries, users ->
+            val free = campsiteOptions(sites.filter { it.ownerId != ownerId }, lotteries, null, clock())
+                .filter { it.available }.map { it.campsite }
+            free to users.associate { it.deviceId to it.name }
+        }.catch { emit(emptyList<Campsite>() to emptyMap()) }.collect { (sites, names) ->
+            _state.update { s ->
+                s.copy(otherCampsites = sites, ownerNames = names,
+                    inviteIds = s.inviteIds.filter { id -> sites.any { it.id == id } }.toSet())
+            }
+        }
+    }
+
     private suspend fun loadForEdit(id: String) {
         val lottery = lotteryRepository.getById(id)
         val entrants = if (lottery == null) 0 else runCatching { waitlistRepository.getEntryCount(id) }.getOrDefault(0)
         _state.update {
-            if (lottery == null) it.copy(isLoading = false, notFound = true)
+            if (lottery == null || lottery.ownerId != ownerId) it.copy(isLoading = false, notFound = true)
             else it.copy(isLoading = false, original = lottery, draft = LotteryDraft.from(lottery), entrantCount = entrants, now = clock())
         }
     }
@@ -212,6 +244,12 @@ class LotteryFormViewModel(
     fun onToggleCampsite(id: String) {
         val option = _state.value.campsites.find { it.campsite.id == id } ?: return
         if (option.available || id in _state.value.draft.campsiteIds) edit { it.toggleCampsite(id) }
+    }
+
+    /** Ticks or unticks another owner's campsite to invite when the lottery is published (US 02.04.08). */
+    fun onToggleInvite(id: String) {
+        if (_state.value.otherCampsites.none { it.id == id }) return
+        _state.update { s -> s.copy(inviteIds = if (id in s.inviteIds) s.inviteIds - id else s.inviteIds + id, saveFailed = false) }
     }
 
     /** Sets the registration period (US 02.04.03). */
@@ -276,7 +314,8 @@ class LotteryFormViewModel(
                 val id = lotteryRepository.save(lottery)
                 linkCampsites(id, lottery.campsiteIds, current.original?.campsiteIds.orEmpty())
                 val change = current.original?.let { describeChange(it, lottery) }
-                _state.update { it.copy(isSaving = false, savedId = id, savedChange = change) }
+                val invitesFailed = current.original == null && sendInvites(id, current)
+                _state.update { it.copy(isSaving = false, savedId = id, savedChange = change, invitesFailed = invitesFailed) }
             } catch (e: Exception) {
                 _state.update { it.copy(isSaving = false, saveFailed = true) }
             }
@@ -308,6 +347,28 @@ class LotteryFormViewModel(
     /** Hides the "Couldn't delete" message. */
     fun onDismissDeleteError() {
         _state.update { it.copy(deleteFailed = false) }
+    }
+
+    /**
+     * Sends one invitation per other owner for the campsites picked in the wizard. The lottery is
+     * already published, so a failed invite doesn't undo it; the owner can retry from its page.
+     *
+     * @return true if any invitation couldn't be sent.
+     */
+    private suspend fun sendInvites(lotteryId: String, state: LotteryFormUiState): Boolean {
+        if (state.inviteIds.isEmpty()) return false
+        val byOwner = state.otherCampsites.filter { it.id in state.inviteIds }.groupBy { it.ownerId }
+        var failed = false
+        for ((_, sites) in byOwner) {
+            try {
+                collaboration.value.invite(lotteryId, ownerId, sites.map { it.id })
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                failed = true
+            }
+        }
+        return failed
     }
 
     private suspend fun linkCampsites(lotteryId: String, now: List<String>, before: List<String>) {

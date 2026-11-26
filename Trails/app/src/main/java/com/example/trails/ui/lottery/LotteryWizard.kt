@@ -52,6 +52,24 @@ internal fun CampsitesStep(state: LotteryFormUiState, actions: LotteryFormAction
         StepProgress(1, R.string.lottery_step_campsites)
         StepHeading(stringResource(R.string.lottery_campsites_heading), stringResource(R.string.lottery_campsites_hint))
         CampsiteChoices(state, actions.onToggleCampsite)
+        if (state.otherCampsites.isNotEmpty()) OtherOwnersChoices(state, actions.onToggleInvite)
+    }
+}
+
+/** Other owners' campsites: ticked ones are invited when the lottery is published (US 02.04.08). */
+@Composable
+private fun OtherOwnersChoices(state: LotteryFormUiState, onToggle: (String) -> Unit) {
+    StepHeading(stringResource(R.string.lottery_other_campsites_heading), stringResource(R.string.lottery_other_campsites_hint))
+    state.otherCampsites.forEach { c ->
+        CampsiteSelectRow(
+            imageUrl = c.imageUrl,
+            name = c.name,
+            subtitle = stringResource(R.string.lottery_needs_approval, state.ownerNames[c.ownerId] ?: c.locationName),
+            selected = c.id in state.inviteIds,
+            enabled = true,
+            onClick = { onToggle(c.id) },
+            tag = LotteryTags.invite(c.id)
+        )
     }
 }
 
@@ -328,6 +346,12 @@ internal fun ReviewStep(state: LotteryFormUiState, actions: LotteryFormActions, 
             SummaryRow(stringResource(R.string.lottery_row_campsites),
                 state.campsiteNames.joinToString(stringResource(R.string.lottery_list_separator)).ifEmpty { dash },
                 edit, { actions.onEditStep(LotteryStep.CAMPSITES) }, LotteryTags.editRow("campsites"))
+            if (state.inviteIds.isNotEmpty()) {
+                CardDivider()
+                SummaryRow(stringResource(R.string.lottery_row_invited),
+                    state.invitedNames.joinToString(stringResource(R.string.lottery_list_separator)),
+                    edit, { actions.onEditStep(LotteryStep.CAMPSITES) }, LotteryTags.editRow("invited"))
+            }
             CardDivider()
             SummaryRow(stringResource(R.string.lottery_row_registration),
                 draft.registrationStart?.let { s -> draft.registrationEnd?.let { e -> compactRange(s, e) } } ?: dash,
@@ -347,6 +371,9 @@ internal fun ReviewStep(state: LotteryFormUiState, actions: LotteryFormActions, 
             SummaryRow(stringResource(R.string.lottery_row_waitlist),
                 waitlistText(if (draft.limitWaitlist) draft.waitlistCapacity else null),
                 edit, { actions.onEditStep(LotteryStep.WINNERS) }, LotteryTags.editRow("waitlist"))
+        }
+        if (state.invitesTooLate) {
+            Text(stringResource(R.string.lottery_invites_too_late), style = LotteryType.Body, color = MaterialTheme.colorScheme.error)
         }
     }
 }

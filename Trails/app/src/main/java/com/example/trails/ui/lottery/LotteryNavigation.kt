@@ -17,6 +17,10 @@ const val LOTTERY_SAVED_MESSAGE = "lottery_saved_message"
 
 object LotteryRoutes {
     const val LOTTERY_FORM = "lottery_form?lotteryId={lotteryId}&campsiteId={campsiteId}&reuseId={reuseId}"
+    const val LOTTERY_SHARING = "lottery_sharing/{lotteryId}"
+    const val INVITATIONS = "lottery_invitations"
+    fun lotterySharing(id: String) = "lottery_sharing/$id"
+
     const val MY_LOTTERIES = "my_lotteries"
     const val LOTTERY_DETAILS = "lottery_details/{lotteryId}"
 
@@ -51,6 +55,10 @@ fun NavGraphBuilder.lotteryGraph(navController: NavController) {
             campsiteId = entry.optionalArg("campsiteId"),
             reuseLotteryId = entry.optionalArg("reuseId")
         )
+    }
+    composable(LotteryRoutes.INVITATIONS) { LotterySharingScreen(navController) }
+    composable(LotteryRoutes.LOTTERY_SHARING, arguments = listOf(requiredId("lotteryId"))) { entry ->
+        LotterySharingScreen(navController, entry.requireArg("lotteryId"))
     }
     composable(LotteryRoutes.MY_LOTTERIES) { MyLotteriesScreen(navController) }
     composable(LotteryRoutes.LOTTERY_DETAILS, arguments = listOf(requiredId("lotteryId"))) { entry ->

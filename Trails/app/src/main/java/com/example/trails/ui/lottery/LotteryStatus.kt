@@ -16,11 +16,14 @@ enum class LotteryStatus {
     /** Registration closed and winners were drawn from the entrants. */
     DRAWN,
 
+    /** Registration closed; the scheduled server draw has not finished yet. */
+    AWAITING_DRAW,
+
     /** Registration closed with nobody on the waiting list. */
     NO_ENTRANTS;
 
     /** True once registration has closed; closed lotteries can't be edited. */
-    val isClosed: Boolean get() = this == DRAWN || this == NO_ENTRANTS
+    val isClosed: Boolean get() = this == DRAWN || this == NO_ENTRANTS || this == AWAITING_DRAW
 }
 
 /**
@@ -33,7 +36,8 @@ fun lotteryStatus(lottery: Lottery, entrantCount: Int, now: Long): LotteryStatus
     val start = lottery.registrationStart.millis()
     val end = lottery.registrationEnd.millis()
     return when {
-        end != null && now >= end -> if (entrantCount > 0) LotteryStatus.DRAWN else LotteryStatus.NO_ENTRANTS
+        lottery.drawStatus == "COMPLETED" -> if (lottery.drawEntrantCount > 0) LotteryStatus.DRAWN else LotteryStatus.NO_ENTRANTS
+        end != null && now >= end -> LotteryStatus.AWAITING_DRAW
         start != null && now < start -> LotteryStatus.SCHEDULED
         else -> LotteryStatus.OPEN
     }
