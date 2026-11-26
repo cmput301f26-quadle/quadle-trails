@@ -1,5 +1,5 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03
+// USER STORIES: 02.01.01, 02.01.02 (tags), 02.01.03, 02.06.01 (booked days locked)
 // PURPOSE: Register a campsite, or edit one when campsiteId is set (Figma · Register Campsite).
 // Outstanding issues: none. Rules and cancellation policy are separate boxes, matching the
 //  model and the updated Figma.
@@ -226,7 +226,7 @@ private fun FormFields(
             LabeledField(stringResource(R.string.campsite_form_price_label), f.pricePerNight, { onFieldsChange(f.copy(pricePerNight = it)) },
                 stringResource(R.string.campsite_form_price_hint), e["pricePerNight"], FormTags.PRICE, Modifier.weight(1f), KeyboardType.Decimal)
         }
-        AvailabilityField(f.availableDays, e["availability"]) { key ->
+        AvailabilityField(f.availableDays, state.bookedDays, e["availability"]) { key ->
             onFieldsChange(f.copy(availableDays = toggleDay(f.availableDays, key)))
         }
         var pickingPin by rememberSaveable { mutableStateOf(false) }
@@ -305,14 +305,15 @@ private fun PhotoPicker(imageUrl: String?, onPick: () -> Unit, onRemove: () -> U
  * Written in assistance with Claude AI by Anthropic.
  */
 @Composable
-private fun AvailabilityField(days: Set<Long>, error: String?, onToggleDay: (Long) -> Unit) {
+private fun AvailabilityField(days: Set<Long>, bookedDays: Set<Long>, error: String?, onToggleDay: (Long) -> Unit) {
     Column(Modifier.padding(bottom = 12.dp)) {
         Text(stringResource(R.string.campsite_form_availability_label), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(6.dp))
         AvailabilityCalendar(
             availableDays = days,
             onToggleDay = onToggleDay,
-            hint = stringResource(R.string.campsite_calendar_hint)
+            hint = stringResource(R.string.campsite_calendar_hint),
+            bookedDays = bookedDays
         )
         if (error != null) {
             Text(

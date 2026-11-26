@@ -1,5 +1,7 @@
-// unit tests for reservation data model and validation
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// Unit tests for Reservation model, validation rules, and status lifecycle (Model in MVVM).
+// implements US 01.04.01, US 01.04.02, US 01.04.03
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
@@ -9,6 +11,9 @@ import org.junit.Before
 import org.junit.Test
 import java.util.Date
 
+/**
+ * Unit tests verifying [Reservation] fields, validation logic, and status lifecycle.
+ */
 class ReservationTest {
 
     private lateinit var validReservation: Reservation
@@ -27,13 +32,29 @@ class ReservationTest {
             totalPrice = 130.0,
             rulesAccepted = true,
             rulesAcceptedAt = now,
-            createdAt = now
+            createdAt = now,
+            status = ReservationStatus.ACTIVE
         )
     }
 
     @Test
     fun validate_validReservation_noErrors() {
         assertTrue(validReservation.validate().isEmpty())
+    }
+
+    @Test
+    fun defaultStatus_isActive() {
+        val res = Reservation()
+        assertEquals(ReservationStatus.ACTIVE, res.status)
+    }
+
+    @Test
+    fun statusTransition_cancelledAndRejected() {
+        val cancelled = validReservation.copy(status = ReservationStatus.CANCELLED)
+        assertEquals(ReservationStatus.CANCELLED, cancelled.status)
+
+        val rejected = validReservation.copy(status = ReservationStatus.REJECTED)
+        assertEquals(ReservationStatus.REJECTED, rejected.status)
     }
 
     @Test

@@ -52,8 +52,8 @@ class MyLotteriesViewModel(
 
     /** What the tab should show. */
     val uiState: StateFlow<MyLotteriesUiState> =
-        combine(lotteriesWithCounts, filter) { (lotteries, counts), chip ->
-            buildMyLotteriesState(lotteries, counts, chip, clock())
+        combine(lotteriesWithCounts, filter, lotteryClock(clock)) { (lotteries, counts), chip, now ->
+            buildMyLotteriesState(lotteries, counts, chip, now)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyLotteriesUiState.Loading)
 
     /** Selects a filter chip. */

@@ -80,7 +80,8 @@ fun LotteryDetailsScreen(
         modifier = modifier,
         deleteState = deleteState,
         onDelete = viewModel::onDelete,
-        onDismissDeleteError = viewModel::onDismissDeleteError
+        onDismissDeleteError = viewModel::onDismissDeleteError,
+        onSharing = { navController.navigate(LotteryRoutes.lotterySharing(lotteryId)) }
     )
 }
 
@@ -106,7 +107,8 @@ fun LotteryDetailsContent(
     modifier: Modifier = Modifier,
     deleteState: DeleteUiState = DeleteUiState(),
     onDelete: () -> Unit = {},
-    onDismissDeleteError: () -> Unit = {}
+    onDismissDeleteError: () -> Unit = {},
+    onSharing: () -> Unit = {}
 ) {
     val loaded = state as? LotteryDetailsUiState.Loaded
     Scaffold(
@@ -136,7 +138,7 @@ fun LotteryDetailsContent(
             LotteryDetailsUiState.NotFound -> Box(inner.padding(24.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.lottery_not_found), style = LotteryType.Body, color = LotteryColors.Muted, textAlign = TextAlign.Center)
             }
-            is LotteryDetailsUiState.Loaded -> DetailsBody(state, savedMessage, deleteState.isDeleting, onDelete, inner)
+            is LotteryDetailsUiState.Loaded -> DetailsBody(state, savedMessage, deleteState.isDeleting, onDelete, onSharing, inner)
         }
     }
     if (deleteState.failed) DeleteFailedDialog(onRetry = onDelete, onDismiss = onDismissDeleteError)
@@ -148,6 +150,7 @@ private fun DetailsBody(
     savedMessage: String?,
     isDeleting: Boolean,
     onDelete: () -> Unit,
+    onSharing: () -> Unit,
     modifier: Modifier
 ) {
     val lottery = state.lottery
@@ -160,13 +163,26 @@ private fun DetailsBody(
         when (state.status) {
             LotteryStatus.SCHEDULED -> ScheduledCard(state)
             LotteryStatus.OPEN -> OpenCards(state)
-            LotteryStatus.DRAWN -> DrawnCard(state)
+            LotteryStatus.AWAITING_DRAW -> NextStepCard(stringResource(R.string.lottery_draw_pending), stringResource(R.string.lottery_draw_pending_body))
+            LotteryStatus.DRAWN -> {
+                DrawnCard(state)
+                LotteryCard {
+                    Text(stringResource(R.string.lottery_actual_winners), style = LotteryType.CardTitle)
+                    state.lottery.winnerIds.forEach { id ->
+                        val entry = state.winners.find { it.userId == id }
+                        Text(entry?.userName?.takeIf { it.isNotBlank() } ?: id, style = LotteryType.Body)
+                    }
+                }
+            }
             LotteryStatus.NO_ENTRANTS -> {
                 NoEntrantsCards(state)
                 // Closed lotteries hide Edit, so one nobody entered can be deleted from here.
-                DeleteLotterySection(state.entrantCount, isDeleting, onConfirm = onDelete)
+                if (state.isCreator) DeleteLotterySection(state.entrantCount, isDeleting, onConfirm = onDelete)
             }
         }
+        if (state.pendingInvites.isNotEmpty()) PendingApprovalCard(state)
+        LotteryButton(stringResource(R.string.lottery_sharing_title), onClick = onSharing)
+        if (lottery.collaborationLocked) Text(stringResource(R.string.lottery_sharing_locked), style = LotteryType.Hint, color = LotteryColors.Muted)
         if (state.status != LotteryStatus.NO_ENTRANTS) {
             DetailsTimeline(state)
             SettingsCard(state)
@@ -247,16 +263,28 @@ private fun StatTile(value: String, label: String, modifier: Modifier) {
 }
 
 /** "5 winners drawn · From 24 entrants · Apr 8, 09:00 · booking open until Apr 10, 18:00". */
+/** Other owners' campsites invited to this lottery that haven't been approved yet (US 02.04.08). */
+@Composable
+private fun PendingApprovalCard(state: LotteryDetailsUiState.Loaded) {
+    LotteryCard(modifier = Modifier.testTag(LotteryTags.PENDING_APPROVAL)) {
+        Text(stringResource(R.string.lottery_pending_approval), style = LotteryType.CardTitle, color = LotteryColors.Amber)
+        state.pendingInvites.forEach { invite ->
+            Text(invite.campsiteNames.joinToString(stringResource(R.string.lottery_list_separator)), style = LotteryType.Body)
+            Text(stringResource(R.string.lottery_pending_approval_body), style = LotteryType.Hint, color = LotteryColors.Muted)
+        }
+    }
+}
+
 @Composable
 private fun DrawnCard(state: LotteryDetailsUiState.Loaded) {
     val lottery = state.lottery
-    val drawn = minOf(lottery.numWinners, state.entrantCount)
-    val draw = lottery.registrationEnd.millis()?.let { formatDateTime(it) } ?: stringResource(R.string.lottery_dash)
+    val drawn = lottery.winnerIds.size
+    val draw = lottery.drawnAt.millis()?.let { formatDateTime(it) } ?: stringResource(R.string.lottery_dash)
     val bookingEnd = lottery.bookingEnd.millis()?.let { formatDateTime(it) } ?: stringResource(R.string.lottery_dash)
     NextStepCard(
         stringResource(R.string.lottery_drawn_title, pluralStringResource(R.plurals.lottery_count_winners, drawn, drawn)),
         stringResource(R.string.lottery_drawn_body,
-            pluralStringResource(R.plurals.lottery_count_entrants, state.entrantCount, state.entrantCount), draw, bookingEnd)
+            pluralStringResource(R.plurals.lottery_count_entrants, lottery.drawEntrantCount, lottery.drawEntrantCount), draw, bookingEnd)
     )
 }
 

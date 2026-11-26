@@ -3,7 +3,8 @@
 // PURPOSE: Admin's home screen (Home tab in Admin mode, Figma Scenario 8 · Admin home): greeting
 //   with the mode pill at the top right, a Needs review card for open policy reports, and live
 //   Campsites / Profiles counts that open the admin lists.
-// Outstanding issues: the Images and Logs parts come in Part 4.
+// Outstanding issues: the Images part comes in Part 4. The Message log tile is Neaz's
+//   MessageLogTile (ui/messaging, US 03.12.01).
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -37,6 +38,8 @@ import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestReports
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
+import com.example.trails.ui.messaging.MessageLogTile
+import com.example.trails.ui.messaging.MessagingRoutes
 import com.example.trails.ui.profile.ModePill
 import com.example.trails.ui.profile.ModePillChip
 import com.example.trails.ui.theme.TrailsTheme
@@ -61,6 +64,7 @@ fun AdminHomeScreen(
         onCampsitesClick = { navController.navigate(AdminRoutes.ADMIN_CAMPSITES) },
         onProfilesClick = { navController.navigate(AdminRoutes.ADMIN_PROFILES) },
         onNeedsReviewClick = { navController.navigate(AdminRoutes.ADMIN_REPORTS) },
+        onMessageLogClick = { navController.navigate(MessagingRoutes.ADMIN_LOG) },
         modifier = modifier,
         modePill = { ModePill(navController) }
     )
@@ -73,6 +77,7 @@ fun AdminHomeScreen(
  * @param onCampsitesClick called when the Campsites tile is tapped (US 03.04.01).
  * @param onProfilesClick called when the Profiles tile is tapped (US 03.05.01).
  * @param onNeedsReviewClick called when the Needs review card is tapped (US 03.07.01).
+ * @param onMessageLogClick called when the Message log tile is tapped (US 03.12.01).
  * @param modifier modifier for the screen.
  * @param modePill the mode pill shown at the top right of the header (US 03.11.01); empty by
  *   default so tests and previews don't need a ViewModel.
@@ -83,6 +88,7 @@ fun AdminHomeContent(
     onCampsitesClick: () -> Unit,
     onProfilesClick: () -> Unit,
     onNeedsReviewClick: () -> Unit = {},
+    onMessageLogClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     modePill: @Composable () -> Unit = {}
 ) {
@@ -93,33 +99,34 @@ fun AdminHomeContent(
             .testTag(AdminHomeTags.SCREEN),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stringResource(R.string.profile_mode_admin), style = MaterialTheme.typography.titleLarge)
+            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
+                modePill()
+            }
+        }
         if (state == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.testTag(AdminHomeTags.LOADING))
             }
             return@Column
         }
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    state.greeting,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.testTag(AdminHomeTags.GREETING)
-                )
-                Text(
-                    stringResource(R.string.admin_home_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
-                modePill()
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                state.greeting,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag(AdminHomeTags.GREETING)
+            )
+            Text(
+                stringResource(R.string.admin_home_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         if (state.openReportCount > 0) {
             NeedsReviewCard(state, onNeedsReviewClick)
@@ -140,6 +147,7 @@ fun AdminHomeContent(
                 modifier = Modifier.weight(1f)
             )
         }
+        MessageLogTile(onClick = onMessageLogClick)
     }
 }
 

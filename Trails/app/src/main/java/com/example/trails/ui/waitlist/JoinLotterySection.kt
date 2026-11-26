@@ -1,7 +1,7 @@
-// Reusable UI component composable rendering controls to join and leave lottery waitlists (UI Component pattern).
-// implements US 01.02.01, US 01.02.02
+// Reusable UI component composable rendering controls to join, leave, claim win, or decline lottery waitlists (UI Component pattern).
+// implements US 01.02.01, US 01.02.02, US 01.04.01, US 01.04.02, US 01.04.03, US 02.04.02
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.compose.foundation.background
@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +45,7 @@ import androidx.navigation.NavController
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.data.model.WaitlistStatus
 import com.example.trails.ui.theme.Ember
 import com.example.trails.ui.theme.Forest
 import com.example.trails.ui.theme.Mist
@@ -57,15 +59,16 @@ import java.util.Date
 
 // reusable component representing stories 01.02.01 and 01.02.02
 /**
- * Embedded section rendering the interactive join or leave controls for a lottery waitlist.
+ * Embedded section rendering the interactive join, leave, claim, or decline controls for a lottery waitlist.
  *
  * Observes [uiState] to display appropriate loading indicators, entrant counts,
- * capacity limits, rules agreement status, or error messages.
- * Triggers [onJoinClick] when the entrant clicks to join, and [onLeaveClick] when the entrant requests removal.
+ * capacity limits, rules agreement status, winner actions, or error messages.
  *
  * @param uiState the current waitlist UI state to display.
  * @param onJoinClick callback triggered when the user attempts to enter the lottery waitlist pool.
  * @param onLeaveClick callback triggered when the user requests to leave the waitlist.
+ * @param onClaimWinClick callback triggered when a winner clicks to claim/reserve dates.
+ * @param onDeclineWinClick callback triggered when a winner clicks to decline their lottery win.
  * @param modifier optional [Modifier] for layout adjustments.
  */
 @Composable
@@ -73,6 +76,8 @@ fun JoinLotterySection(
     uiState: WaitlistUiState,
     onJoinClick: () -> Unit,
     onLeaveClick: () -> Unit,
+    onClaimWinClick: () -> Unit = {},
+    onDeclineWinClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -97,10 +102,11 @@ fun JoinLotterySection(
             }
 
             is WaitlistUiState.Waitlisted -> {
-                // story 01.02.02: leave the waiting list
                 WaitlistedContent(
                     entry = uiState.entry,
-                    onLeaveClick = onLeaveClick
+                    onLeaveClick = onLeaveClick,
+                    onClaimWinClick = onClaimWinClick,
+                    onDeclineWinClick = onDeclineWinClick
                 )
             }
 
@@ -156,70 +162,199 @@ fun JoinLotterySection(
     }
 }
 
-// view when entrant is already in the lottery pool
+// view when entrant is already in the lottery pool, has won, or has declined/reserved
 @Composable
 private fun WaitlistedContent(
     entry: WaitlistEntry,
     onLeaveClick: () -> Unit,
+    onClaimWinClick: () -> Unit = {},
+    onDeclineWinClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(NightSurface, RoundedCornerShape(8.dp))
-            .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
-            .padding(12.dp)
-            .testTag("waitlisted_content")
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = TrailGreen,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+    when (entry.status) {
+        WaitlistStatus.WON -> {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(NightSurface, RoundedCornerShape(8.dp))
+                    .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
+                    .padding(14.dp)
+                    .testTag("winner_content")
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = TrailGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "YOU WON THIS LOTTERY!",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = TrailGreen
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "ON WAITING LIST",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TrailGreen
+                    text = "Congratulations! You were selected in this draw. Claim your preferred dates before booking closes or decline to forfeit.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Mist
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = onClaimWinClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("claim_reservation_button"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TrailGreen,
+                        contentColor = Night
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "Claim Reservation",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onDeclineWinClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("decline_win_button"),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Ember),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(Ember)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Decline Win")
+                }
             }
-            Text(
-                text = "${entry.partySize} Guests",
-                style = MaterialTheme.typography.bodySmall,
-                color = Mist
-            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        WaitlistStatus.DECLINED -> {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(NightSurface, RoundedCornerShape(8.dp))
+                    .border(1.dp, Ember, RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+                    .testTag("declined_content")
+            ) {
+                Text(
+                    text = "INVITATION DECLINED",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Ember
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "You declined this lottery invitation. The spot was released to another entrant.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Mist
+                )
+            }
+        }
 
-        Text(
-            text = "You are in this lottery pool. Selection does not guarantee a booking.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Mist
-        )
+        WaitlistStatus.RESERVED -> {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(NightSurface, RoundedCornerShape(8.dp))
+                    .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+                    .testTag("reserved_content")
+            ) {
+                Text(
+                    text = "RESERVATION CONFIRMED",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TrailGreen
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Your booking for this campsite is confirmed! View it under your profile.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Mist
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        else -> {
+            // default WAITING state
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(NightSurface, RoundedCornerShape(8.dp))
+                    .border(1.dp, TrailGreen, RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+                    .testTag("waitlisted_content")
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = TrailGreen,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "ON WAITING LIST",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TrailGreen
+                        )
+                    }
+                    Text(
+                        text = "${entry.partySize} Guests",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Mist
+                    )
+                }
 
-        OutlinedButton(
-            onClick = onLeaveClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("leave_lottery_button"),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Ember
-            ),
-            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                brush = androidx.compose.ui.graphics.SolidColor(Ember)
-            )
-        ) {
-            Text("Leave Lottery Pool")
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "You are in this lottery pool. Selection does not guarantee a booking.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Mist
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onLeaveClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("leave_lottery_button"),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Ember
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(Ember)
+                    )
+                ) {
+                    Text("Leave Lottery Pool")
+                }
+            }
         }
     }
 }

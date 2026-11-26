@@ -1,4 +1,4 @@
-// Unit tests for the owner campsite page logic (US 02.01.04).
+// Unit tests for the owner campsite page logic (US 02.01.04, 02.06.01).
 // OWNER: Ibrahim (ibr2309) — Campsite Management
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
@@ -7,6 +7,7 @@ import com.example.trails.data.fake.dateOf
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.DateRange
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Reservation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -43,6 +44,15 @@ class OwnerCampsiteUiStateTest {
             OwnerCampsiteUiState.Loaded(hinton, "May long weekend"),
             buildOwnerCampsiteState(hinton, listOf(mayLottery))
         )
+    }
+
+    // US 02.06.01: this campsite's reservations become booked days; other campsites' don't.
+    @Test
+    fun buildState_withReservations_bookedDaysForThisCampsiteOnly() {
+        val mine = Reservation(campsiteId = "campsite-hinton", startDate = dateOf(2027, 5, 15), endDate = dateOf(2027, 5, 16))
+        val other = Reservation(campsiteId = "campsite-other", startDate = dateOf(2027, 5, 20), endDate = dateOf(2027, 5, 20))
+        val state = buildOwnerCampsiteState(hinton, emptyList(), listOf(mine, other)) as OwnerCampsiteUiState.Loaded
+        assertEquals(setOf(dayKey(2027, 5, 15), dayKey(2027, 5, 16)), state.bookedDays)
     }
 
     @Test

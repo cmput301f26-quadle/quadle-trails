@@ -1,7 +1,7 @@
 // ViewModel controller orchestrating waitlist state streams, rules acceptance, and entry operations (MVVM pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01, US 02.11.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import androidx.lifecycle.ViewModel
@@ -11,6 +11,7 @@ import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
+import com.example.trails.data.model.WaitlistStatus
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.LotteryRepository
 import com.example.trails.data.repository.RulesNotAcceptedException
@@ -385,6 +386,31 @@ class WaitlistViewModel(
                 waitlistRepository.leaveWaitlist(targetLotteryId, userId)
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to leave waitlist. Please check your network connection."
+            }
+        }
+    }
+
+    // declines a won lottery invitation (US 01.04.03)
+    /**
+     * Declines a won lottery invitation for the current entrant.
+     *
+     * @param onSuccess optional callback invoked when the decline succeeds.
+     */
+    fun declineWin(onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _errorMessage.value = null
+                val targetLotteryId = _activeLotteryId.value.ifBlank {
+                    _lottery.value?.id?.ifBlank { null } ?: lotteryId
+                }
+                if (targetLotteryId.isBlank()) {
+                    _errorMessage.value = "This campsite is not in a lottery right now."
+                    return@launch
+                }
+                waitlistRepository.updateStatus(targetLotteryId, userId, WaitlistStatus.DECLINED)
+                onSuccess()
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to decline lottery invitation."
             }
         }
     }

@@ -31,5 +31,14 @@ data class Lottery(
     val bookingStart: Timestamp? = null,
     val bookingEnd: Timestamp? = null,
     val numWinners: Int = 1,
-    val waitlistCapacity: Int? = null   // null = unlimited
+    val waitlistCapacity: Int? = null,   // null = unlimited
+    val participantOwnerIds: List<String> = emptyList(),
+    val collaborationLocked: Boolean = false,
+    val drawStatus: String = "PENDING",
+    val winnerIds: List<String> = emptyList(),
+    val drawEntrantCount: Int = 0,
+    val drawnAt: Timestamp? = null
 )
+
+/** The creator manages settings; accepted collaborators can also view the lottery. */
+fun Lottery.includesOwner(id: String): Boolean = ownerId == id || id in participantOwnerIds

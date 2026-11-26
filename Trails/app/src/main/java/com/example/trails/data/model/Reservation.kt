@@ -1,12 +1,14 @@
-// a confirmed campsite reservation from winning a lottery or direct booking
-// owner: chitkarsh (chitkarshrathi) - waitlist
+// Data model representing a confirmed campsite reservation from winning a lottery or direct booking (Model in MVVM).
+// implements US 01.04.01, US 01.04.02, US 01.04.03
+// Outstanding issues: None
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 
 /**
- * confirmed booking for a campsite stored in reservations collection
+ * Confirmed booking for a campsite stored in the reservations collection.
  *
  * @property id firestore document id
  * @property userId device id of entrant holding the reservation
@@ -19,6 +21,7 @@ import com.google.firebase.firestore.DocumentId
  * @property rulesAccepted true if entrant agreed to campsite rules
  * @property rulesAcceptedAt timestamp when entrant accepted rules
  * @property createdAt timestamp when reservation was confirmed
+ * @property status current lifecycle status of the reservation (ACTIVE, CANCELLED, REJECTED)
  */
 data class Reservation(
     @DocumentId val id: String = "",
@@ -31,10 +34,16 @@ data class Reservation(
     val totalPrice: Double = 0.0,
     val rulesAccepted: Boolean = false,
     val rulesAcceptedAt: Timestamp? = null,
-    val createdAt: Timestamp? = null
+    val createdAt: Timestamp? = null,
+    val status: ReservationStatus = ReservationStatus.ACTIVE
 ) {
     // checks required fields to confirm reservation
     // returns field error messages
+    /**
+     * Validates required fields before persisting or confirming a reservation.
+     *
+     * @return a map of property names to error message strings, empty if valid.
+     */
     fun validate(): Map<String, String> = buildMap {
         if (userId.isBlank()) put("userId", "User ID is required")
         if (campsiteId.isBlank()) put("campsiteId", "Campsite ID is required")

@@ -14,7 +14,7 @@ import com.example.trails.data.model.Lottery
  */
 data class LotteryCardItem(val lottery: Lottery, val status: LotteryStatus, val entrantCount: Int) {
     /** Winners actually drawn: never more than the people who entered. */
-    val winnersDrawn: Int get() = minOf(lottery.numWinners, entrantCount)
+    val winnersDrawn: Int get() = lottery.winnerIds.size
 }
 
 /** Every situation the Lotteries tab can be in. */
@@ -51,7 +51,7 @@ fun buildMyLotteriesState(lotteries: List<Lottery>, entrantCounts: Map<String, I
 private fun rank(status: LotteryStatus) = when (status) {
     LotteryStatus.SCHEDULED -> 0
     LotteryStatus.OPEN -> 1
-    LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS -> 2
+    LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS, LotteryStatus.AWAITING_DRAW -> 2
 }
 
 private fun sortTime(item: LotteryCardItem): Long {
@@ -59,6 +59,6 @@ private fun sortTime(item: LotteryCardItem): Long {
     return when (item.status) {
         LotteryStatus.SCHEDULED -> l.registrationStart.millis() ?: Long.MAX_VALUE
         LotteryStatus.OPEN -> l.registrationEnd.millis() ?: Long.MAX_VALUE
-        LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS -> -(l.registrationEnd.millis() ?: 0L)
+        LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS, LotteryStatus.AWAITING_DRAW -> -(l.registrationEnd.millis() ?: 0L)
     }
 }
