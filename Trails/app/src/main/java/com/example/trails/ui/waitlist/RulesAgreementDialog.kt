@@ -66,8 +66,7 @@ import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.ReservationRepository
 import com.example.trails.data.repository.WaitlistRepository
 import com.example.trails.ui.campsite.dayKeyToTimestamp
-import com.example.trails.ui.campsite.dayOfMonth
-import com.example.trails.ui.campsite.monthOf
+import com.example.trails.ui.campsite.formatStayDates
 import com.example.trails.ui.campsite.todayKey
 import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.theme.Ember
@@ -81,7 +80,6 @@ import com.example.trails.ui.theme.TrailsTheme
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.DateFormatSymbols
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
@@ -232,29 +230,6 @@ private fun RuleRow(
 }
 
 // screen for confirming reservation with embedded rules agreement section
-/**
- * Formats calendar day keys into a human-readable stay date range (e.g. "May 22 – 24, 2027").
- *
- * @param startKey check-in day key.
- * @param endKey check-out day key.
- * @return formatted date string.
- */
-fun formatStayDates(startKey: Long, endKey: Long): String {
-    val startMonth = monthOf(startKey)
-    val endMonth = monthOf(endKey)
-    val startMonthName = DateFormatSymbols(Locale.getDefault()).shortMonths[startMonth.month - 1]
-    val startDay = dayOfMonth(startKey)
-    val endDay = dayOfMonth(endKey)
-    val year = startMonth.year
-    return if (startKey == endKey) {
-        "$startMonthName $startDay, $year"
-    } else if (startMonth == endMonth) {
-        "$startMonthName $startDay – $endDay, $year"
-    } else {
-        val endMonthName = DateFormatSymbols(Locale.getDefault()).shortMonths[endMonth.month - 1]
-        "$startMonthName $startDay – $endMonthName $endDay, $year"
-    }
-}
 
 /**
  * Screen enabling an entrant to review campsite rules, booking summary, and confirm their reservation.

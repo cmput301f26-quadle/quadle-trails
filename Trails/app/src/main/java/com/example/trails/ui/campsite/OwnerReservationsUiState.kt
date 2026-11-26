@@ -144,6 +144,7 @@ fun formatStayDates(start: Long, end: Long, locale: Locale = Locale.getDefault()
         return SimpleDateFormat(pattern, locale).format(GregorianCalendar(m.year, m.month - 1, dayOfMonth(key)).time)
     }
     return when {
+        start == end -> fmt("MMM d, yyyy", start)
         s.year != e.year -> "${fmt("MMM d, yyyy", start)} – ${fmt("MMM d, yyyy", end)}"
         s.month != e.month -> "${fmt("MMM d", start)} – ${fmt("MMM d, yyyy", end)}"
         else -> "${fmt("MMM d", start)} – ${fmt("d, yyyy", end)}"
