@@ -8,12 +8,14 @@ package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.includesOwner
 import com.example.trails.data.repository.LotteryRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -24,7 +26,7 @@ import kotlinx.coroutines.tasks.await
  * @param db the Firestore instance; defaults to the app's default instance.
  */
 class FirestoreLotteryRepository(
-    db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : LotteryRepository {
 
     private val lotteries = db.collection(Collections.LOTTERIES)
@@ -32,7 +34,7 @@ class FirestoreLotteryRepository(
     override fun observeAll(): Flow<List<Lottery>> = observe(lotteries)
 
     override fun observeByOwner(ownerId: String): Flow<List<Lottery>> =
-        observe(lotteries.whereEqualTo("ownerId", ownerId))
+        observe(lotteries).map { list -> list.filter { it.includesOwner(ownerId) } }
 
     override fun observeById(id: String): Flow<Lottery?> = callbackFlow {
         val registration = lotteries.document(id).addSnapshotListener { snapshot, error ->
@@ -50,7 +52,26 @@ class FirestoreLotteryRepository(
 
     override suspend fun save(lottery: Lottery): String {
         val doc = if (lottery.id.isBlank()) lotteries.document() else lotteries.document(lottery.id)
-        doc.set(lottery).await() // the @DocumentId field is not written into the document
+        if (lottery.id.isBlank()) {
+            doc.set(lottery).await()
+        } else {
+            db.runTransaction { tx ->
+                val current = tx.get(doc).toObject(Lottery::class.java) ?: error("Lottery no longer exists.")
+                require(current.ownerId == lottery.ownerId && !current.collaborationLocked && current.drawStatus == "PENDING") {
+                    "This lottery's settings are locked."
+                }
+                require((current.registrationEnd?.toDate()?.time ?: Long.MAX_VALUE) > System.currentTimeMillis()) {
+                    "Registration has closed."
+                }
+                // Never overwrite a server draw or accepted collaborators with a stale form.
+                tx.update(doc, mapOf(
+                    "name" to lottery.name, "campsiteIds" to lottery.campsiteIds,
+                    "registrationStart" to lottery.registrationStart, "registrationEnd" to lottery.registrationEnd,
+                    "bookingStart" to lottery.bookingStart, "bookingEnd" to lottery.bookingEnd,
+                    "numWinners" to lottery.numWinners, "waitlistCapacity" to lottery.waitlistCapacity
+                ))
+            }.await()
+        }
         return doc.id
     }
 

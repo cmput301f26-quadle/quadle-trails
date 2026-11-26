@@ -7,7 +7,7 @@ const { drawLottery } = require("./draw");
 initializeApp();
 
 exports.drawClosedLotteries = onSchedule({
-  schedule: "every 1 minutes", timeZone: "UTC", region: "us-central1",
+  schedule: "every 60 minutes", timeZone: "UTC", region: "us-central1",
   timeoutSeconds: 540, maxInstances: 1, retryCount: 3
 }, async () => {
   const db = getFirestore();

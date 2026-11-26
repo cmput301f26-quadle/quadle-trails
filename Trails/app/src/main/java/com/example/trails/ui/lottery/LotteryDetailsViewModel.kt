@@ -6,13 +6,19 @@ package com.example.trails.ui.lottery
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.trails.data.AppContainer
+import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.repository.CampsiteRepository
+import com.example.trails.data.model.LotteryInvitation
+import com.example.trails.data.repository.LotteryCollaborationRepository
 import com.example.trails.data.repository.LotteryRepository
 import com.example.trails.data.repository.WaitlistRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -33,8 +39,14 @@ class LotteryDetailsViewModel(
     private val lotteryRepository: LotteryRepository = AppContainer.lotteryRepository,
     private val campsiteRepository: CampsiteRepository = AppContainer.campsiteRepository,
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
-    clock: () -> Long = System::currentTimeMillis
+    clock: () -> Long = System::currentTimeMillis,
+    private val viewerId: String = CurrentUser.id(),
+    // Lazy so tests without Firebase fall back to "no invitations" instead of crashing.
+    private val collaboration: Lazy<LotteryCollaborationRepository> = lazy { AppContainer.lotteryCollaborationRepository }
 ) : ViewModel() {
+
+    private val invitations = flow { emitAll(collaboration.value.observeForLottery(lotteryId)) }
+        .catch { emit(emptyList<LotteryInvitation>()) }
 
     private val _deleteState = MutableStateFlow(DeleteUiState())
 
@@ -46,14 +58,17 @@ class LotteryDetailsViewModel(
         combine(
             lotteryRepository.observeById(lotteryId),
             campsiteRepository.observeAll(),
-            waitlistRepository.observeForLottery(lotteryId)
-        ) { lottery, campsites, entries ->
-            buildLotteryDetailsState(lottery, campsites, entries.size, clock())
+            waitlistRepository.observeForLottery(lotteryId),
+            lotteryClock(clock),
+            invitations
+        ) { lottery, campsites, entries, now, invites ->
+            buildLotteryDetailsState(lottery, campsites, entries.size, now, entries, viewerId, invites)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LotteryDetailsUiState.Loading)
 
     /** Deletes the lottery if its waiting list is still empty, and frees its campsites. */
     fun onDelete() {
         if (_deleteState.value.isDeleting) return
+        if ((uiState.value as? LotteryDetailsUiState.Loaded)?.isCreator != true) return
         _deleteState.update { it.copy(isDeleting = true, failed = false) }
         viewModelScope.launch {
             try {

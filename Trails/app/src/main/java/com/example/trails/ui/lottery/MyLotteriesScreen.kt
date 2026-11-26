@@ -59,13 +59,18 @@ fun MyLotteriesScreen(
     viewModel: MyLotteriesViewModel = viewModel { MyLotteriesViewModel() }
 ) {
     val state by viewModel.uiState.collectAsState()
-    MyLotteriesContent(
+    Column(modifier.fillMaxSize()) {
+        androidx.compose.material3.TextButton(onClick = { navController.navigate(LotteryRoutes.INVITATIONS) }) {
+            Text(stringResource(R.string.lottery_invitations))
+        }
+        MyLotteriesContent(
         state = state,
         onFilterChange = viewModel::onFilterChange,
         onOpenLottery = { id -> navController.navigate(LotteryRoutes.lotteryDetails(id)) },
         onCreate = { navController.navigate(LotteryRoutes.lotteryForm()) },
-        modifier = modifier
+        modifier = Modifier.weight(1f)
     )
+    }
 }
 
 /**
@@ -189,6 +194,7 @@ private fun cardHeadline(item: LotteryCardItem): String {
             pluralStringResource(R.plurals.lottery_count_winners, item.winnersDrawn, item.winnersDrawn),
             pluralStringResource(R.plurals.lottery_count_entrants, item.entrantCount, item.entrantCount)
         )
+        LotteryStatus.AWAITING_DRAW -> stringResource(R.string.lottery_draw_pending_body)
         LotteryStatus.NO_ENTRANTS -> stringResource(R.string.lottery_card_no_entrants)
     }
 }
@@ -203,7 +209,7 @@ private fun cardSummary(item: LotteryCardItem): String {
         LotteryStatus.SCHEDULED -> stringResource(R.string.lottery_dot_join, campsites, winners)
         LotteryStatus.OPEN -> stringResource(R.string.lottery_dot_join,
             pluralStringResource(R.plurals.lottery_count_entrants, item.entrantCount, item.entrantCount), winners)
-        LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS -> stringResource(R.string.lottery_dot_join, campsites,
+        LotteryStatus.DRAWN, LotteryStatus.NO_ENTRANTS, LotteryStatus.AWAITING_DRAW -> stringResource(R.string.lottery_dot_join, campsites,
             l.registrationEnd.millis()?.let { formatMonthYear(it) } ?: stringResource(R.string.lottery_dash))
     }
 }

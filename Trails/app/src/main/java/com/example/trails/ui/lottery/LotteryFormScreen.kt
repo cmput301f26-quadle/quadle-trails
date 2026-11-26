@@ -75,6 +75,7 @@ fun LotteryFormScreen(
             onBack = leave,
             onNameChange = viewModel::onNameChange,
             onToggleCampsite = viewModel::onToggleCampsite,
+            onToggleInvite = viewModel::onToggleInvite,
             onRegistrationChange = viewModel::onRegistrationChange,
             onBookingChange = viewModel::onBookingChange,
             onWinnersChange = viewModel::onWinnersChange,
@@ -91,6 +92,13 @@ fun LotteryFormScreen(
                 navController.navigate(LotteryRoutes.lotteryDetails(id)) {
                     popUpTo(LotteryRoutes.LOTTERY_FORM) { inclusive = true }
                 }
+            },
+            // "Invite other owners" opens the new lottery, then its invite screen on top, so Back lands on the lottery.
+            onPublishedInvite = { id ->
+                navController.navigate(LotteryRoutes.lotteryDetails(id)) {
+                    popUpTo(LotteryRoutes.LOTTERY_FORM) { inclusive = true }
+                }
+                navController.navigate(LotteryRoutes.lotterySharing(id))
             }
         ),
         modifier = modifier
@@ -102,6 +110,7 @@ class LotteryFormActions(
     val onBack: () -> Unit = {},
     val onNameChange: (String) -> Unit = {},
     val onToggleCampsite: (String) -> Unit = {},
+    val onToggleInvite: (String) -> Unit = {},
     val onRegistrationChange: (Long, Long) -> Unit = { _, _ -> },
     val onBookingChange: (Long, Long) -> Unit = { _, _ -> },
     val onWinnersChange: (Int) -> Unit = {},
@@ -113,7 +122,8 @@ class LotteryFormActions(
     val onDismissSaveError: () -> Unit = {},
     val onDelete: () -> Unit = {},
     val onDismissDeleteError: () -> Unit = {},
-    val onPublishedDone: (String) -> Unit = {}
+    val onPublishedDone: (String) -> Unit = {},
+    val onPublishedInvite: (String) -> Unit = {}
 )
 
 /**
@@ -162,7 +172,7 @@ fun LotteryFormContent(state: LotteryFormUiState, actions: LotteryFormActions, m
 
     val savedId = state.savedId
     if (savedId != null && !state.isEditing) {
-        PublishedDialog(state.draft, onDone = { actions.onPublishedDone(savedId) })
+        PublishedDialog(state.draft, state.inviteIds.size, state.invitesFailed, onDone = { actions.onPublishedDone(savedId) }, onInvite = { actions.onPublishedInvite(savedId) })
     }
     if (state.saveFailed) {
         SaveFailedDialog(
@@ -225,16 +235,28 @@ private fun CenteredNote(text: String, modifier: Modifier) {
 
 /** "Lottery published · Registration opens Apr 1 at 09:00. 5 winners are drawn automatically on Apr 8." */
 @Composable
-private fun PublishedDialog(draft: LotteryDraft, onDone: () -> Unit) {
+private fun PublishedDialog(draft: LotteryDraft, invited: Int, invitesFailed: Boolean, onDone: () -> Unit, onInvite: () -> Unit) {
     val opens = draft.registrationStart ?: 0L
     val draw = draft.drawTime ?: 0L
     val winners = pluralStringResource(R.plurals.lottery_published_winners, draft.numWinners, draft.numWinners)
-    val body = if (opens <= System.currentTimeMillis()) {
+    val base = if (opens <= System.currentTimeMillis()) {
         stringResource(R.string.lottery_published_body_open, winners, formatDay(draw))
     } else {
         stringResource(R.string.lottery_published_body, formatDay(opens), formatTime(opens), winners, formatDay(draw))
     }
-    LotteryDialog(stringResource(R.string.lottery_published_title), body, stringResource(R.string.lottery_done), false, onDone, onDone)
+    val inviteNote = when {
+        invited == 0 -> null
+        invitesFailed -> stringResource(R.string.lottery_invites_failed)
+        else -> stringResource(R.string.lottery_invites_sent)
+    }
+    val body = inviteNote?.let { "$base\n\n$it" } ?: base
+    // Invitations are only possible before registration opens (US 02.04.08), so only offer them then.
+    val canInvite = opens > System.currentTimeMillis()
+    LotteryDialog(
+        stringResource(R.string.lottery_published_title), body, stringResource(R.string.lottery_done), false, onDone, onDone,
+        dismissLabel = if (canInvite) stringResource(R.string.lottery_invite_owners) else null,
+        onSecondary = if (canInvite) onInvite else null
+    )
 }
 
 /** "Couldn't save changes · Your edits are still here." with a red Try again. */

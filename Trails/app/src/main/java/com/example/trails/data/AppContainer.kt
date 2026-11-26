@@ -22,6 +22,9 @@ import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
 
 object AppContainer {
+    val lotteryCollaborationRepository: com.example.trails.data.repository.LotteryCollaborationRepository by lazy {
+        com.example.trails.data.firestore.FirestoreLotteryCollaborationRepository()
+    }
     // User — Aarav swaps this for the Firestore version.
     val userRepository: UserRepository = FakeUserRepository()
 

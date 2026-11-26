@@ -87,6 +87,7 @@ object LotteryTags {
     const val SHEET_OPENS = "lottery_sheet_opens"
     const val SHEET_CLOSES = "lottery_sheet_closes"
     const val DIALOG_BUTTON = "lottery_dialog_button"
+    const val PENDING_APPROVAL = "lottery_pending_approval"
     const val SAVED_BANNER = "lottery_saved_banner"
     const val LIST = "lottery_list"
     const val CREATE = "lottery_create"
@@ -98,6 +99,7 @@ object LotteryTags {
 
     /** Tag for a campsite row in the picker. */
     fun campsite(id: String) = "lottery_campsite_$id"
+    fun invite(id: String) = "lottery_invite_$id"
 
     /** Tag for a summary row's Edit link on the review screen. */
     fun editRow(field: String) = "lottery_edit_$field"
@@ -278,6 +280,7 @@ internal fun StatusBadge(status: LotteryStatus, modifier: Modifier = Modifier) {
     val (label, colour) = when (status) {
         LotteryStatus.SCHEDULED -> R.string.lottery_badge_scheduled to LotteryColors.Amber
         LotteryStatus.OPEN -> R.string.lottery_badge_open to MaterialTheme.colorScheme.primary
+        LotteryStatus.AWAITING_DRAW -> R.string.lottery_draw_pending to LotteryColors.Amber
         LotteryStatus.DRAWN -> R.string.lottery_badge_drawn to LotteryColors.Muted
         LotteryStatus.NO_ENTRANTS -> R.string.lottery_badge_no_entrants to LotteryColors.Muted
     }
@@ -392,7 +395,7 @@ internal fun CampsitePhoto(url: String?, size: Dp = 56.dp) {
     val mod = Modifier
         .size(size)
         .clip(RoundedCornerShape(8.dp))
-    if (url != null) {
+    if (!url.isNullOrBlank()) {
         AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = mod)
     } else {
         Box(mod.background(LotteryColors.Line))
@@ -624,7 +627,8 @@ internal fun LotteryDialog(
     destructive: Boolean,
     onClick: () -> Unit,
     onDismiss: () -> Unit,
-    dismissLabel: String? = null
+    dismissLabel: String? = null,
+    onSecondary: (() -> Unit)? = null
 ) {
     Dialog(onDismissRequest = onDismiss) {
         val shape = RoundedCornerShape(16.dp)
@@ -649,7 +653,7 @@ internal fun LotteryDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onDismiss)
+                        .clickable(onClick = onSecondary ?: onDismiss)
                         .padding(vertical = 8.dp)
                         .testTag(LotteryTags.DIALOG_CANCEL)
                 )

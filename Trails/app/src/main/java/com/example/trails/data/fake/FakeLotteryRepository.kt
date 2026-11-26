@@ -5,6 +5,7 @@
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.includesOwner
 import com.example.trails.data.repository.LotteryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,7 @@ class FakeLotteryRepository(initial: List<Lottery> = TestLotteries.all) : Lotter
     override fun observeAll(): Flow<List<Lottery>> = lotteries
 
     override fun observeByOwner(ownerId: String): Flow<List<Lottery>> =
-        lotteries.map { list -> list.filter { it.ownerId == ownerId } }
+        lotteries.map { list -> list.filter { it.includesOwner(ownerId) } }
 
     override fun observeById(id: String): Flow<Lottery?> =
         lotteries.map { list -> list.find { it.id == id } }
