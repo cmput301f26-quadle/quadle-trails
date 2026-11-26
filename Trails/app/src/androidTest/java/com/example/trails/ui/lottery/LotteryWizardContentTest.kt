@@ -214,6 +214,15 @@ class LotteryWizardContentTest {
         assertEquals("lottery-new", opened)
     }
 
+    // Before registration opens, the dialog also offers to invite other owners (US 02.04.08).
+    @Test
+    fun published_dialogInvite_opensInvitations() {
+        var invited: String? = null
+        show(state(LotteryStep.REVIEW, complete).copy(savedId = "lottery-new"), LotteryFormActions(onPublishedInvite = { invited = it }))
+        composeRule.onNodeWithText("Invite other owners’ campsites").performClick()
+        assertEquals("lottery-new", invited)
+    }
+
     @Test
     fun publishFailed_offersTryAgain() {
         var retried = false

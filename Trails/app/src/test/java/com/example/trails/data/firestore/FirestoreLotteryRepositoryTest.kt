@@ -7,6 +7,7 @@ import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Collections
 import com.example.trails.data.model.Lottery
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -16,14 +17,17 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.Transaction
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import java.util.Date
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -68,14 +72,46 @@ class FirestoreLotteryRepositoryTest {
         verify(newDoc).set(draft)
     }
 
-    // Editing (US 02.04.06) overwrites the existing document.
-    @Test
-    fun save_existingLottery_overwritesItsDocument(): Unit = runBlocking {
+    /** Runs [repo]'s transaction against [stored], the lottery as it is in Firestore. */
+    private fun mockTransaction(stored: Lottery): Transaction {
+        val tx = mock(Transaction::class.java)
+        val snap = mock(DocumentSnapshot::class.java)
         `when`(doc.id).thenReturn(lotteryId)
-        `when`(doc.set(mayLongWeekend)).thenReturn(Tasks.forResult(null))
+        `when`(tx.get(doc)).thenReturn(snap)
+        `when`(snap.toObject(Lottery::class.java)).thenReturn(stored)
+        `when`(db.runTransaction(any<Transaction.Function<Any>>())).thenAnswer { call ->
+            Tasks.forResult(call.getArgument<Transaction.Function<Any>>(0).apply(tx))
+        }
+        return tx
+    }
 
-        assertEquals(lotteryId, repo.save(mayLongWeekend))
-        verify(doc).set(mayLongWeekend)
+    private val openLottery = mayLongWeekend.copy(registrationEnd = Timestamp(Date(System.currentTimeMillis() + 86_400_000L)))
+
+    // Editing (US 02.04.06) only updates the form's fields, so it can't wipe a draw or accepted collaborators.
+    @Test
+    fun save_existingLottery_updatesOnlyTheFormFields(): Unit = runBlocking {
+        val tx = mockTransaction(openLottery)
+        val edited = openLottery.copy(name = "Renamed", numWinners = 3)
+
+        assertEquals(lotteryId, repo.save(edited))
+        verify(tx).update(doc, mapOf(
+            "name" to "Renamed", "campsiteIds" to edited.campsiteIds,
+            "registrationStart" to edited.registrationStart, "registrationEnd" to edited.registrationEnd,
+            "bookingStart" to edited.bookingStart, "bookingEnd" to edited.bookingEnd,
+            "numWinners" to 3, "waitlistCapacity" to edited.waitlistCapacity
+        ))
+    }
+
+    // Once invitations go out (US 02.04.08) the agreed settings can't change.
+    @Test
+    fun save_lockedLottery_isRejected(): Unit = runBlocking {
+        mockTransaction(openLottery.copy(collaborationLocked = true))
+        try {
+            repo.save(openLottery.copy(name = "Renamed"))
+            fail("A locked lottery must not be saved")
+        } catch (e: IllegalArgumentException) {
+            assertEquals("This lottery's settings are locked.", e.message)
+        }
     }
 
     @Test
@@ -106,19 +142,19 @@ class FirestoreLotteryRepositoryTest {
     // The Lotteries tab only lists the owner's lotteries, and stops listening when it stops collecting.
     @Test
     @Suppress("UNCHECKED_CAST")
-    fun observeByOwner_queriesOwnerAndEmitsLotteries(): Unit = runBlocking {
-        val query = mock(Query::class.java)
+    fun observeByOwner_includesOwnAndSharedLotteries(): Unit = runBlocking {
         val reg = mock(ListenerRegistration::class.java)
         val captor = ArgumentCaptor.forClass(EventListener::class.java) as ArgumentCaptor<EventListener<QuerySnapshot>>
-        `when`(lotteries.whereEqualTo("ownerId", TestUsers.OWNER_ID)).thenReturn(query)
-        `when`(query.addSnapshotListener(captor.capture())).thenAnswer {
+        val shared = mayLongWeekend.copy(id = "shared", ownerId = "someone-else", participantOwnerIds = listOf("someone-else", TestUsers.OWNER_ID))
+        val unrelated = mayLongWeekend.copy(id = "unrelated", ownerId = "someone-else")
+        `when`(lotteries.addSnapshotListener(captor.capture())).thenAnswer {
             val snap = mock(QuerySnapshot::class.java)
-            `when`(snap.toObjects(Lottery::class.java)).thenReturn(listOf(mayLongWeekend))
+            `when`(snap.toObjects(Lottery::class.java)).thenReturn(listOf(mayLongWeekend, shared, unrelated))
             captor.value.onEvent(snap, null)
             reg
         }
 
-        assertEquals(listOf(lotteryId), repo.observeByOwner(TestUsers.OWNER_ID).first().map { it.id })
+        assertEquals(listOf(lotteryId, "shared"), repo.observeByOwner(TestUsers.OWNER_ID).first().map { it.id })
         verify(reg).remove()
     }
 
