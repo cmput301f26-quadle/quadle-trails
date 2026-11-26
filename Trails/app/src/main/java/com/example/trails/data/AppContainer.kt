@@ -7,11 +7,13 @@ import com.example.trails.data.fake.FakeReportRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.firestore.FirestoreCampsiteRepository
 import com.example.trails.data.firestore.FirestoreLotteryRepository
+import com.example.trails.data.firestore.FirestoreNotificationRepository
 import com.example.trails.data.firestore.FirestoreMessageRepository
 import com.example.trails.data.firestore.FirestoreReservationRepository
 import com.example.trails.data.firestore.FirestoreWaitlistRepository
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.NotificationRepository
 import com.example.trails.data.repository.MessageRepository
 import com.example.trails.data.repository.RatingRepository
 import com.example.trails.data.repository.ReportRepository
@@ -45,6 +47,8 @@ object AppContainer {
     // Report — Zainab swaps this for the Firestore version when reports exist in Firestore.
     val reportRepository: ReportRepository = FakeReportRepository()
 
+    //Temporary version made by Kasey, can be changed/removed
+    val notificationRepository: NotificationRepository by lazy { FirestoreNotificationRepository() }
     // Messages — Neaz.
     val messageRepository: MessageRepository by lazy { FirestoreMessageRepository() }
 }
