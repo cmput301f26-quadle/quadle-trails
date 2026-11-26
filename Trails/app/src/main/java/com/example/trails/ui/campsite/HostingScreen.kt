@@ -1,5 +1,5 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.03.01, 03.11.01, 02.07.01–03 (Reservations tab)
+// USER STORIES: 02.03.01, 03.11.01, 02.07.01–03 (Reservations tab), 02.08.01 (rejected banner)
 // PURPOSE: Owner's home screen listing the campsites they host (Figma F01 · My campsites), with
 //   the mode pill in the header for switching modes (US 03.11.01, Aarav's ModePill), and a
 //   Reservations tab showing My Reservations (Figma · Owner reservations).
@@ -38,9 +38,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,6 +69,7 @@ import com.example.trails.ui.lottery.MyLotteriesScreen
 import com.example.trails.ui.profile.ModePill
 import com.example.trails.ui.profile.ModePillChip
 import com.example.trails.ui.theme.TrailsTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * The sections of the Hosting home: Campsites and Lotteries (Figma F01), and Reservations
@@ -106,7 +109,17 @@ fun HostingScreen(
         selectedTab = tab,
         onTabChange = { tab = it },
         lotteriesContent = { MyLotteriesScreen(navController) }, // Skanda's screen, US 02.04.x
-        reservationsContent = { OwnerReservationsScreen() }, // details screen comes with US 02.08.01
+        reservationsContent = {
+            // After a rejection (US 02.08.01), Reservation details leaves a banner for this screen.
+            val handle = navController.currentBackStackEntry?.savedStateHandle
+            val banner by remember(handle) { handle?.getStateFlow<String?>(REJECTED_BANNER_KEY, null) ?: MutableStateFlow(null) }
+                .collectAsState()
+            DisposableEffect(handle) { onDispose { handle?.set(REJECTED_BANNER_KEY, null) } }
+            OwnerReservationsScreen(
+                onViewDetails = { navController.navigate(CampsiteRoutes.reservationDetails(it)) },
+                rejectedBanner = banner
+            )
+        },
         modePill = { ModePill(navController) }
     )
 }

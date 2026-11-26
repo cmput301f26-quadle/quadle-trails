@@ -6,7 +6,6 @@
 package com.example.trails.ui.admin
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule

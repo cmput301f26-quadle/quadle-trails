@@ -6,6 +6,7 @@ package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
@@ -62,6 +63,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
     }
@@ -100,6 +102,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = prefilledRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
 
@@ -123,6 +126,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = fullRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
 
@@ -218,6 +222,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = fullRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -296,6 +301,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = repo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -319,6 +325,7 @@ class WaitlistViewModelTest {
             lotteryId = lotteryId,
             userId = currentUserId,
             waitlistRepository = repo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -348,6 +355,7 @@ class WaitlistViewModelTest {
             campsiteId = "campsite-dynamically-resolved",
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo
         )
@@ -374,6 +382,7 @@ class WaitlistViewModelTest {
             campsiteId = "campsite-1",
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo
         )
@@ -408,6 +417,7 @@ class WaitlistViewModelTest {
             campsiteId = "campsite-no-lottery",
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo
         )
@@ -442,6 +452,7 @@ class WaitlistViewModelTest {
             campsiteId = "campsite-no-lottery-2",
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo
         )
@@ -482,6 +493,7 @@ class WaitlistViewModelTest {
             lotteryId = "",
             userId = currentUserId,
             waitlistRepository = waitlistRepo,
+            userRepository = FakeUserRepository(),
             lotteryRepository = lotteryRepo
         )
         testDispatcher.scheduler.advanceUntilIdle()

@@ -92,6 +92,8 @@
     <string name="profile_mode_camper">Camper</string>
     <string name="profile_mode_camper_body">Find, enter lotteries and book campsites.</string>
     <string name="profile_mode_current">Current</string>
+    <string name="profile_become_host">Become a host</string>
+    <string name="profile_become_host_body">List your own campsites and run lotteries. You can switch back to Camper anytime.</string>
     <string name="profile_switch_to">Switch to %1$s</string>
     <string name="profile_mode_footer">Admin tools only appear in Admin mode. Your campsites, bookings and entries are the same in every mode.</string>
     <string name="profile_error_mode">Couldn\'t switch mode. Try again.</string>

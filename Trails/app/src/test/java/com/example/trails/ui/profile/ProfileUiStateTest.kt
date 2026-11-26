@@ -1,7 +1,7 @@
 // Unit tests for profile state, validation and role rules (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
-// AI assistance: Used AI to help write profile name, email, and phone validation tests.
+// AI assistance: Used AI to help write profile validation, role and become-a-host tests.
 package com.example.trails.ui.profile
 
 import com.example.trails.data.model.Role
@@ -189,5 +189,31 @@ class ProfileUiStateTest {
     @Test
     fun effectiveMode_noRoles_isEntrant() {
         assertEquals(Role.ENTRANT, effectiveMode(morgan.copy(roles = emptyList())))
+    }
+
+    // US 03.11.01: becoming a host
+
+    // Only campers who are not owners yet are offered "Become a host".
+    @Test
+    fun canBecomeHost_onlyWithoutOwnerRole() {
+        assertTrue(canBecomeHost(priya))
+        assertFalse(canBecomeHost(priya.copy(roles = listOf(Role.ENTRANT, Role.OWNER))))
+    }
+
+    // Becoming a host adds OWNER, switches to Owner mode and keeps the rest of the profile.
+    @Test
+    fun becomeHost_addsOwnerAndSwitchesToIt() {
+        val host = becomeHost(priya)
+        assertEquals(listOf(Role.ENTRANT, Role.OWNER), host.roles)
+        assertEquals(Role.OWNER, host.activeMode)
+        assertEquals(priya.name, host.name)
+    }
+
+    // Becoming a host never adds ADMIN and never adds OWNER twice.
+    @Test
+    fun becomeHost_neverGrantsAdminOrDuplicatesOwner() {
+        val host = becomeHost(priya.copy(roles = listOf(Role.ENTRANT, Role.OWNER)))
+        assertEquals(listOf(Role.ENTRANT, Role.OWNER), host.roles)
+        assertFalse(Role.ADMIN in host.roles)
     }
 }

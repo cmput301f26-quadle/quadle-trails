@@ -6,6 +6,7 @@ package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Lottery
@@ -74,6 +75,7 @@ class WaitlistScreenTest {
             waitlistRepository = waitlistRepo,
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo,
+            userRepository = FakeUserRepository(),
             campsiteId = campsiteId
         )
     }
@@ -164,6 +166,7 @@ class WaitlistScreenTest {
             waitlistRepository = fullRepo,
             lotteryRepository = lotteryRepo,
             campsiteRepository = campsiteRepo,
+            userRepository = FakeUserRepository(),
             campsiteId = campsiteId
         )
         testDispatcher.scheduler.advanceUntilIdle()

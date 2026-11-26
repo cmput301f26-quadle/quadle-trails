@@ -34,15 +34,24 @@ class LotteryStatusTest {
         assertEquals(LotteryStatus.OPEN, lotteryStatus(mayLongWeekend, 24, now + 15 * day))
     }
 
-    // Registration closing at exactly "now" counts as closed: the draw has run.
+    // Registration closing at exactly "now" counts as closed, but winners only exist once the server draw runs.
     @Test
-    fun afterRegistrationWithEntrants_isDrawn() {
-        assertEquals(LotteryStatus.DRAWN, lotteryStatus(mayLongWeekend, 24, now + 19 * day))
+    fun afterRegistrationBeforeTheDraw_isAwaitingDraw() {
+        val status = lotteryStatus(mayLongWeekend, 24, now + 19 * day)
+        assertEquals(LotteryStatus.AWAITING_DRAW, status)
+        assertTrue(status.isClosed)
     }
 
     @Test
-    fun afterRegistrationWithNobody_isNoEntrants() {
-        val status = lotteryStatus(mayLongWeekend, 0, now + 20 * day)
+    fun afterTheDrawWithEntrants_isDrawn() {
+        val drawn = mayLongWeekend.copy(drawStatus = "COMPLETED", drawEntrantCount = 24, winnerIds = List(5) { "w$it" })
+        assertEquals(LotteryStatus.DRAWN, lotteryStatus(drawn, 24, now + 19 * day))
+    }
+
+    @Test
+    fun afterTheDrawWithNobody_isNoEntrants() {
+        val drawn = mayLongWeekend.copy(drawStatus = "COMPLETED", drawEntrantCount = 0)
+        val status = lotteryStatus(drawn, 0, now + 20 * day)
         assertEquals(LotteryStatus.NO_ENTRANTS, status)
         assertTrue(status.isClosed)
     }
@@ -56,6 +65,7 @@ class LotteryStatusTest {
     fun doneFilter_coversBothClosedStatuses() {
         assertTrue(LotteryFilter.DONE.matches(LotteryStatus.DRAWN))
         assertTrue(LotteryFilter.DONE.matches(LotteryStatus.NO_ENTRANTS))
+        assertTrue(LotteryFilter.DONE.matches(LotteryStatus.AWAITING_DRAW))
         assertFalse(LotteryFilter.DONE.matches(LotteryStatus.OPEN))
     }
 

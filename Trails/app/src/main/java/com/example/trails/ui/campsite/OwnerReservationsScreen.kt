@@ -3,8 +3,10 @@
 // PURPOSE: The owner's reservations across their campsites, filtered by Active / Past /
 //  Cancelled (Figma · US 02.07.01–03 · Owner reservations). Shown as the Reservations tab of
 //  Hosting.
-// Outstanding issues: "View details" opens nothing yet (Reservation details is US 02.08.01);
-//  cancelled cards show the reservation number instead of the cancel date (not stored).
+//  "View details" opens Reservation details (US 02.08.01); after a rejection, a "Reservation
+//  rejected" banner shows here, as in Figma.
+// Outstanding issues: cancelled cards show the reservation number instead of the cancel date
+//  (not stored).
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -72,11 +74,13 @@ import java.util.Locale
  * Written in assistance with Claude AI by Anthropic.
  *
  * @param onViewDetails called with a reservation id from "View details".
+ * @param rejectedBanner the "Reservation rejected" summary to show, or null.
  */
 @Composable
 fun OwnerReservationsScreen(
     modifier: Modifier = Modifier,
     onViewDetails: (String) -> Unit = {},
+    rejectedBanner: String? = null,
     viewModel: OwnerReservationsViewModel = viewModel { OwnerReservationsViewModel() }
 ) {
     val state by viewModel.state.collectAsState()
@@ -85,6 +89,7 @@ fun OwnerReservationsScreen(
         onFilterChange = viewModel::onFilterChange,
         onCampsiteChange = viewModel::onCampsiteChange,
         onViewDetails = onViewDetails,
+        rejectedBanner = rejectedBanner,
         modifier = modifier
     )
 }
@@ -99,6 +104,7 @@ fun OwnerReservationsScreen(
  * @param onFilterChange called when a chip is tapped.
  * @param onCampsiteChange called with a campsite id, or null for All campsites.
  * @param onViewDetails called with a reservation id from "View details".
+ * @param rejectedBanner after a rejection, e.g. "Priya Shah · Two Jack Lakeside · Jun 5 – 7, 2027".
  */
 @Composable
 fun OwnerReservationsContent(
@@ -106,7 +112,8 @@ fun OwnerReservationsContent(
     onFilterChange: (ReservationFilter) -> Unit,
     onCampsiteChange: (String?) -> Unit,
     onViewDetails: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    rejectedBanner: String? = null
 ) {
     if (state.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -121,6 +128,10 @@ fun OwnerReservationsContent(
             ReservationFilter.entries.forEach { chip -> FilterChipFor(chip, chip == state.filter, onFilterChange) }
         }
         Spacer(Modifier.height(12.dp))
+        if (rejectedBanner != null) {
+            RejectedBanner(rejectedBanner)
+            Spacer(Modifier.height(12.dp))
+        }
         Text(
             stringResource(R.string.reservations_summary, countLabel(state.filter, state.items.size), longDate(state.today)),
             style = MaterialTheme.typography.labelMedium,
@@ -144,6 +155,29 @@ fun OwnerReservationsContent(
                 items(state.items, key = { it.reservation.id }) { ReservationCard(it, onViewDetails) }
             }
         }
+    }
+}
+
+/**
+ * "Reservation rejected / Moved from Active to Cancelled. / <summary>", as in Figma.
+ *
+ * Written in assistance with Claude AI by Anthropic.
+ */
+@Composable
+private fun RejectedBanner(summary: String) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+            .border(1.dp, MaterialTheme.colorScheme.primary, shape)
+            .padding(12.dp)
+            .testTag(ReservationsTags.REJECTED_BANNER)
+    ) {
+        Text(stringResource(R.string.reservations_rejected_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.reservations_rejected_moved), style = MaterialTheme.typography.bodySmall)
+        if (summary.isNotBlank()) Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -384,6 +418,7 @@ object ReservationsTags {
     const val SUMMARY = "reservations_summary"
     const val LIST = "reservations_list"
     const val EMPTY = "reservations_empty"
+    const val REJECTED_BANNER = "reservations_rejected_banner"
 
     /** Tag for a filter chip. */
     fun filter(chip: ReservationFilter) = "reservations_filter_${chip.name.lowercase()}"

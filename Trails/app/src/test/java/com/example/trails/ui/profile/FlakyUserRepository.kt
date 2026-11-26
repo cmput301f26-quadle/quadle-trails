@@ -1,6 +1,7 @@
 // Test double: a user repository whose operations can be made to fail (US 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
+// AI assistance: Used AI to help make each repository operation fail on demand for error-state tests.
 package com.example.trails.ui.profile
 
 import com.example.trails.data.fake.FakeUserRepository
@@ -51,6 +52,10 @@ class FlakyUserRepository(private val inner: FakeUserRepository) : UserRepositor
     override suspend fun updateProfileImage(deviceId: String, url: String?) {
         photoFailure?.let { throw it }
         inner.updateProfileImage(deviceId, url)
+    /** Fails with [modeFailure] too, since becoming a host also changes the mode. */
+    override suspend fun becomeHost(deviceId: String) {
+        modeFailure?.let { throw it }
+        inner.becomeHost(deviceId)
     }
 
     override suspend fun delete(deviceId: String) {

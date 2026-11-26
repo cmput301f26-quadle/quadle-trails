@@ -6,6 +6,7 @@ package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.WaitlistEntry
 import com.google.firebase.Timestamp
@@ -78,7 +79,8 @@ class WaitlistEntrantsScreenTest {
             lotteryId = lotteryId,
             waitlistRepository = waitlistRepo,
             lotteryRepository = lotteryRepo,
-            campsiteRepository = campsiteRepo
+            campsiteRepository = campsiteRepo,
+            userRepository = FakeUserRepository()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 

@@ -1,13 +1,15 @@
 // Stores user profiles in the Firestore users collection (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: Security Rules must also stop users changing their own roles; not unit-tested (needs a live Firestore).
-// AI assistance: Used AI to help implement field-limited Firestore profile updates.
+// Outstanding issues: Not unit-tested (needs a live Firestore). The users Security Rules are written but not
+//  published yet, because the project still uses test-mode rules until Dec 31, 2026.
+// AI assistance: Used AI to help implement field-limited Firestore profile updates and the become-a-host update.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.repository.UserRepository
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -95,6 +97,19 @@ class FirestoreUserRepository(
         val user = getById(deviceId) ?: throw NoSuchElementException("No profile for $deviceId.")
         require(mode in user.roles) { "Profile $deviceId does not hold the $mode role." }
         usersCollection().document(deviceId).update("activeMode", mode.name).await()
+    }
+
+    override suspend fun becomeHost(deviceId: String) {
+        require(deviceId.isNotBlank()) { "A device id is required." }
+        // One update: arrayUnion adds OWNER only if it is missing, and nothing else is touched.
+        usersCollection().document(deviceId)
+            .update(
+                mapOf(
+                    "roles" to FieldValue.arrayUnion(Role.OWNER.name),
+                    "activeMode" to Role.OWNER.name
+                )
+            )
+            .await()
     }
 
     override suspend fun delete(deviceId: String) {

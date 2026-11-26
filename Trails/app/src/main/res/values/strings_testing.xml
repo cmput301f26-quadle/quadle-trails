@@ -5,6 +5,7 @@
     <string name="testing_role_camper">Camper · Priya</string>
     <string name="testing_role_owner">Owner · Daniel</string>
     <string name="testing_role_admin">Admin · Morgan</string>
+    <string name="testing_role_this_device">This device · Firebase sign-in</string>
     <string name="testing_role_error">Couldn’t start the sample session. Choose a role to try again.</string>
     <string name="testing_change_role">Change testing role</string>
 </resources>

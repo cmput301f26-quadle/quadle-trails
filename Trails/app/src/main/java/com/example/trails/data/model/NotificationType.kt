@@ -5,5 +5,8 @@ enum class NotificationType {
     RESERVE_CANCEL,
     LOTTERY_SINGLE,
     LOTTERY_MULTI,
-    LOTTERY_LOST
+    LOTTERY_LOST,
+
+    /** A message an owner sent to everyone on a lottery's waitlist (US 02.10.01). */
+    OWNER_MESSAGE
 }

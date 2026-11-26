@@ -11,6 +11,7 @@ import com.example.trails.data.firestore.FirestoreLotteryRepository
 import com.example.trails.data.firestore.FirestoreNotificationRepository
 import com.example.trails.data.firestore.FirestoreMessageRepository
 import com.example.trails.data.firestore.FirestoreReservationRepository
+import com.example.trails.data.firestore.FirestoreUserRepository
 import com.example.trails.data.firestore.FirestoreWaitlistRepository
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.data.repository.ImageRepository
@@ -23,12 +24,13 @@ import com.example.trails.data.repository.ReservationRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
 
+/** Holds the one repository of each kind that the whole app uses. */
 object AppContainer {
     val lotteryCollaborationRepository: com.example.trails.data.repository.LotteryCollaborationRepository by lazy {
         com.example.trails.data.firestore.FirestoreLotteryCollaborationRepository()
     }
-    // User — Aarav swaps this for the Firestore version.
-    val userRepository: UserRepository = FakeUserRepository()
+    // User — Aarav. Profiles live in Firestore at users/{deviceId}.
+    val userRepository: UserRepository by lazy { FirestoreUserRepository() }
 
     // Campsites, lotteries and waitlists are on Firestore together, since campsites point at
     // lottery ids and waitlist entries live under each lottery. Lazy so code that never uses

@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -34,6 +34,7 @@ class BuildMyLotteriesStateTest {
     private val juneWeekend = lottery("june", "June weekend", opensIn = 3)
     private val summerWeekends = lottery("summer", "Summer weekends", opensIn = -5)
     private val springOpening = lottery("spring", "Spring opening", opensIn = -60)
+        .copy(drawStatus = "COMPLETED", drawEntrantCount = 31, winnerIds = List(5) { "w$it" })
 
     private fun lottery(id: String, name: String, opensIn: Int) = Lottery(
         id = id, ownerId = TestUsers.OWNER_ID, name = name, campsiteIds = listOf("a", "b"),
@@ -60,7 +61,8 @@ class BuildMyLotteriesStateTest {
     fun doneChip_onlyClosedLotteries() {
         val state = buildMyLotteriesState(all, emptyMap(), LotteryFilter.DONE, now)
         assertEquals(listOf("spring"), state.items.map { it.lottery.id })
-        assertEquals(LotteryStatus.NO_ENTRANTS, state.items.single().status)
+        // Status comes from the server draw's result, not the live waiting-list count.
+        assertEquals(LotteryStatus.DRAWN, state.items.single().status)
     }
 
     // A chip with nothing under it is different from having no lotteries at all.
@@ -74,9 +76,9 @@ class BuildMyLotteriesStateTest {
 
     // "5 winners drawn from 31 entrants", but never more winners than entrants.
     @Test
-    fun winnersDrawn_capsAtEntrants() {
+    fun winnersDrawn_countsTheServerDrawsWinners() {
         assertEquals(5, LotteryCardItem(springOpening, LotteryStatus.DRAWN, 31).winnersDrawn)
-        assertEquals(2, LotteryCardItem(springOpening, LotteryStatus.DRAWN, 2).winnersDrawn)
+        assertEquals(2, LotteryCardItem(springOpening.copy(winnerIds = listOf("a", "b")), LotteryStatus.DRAWN, 2).winnersDrawn)
     }
 
     // The ViewModel only lists the owner's lotteries and counts their waiting lists live.
@@ -86,14 +88,14 @@ class BuildMyLotteriesStateTest {
         val waitlist = FakeWaitlistRepository(List(24) { WaitlistEntry(userId = "u$it", lotteryId = "summer") })
         val vm = MyLotteriesViewModel(lotteries, waitlist, TestUsers.OWNER_ID, clock = { now })
         backgroundScope.launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+        runCurrent()
 
         val state = vm.uiState.value as MyLotteriesUiState.Loaded
         assertEquals(listOf("summer"), state.items.map { it.lottery.id })
         assertEquals(24, state.items.single().entrantCount)
 
         vm.onFilterChange(LotteryFilter.SCHEDULED)
-        advanceUntilIdle()
+        runCurrent()
         assertTrue((vm.uiState.value as MyLotteriesUiState.Loaded).items.isEmpty())
     }
 }
