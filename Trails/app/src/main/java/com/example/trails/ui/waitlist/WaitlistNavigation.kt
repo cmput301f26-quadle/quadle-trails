@@ -4,6 +4,7 @@
 // OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
+import com.example.trails.ui.ownernotify.OwnerNotifyRoutes
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -52,9 +53,11 @@ fun NavGraphBuilder.waitlistGraph(navController: NavController) {
     }
 
     composable(WaitlistRoutes.WAITLIST_ENTRANTS, arguments = listOf(requiredId("lotteryId"))) { entry ->
+        val lotteryId = entry.requireArg("lotteryId")
         WaitlistEntrantsScreen(
-            lotteryId = entry.requireArg("lotteryId"),
-            onBack = { navController.popBackStack() }
+            lotteryId = lotteryId,
+            onBack = { navController.popBackStack() },
+            onNotifyClick = { navController.navigate(OwnerNotifyRoutes.compose(lotteryId)) }
         )
     }
 

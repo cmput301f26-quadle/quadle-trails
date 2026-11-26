@@ -15,6 +15,7 @@ import com.example.trails.ui.discovery.DiscoveryRoutes
 import com.example.trails.ui.discovery.discoveryGraph
 import com.example.trails.ui.lottery.lotteryGraph
 import com.example.trails.ui.notification.notificationGraph
+import com.example.trails.ui.ownernotify.ownerNotifyGraph
 import com.example.trails.ui.messaging.messagingGraph
 import com.example.trails.ui.profile.profileGraph
 import com.example.trails.ui.shell.shellGraph
@@ -40,5 +41,6 @@ fun AppNavGraph(
         shellGraph(navController)
         notificationGraph(navController)
         messagingGraph(navController)
+        ownerNotifyGraph(navController)
     }
 }
