@@ -1,6 +1,6 @@
 // Shows the mode pill and its "Use Quadle as" sheet for switching roles (US 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: Admin home (Zainab's screen) does not show the pill yet.
+// Outstanding issues: none.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.background

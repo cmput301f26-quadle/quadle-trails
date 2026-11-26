@@ -211,7 +211,7 @@ private fun MonthArrow(glyph: String, description: String, tag: String, onClick:
  *
  * Written in assistance with Claude AI by Anthropic.
  */
-private fun monthLabel(month: CalendarMonth): String =
+internal fun monthLabel(month: CalendarMonth): String =
     SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(GregorianCalendar(month.year, month.month - 1, 1).time)
 
 /**
@@ -229,7 +229,7 @@ private fun monthDayLabel(key: Long): String {
  *
  * Written in assistance with Claude AI by Anthropic.
  */
-private fun weekdayInitials(): List<String> =
+internal fun weekdayInitials(): List<String> =
     DateFormatSymbols.getInstance(Locale.getDefault()).shortWeekdays.drop(1).map { it.take(1) }
 
 /**

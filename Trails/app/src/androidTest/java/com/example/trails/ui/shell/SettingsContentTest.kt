@@ -56,4 +56,22 @@ class SettingsContentTest {
         assertEquals(0, profile)
         assertEquals(1, policy)
     }
+
+    @Test
+    fun testingRoleRow_isHiddenWithoutTestingAction() {
+        show()
+        composeRule.onNodeWithTag(SettingsTags.TESTING_ROLE_ROW).assertDoesNotExist()
+    }
+
+    @Test
+    fun testingRoleRow_opensRoleSelection() {
+        var clicks = 0
+        composeRule.setContent {
+            TrailsTheme {
+                SettingsContent({}, {}, onTestingRoleClick = { clicks++ })
+            }
+        }
+        composeRule.onNodeWithTag(SettingsTags.TESTING_ROLE_ROW).performClick()
+        assertEquals(1, clicks)
+    }
 }

@@ -37,7 +37,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "TESTING_TOOLS", "true")
+            versionNameSuffix = "-testing"
+        }
         release {
+            buildConfigField("boolean", "TESTING_TOOLS", "false")
             optimization {
                 enable = false
             }
@@ -49,6 +54,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
         resValues = true // needed for the maptiler_key resValue above
     }
@@ -78,6 +84,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.osmdroid.android) // OpenStreetMap map pins, US 02.01.02
+    implementation(libs.zxing.core) // draws campsite QR codes, US 02.02.01 (Neaz)
+    implementation(libs.zxing.android.embedded) // camera QR scanner, US 01.12.01 (Neaz)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test) // added by chitkarsh on 11/05/2026
     testImplementation(libs.mockito.core) // added by chitkarsh on 11/05/2026

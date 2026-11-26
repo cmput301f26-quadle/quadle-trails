@@ -1,7 +1,8 @@
 // OWNER: Neaz (NeazMZ06) — Search & Discovery
-// USER STORIES: 01.01.01, 01.01.02, 01.01.03, 01.01.04, 03.11.01
+// USER STORIES: 01.01.01, 01.01.02, 01.01.03, 01.01.04, 01.12.01, 03.11.01
 // PURPOSE: Search, a filters page, the filtered list, and a summary preview, with the mode pill
-//   at the top right of the Browse header (US 03.11.01, Aarav's ModePill).
+//   at the top right of the Browse header (US 03.11.01, Aarav's ModePill) and a button that
+//   scans a campsite QR code (US 01.12.01).
 // Outstanding issues: the search title must stay "Browse" because TrailsAppTest looks for it.
 package com.example.trails.ui.discovery
 
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,8 +36,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
@@ -45,6 +51,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +72,7 @@ import com.example.trails.data.model.Campsite
 import com.example.trails.data.repository.CampsiteRepository
 import com.example.trails.ui.common.TrailsTopBar
 import com.example.trails.ui.profile.ModePill
+import com.example.trails.ui.qr.rememberCampsiteQrScanner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +80,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,6 +94,7 @@ private enum class BrowsePane { Search, Filters, Results, Preview }
  * The search title is "Browse" so the app-shell test can find this screen.
  * Location, guests, and dates change the list only after Apply filters.
  * Tapping a campsite opens a summary, and View details opens the campsite.
+ * The scan button reads a campsite QR code and opens that campsite's details.
  *
  * @param navController used to open a campsite's details.
  * @param modifier applied to the screen.
@@ -134,9 +145,18 @@ fun BrowseScreen(
         pane = if (hasDetails && !forceSearch) BrowsePane.Results else BrowsePane.Search
     }
 
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val notTrails = stringResource(R.string.qr_scan_not_trails)
+    val scanQr = rememberCampsiteQrScanner(
+        onCampsite = { id -> navController.navigate(DiscoveryRoutes.campsiteDetails(id)) },
+        onNotTrails = { scope.launch { snackbar.showSnackbar(notTrails) } }
+    )
+
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             when (pane) {
                 BrowsePane.Search -> TrailsTopBar(
@@ -188,6 +208,7 @@ fun BrowseScreen(
                 onQueryChange = viewModel::onQueryChange,
                 onClearSearch = viewModel::onClearSearch,
                 onOpenFilters = ::openFilters,
+                onScanQr = scanQr,
                 onOpenCampsite = {
                     previewFrom = BrowsePane.Search
                     previewId = it.id
@@ -261,6 +282,7 @@ fun BrowseScreen(
  * @param onQueryChange called with the search text.
  * @param onClearSearch called by the clear control.
  * @param onOpenFilters called by the Filters button.
+ * @param onScanQr called by the scan button; opens the camera (US 01.12.01).
  * @param onOpenCampsite called when a card is tapped.
  * @param onSelectPlace called when a suggested place is tapped.
  * @param modifier applied to the pane.
@@ -271,29 +293,49 @@ private fun SearchPane(
     onQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
     onOpenFilters: () -> Unit,
+    onScanQr: () -> Unit,
     onOpenCampsite: (Campsite) -> Unit,
     onSelectPlace: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-        OutlinedTextField(
-            value = state.filters.query,
-            onValueChange = onQueryChange,
-            placeholder = { Text(stringResource(R.string.discovery_search_hint)) },
-            trailingIcon = {
-                if (state.filters.query.isNotEmpty()) {
-                    IconButton(onClick = onClearSearch) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.discovery_clear_search))
-                    }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
+        Row(
+            Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
-                .testTag(BrowseTags.SEARCH)
-        )
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = state.filters.query,
+                onValueChange = onQueryChange,
+                placeholder = { Text(stringResource(R.string.discovery_search_hint)) },
+                trailingIcon = {
+                    if (state.filters.query.isNotEmpty()) {
+                        IconButton(onClick = onClearSearch) {
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.discovery_clear_search))
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(BrowseTags.SEARCH)
+            )
+            OutlinedIconButton(
+                onClick = onScanQr,
+                modifier = Modifier
+                    .size(56.dp)
+                    .testTag(BrowseTags.SCAN_QR)
+            ) {
+                Icon(
+                    Icons.Filled.QrCodeScanner,
+                    contentDescription = stringResource(R.string.qr_scan_button),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onOpenFilters) {
                 Text(stringResource(R.string.discovery_open_filters))
@@ -857,6 +899,7 @@ class BrowseViewModel(
  * @property ARRIVE the check-in field.
  * @property LEAVE the check-out field.
  * @property MODE_PILL the mode pill slot in the Browse header.
+ * @property SCAN_QR the button that scans a campsite QR code.
  */
 object BrowseTags {
     const val LIST = "discovery_list"
@@ -866,4 +909,5 @@ object BrowseTags {
     const val ARRIVE = "discovery_arrive"
     const val LEAVE = "discovery_leave"
     const val MODE_PILL = "discovery_mode_pill"
+    const val SCAN_QR = "discovery_scan_qr"
 }

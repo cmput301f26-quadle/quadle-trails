@@ -1,7 +1,7 @@
 // Unit test suite verifying in-memory fake waitlist repository logic (Repository pattern test double).
-// implements US 01.02.01, US 01.02.02, US 02.09.01
+// implements US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.WaitlistEntry
@@ -181,5 +181,28 @@ class FakeWaitlistRepositoryTest {
     fun failureInjected_throwsExceptionOnAllCalls(): Unit = runBlocking {
         repo.failure = IOException("simulated network outage")
         repo.getEntry(lotteryId, userId)
+    }
+
+    @Test
+    fun updateStatus_existingEntry_updatesAndPersists(): Unit = runBlocking {
+        repo.joinWaitlist(lotteryId, userId, "Chitkarsh", 2, true)
+        val initial = repo.getEntry(lotteryId, userId)
+        assertEquals(WaitlistStatus.WAITING, initial?.status)
+
+        val won = repo.updateStatus(lotteryId, userId, WaitlistStatus.WON)
+        assertNotNull(won)
+        assertEquals(WaitlistStatus.WON, won?.status)
+        assertEquals(WaitlistStatus.WON, repo.getEntry(lotteryId, userId)?.status)
+
+        val declined = repo.updateStatus(lotteryId, userId, WaitlistStatus.DECLINED)
+        assertNotNull(declined)
+        assertEquals(WaitlistStatus.DECLINED, declined?.status)
+        assertEquals(WaitlistStatus.DECLINED, repo.getEntry(lotteryId, userId)?.status)
+    }
+
+    @Test
+    fun updateStatus_nonExistingEntry_returnsNull(): Unit = runBlocking {
+        val result = repo.updateStatus(lotteryId, "unknown-user", WaitlistStatus.WON)
+        assertNull(result)
     }
 }

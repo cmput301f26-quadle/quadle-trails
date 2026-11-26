@@ -12,6 +12,7 @@ package com.example.trails.data.model
  * @property ENTRIES Subcollection of waitlist entries under each lottery.
  * @property RESERVATIONS confirmed reservations collection
  * @property REPORTS Top-level collection of policy reports against campsite owners.
+ * @property MESSAGES Top-level collection of owner–camper chat messages.
  */
 object Collections {
     const val USERS = "users"
@@ -22,4 +23,5 @@ object Collections {
     const val RESERVATIONS = "reservations" // added by chitkarsh on 11/05/2026
     const val REPORTS = "reports" // policy reports against owners; added by Zainab (US 03.07.01)
     const val NOTIFICATIONS = "notifications"
+    const val MESSAGES = "messages" // owner–camper chat; added by Neaz (US 02.12.01, 01.14.01)
 }

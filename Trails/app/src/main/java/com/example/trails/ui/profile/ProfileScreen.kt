@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.trails.R
+import com.example.trails.BuildConfig
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Role
@@ -254,7 +255,7 @@ fun DeviceProfileContent(
  */
 @Composable
 fun rememberSampleUserSwitch(): ((String) -> Unit)? {
-    if (!CurrentUser.canUseSampleUsers) return null
+    if (!BuildConfig.TESTING_TOOLS || !CurrentUser.canUseSampleUsers) return null
     val context = LocalContext.current
     return { id ->
         CurrentUser.useSampleUser(id)

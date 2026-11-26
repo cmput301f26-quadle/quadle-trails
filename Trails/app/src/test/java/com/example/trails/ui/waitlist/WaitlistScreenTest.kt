@@ -1,7 +1,7 @@
 // Unit test suite for WaitlistScreen UI controller state bindings and flows (UI Controller in MVVM).
-// implements US 01.01.06, US 01.02.01, US 01.02.02
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.ui.waitlist
 
 import com.example.trails.data.fake.FakeCampsiteRepository
@@ -172,5 +172,28 @@ class WaitlistScreenTest {
         val notWaitlisted = state as WaitlistUiState.NotWaitlisted
         assertTrue(notWaitlisted.isFull)
         assertEquals(5, notWaitlisted.entrantCount)
+    }
+
+    @Test
+    fun formatStayDates_sameDayFormatsCorrectly() {
+        val day = com.example.trails.ui.campsite.dayKey(2027, 5, 22)
+        val formatted = formatStayDates(day, day)
+        assertTrue(formatted.contains("May 22, 2027"))
+    }
+
+    @Test
+    fun formatStayDates_sameMonthRangeFormatsCorrectly() {
+        val start = com.example.trails.ui.campsite.dayKey(2027, 5, 22)
+        val end = com.example.trails.ui.campsite.dayKey(2027, 5, 24)
+        val formatted = formatStayDates(start, end)
+        assertTrue(formatted.contains("May 22 – 24, 2027"))
+    }
+
+    @Test
+    fun formatStayDates_differentMonthsRangeFormatsCorrectly() {
+        val start = com.example.trails.ui.campsite.dayKey(2027, 5, 30)
+        val end = com.example.trails.ui.campsite.dayKey(2027, 6, 2)
+        val formatted = formatStayDates(start, end)
+        assertTrue(formatted.contains("May 30 – Jun 2, 2027"))
     }
 }

@@ -16,25 +16,59 @@ The application id is `com.example.quadletrails` so it matches the Firebase proj
 
 ## Testing as different users
 
-There is no sign-in. The app runs as one of three realistic sample users, so every role can be tested on one device.
+Run the **debug** build to show **Choose your testing role** immediately on a fresh launch.
+Tap **Camper**, **Owner**, or **Admin** to enter as the corresponding sample user below.
+The selection survives rotation and backgrounding. To choose again, open
+**Settings → Change testing role**, which restarts the screen stack before showing the picker.
 
 | User | Roles | Opens in |
 |---|---|---|
-| Priya Sharma | Camper | Camper (Browse) — the default |
+| Priya Sharma | Camper | Camper (Browse) |
 | Daniel Whitehorse | Owner, Camper | Owner (Hosting) |
 | Morgan Lee | Admin, Owner, Camper | Admin (Admin home) |
 
-**Switch user (no code changes needed):**
-1. Tap the **Settings** tab (gear icon) → **Profile**.
-2. Tap the green **"Signed in with this device"** card to open **Device profile**.
-3. Scroll to **"Testing: run as a sample user"** and tap Priya, Daniel or Morgan.
-4. The app restarts as that user, on their home screen.
+**Switch testing role (no code changes needed):**
+1. Tap the **Settings** tab (gear icon) → **Change testing role**.
+2. Tap **Camper**, **Owner**, or **Admin**.
+3. The app opens that role's home screen using its sample profile.
+
+The older sample-user controls in Device profile are also restricted to debug builds.
 
 **Switch mode (US 03.11.01):** as Morgan or Daniel, go to **Settings → Profile**, tap the mode pill at the top right (e.g. **Admin ▾**), pick a mode and tap **Switch to …**. Users only see the roles they hold, so Priya cannot switch.
 
 **Profile stories (US 01.07.03, 01.08.01, 01.09.01):** on **Settings → Profile**, edit name, email or phone and tap **Save Changes**, or tap **Delete Profile** and confirm. Device profile shows the masked device identifier.
 
 **Data:** campsites, lotteries and waitlists are stored in Firestore. Users and ratings use in-memory sample data for this checkpoint, so profile changes reset when the app restarts. Firebase anonymous sign-in and Firestore storage for users are built and will be switched on in Part 4.
+
+## Debug and release builds
+
+In Android Studio, open **Build Variants** and select **debug** for the `app` module,
+then press Run. Debug enables `BuildConfig.TESTING_TOOLS`, adds `-testing` to the
+version name, and shows the startup role picker and Settings shortcut.
+
+From the `Trails/` directory, with a device or emulator connected:
+```
+./gradlew installDebug
+```
+Open Trails on the device after installation.
+
+Select **release** to build without the testing popup or sample-user controls.
+To create an unsigned release APK:
+```
+./gradlew assembleRelease
+```
+The APK is under `app/build/outputs/apk/release/`. To install or distribute a release,
+use Android Studio's **Generate Signed App Bundle or APK** action and your release
+keystore; no release signing credentials are configured in this repository.
+
+Both variants currently use the same application ID and Firebase configuration.
+They are not separate installed apps or separate data environments. A differently
+signed release cannot replace a debug installation without uninstalling it first
+(which removes local app data).
+
+**Release is not yet a complete production identity setup:** `AppContainer` still
+uses sample users and fake ratings in both variants. Disabling testing controls
+does not enable real authentication, provision production roles, or isolate Firestore.
 
 **Run the tests** (from the `Trails/` folder, with an emulator running for the second command):
 ```

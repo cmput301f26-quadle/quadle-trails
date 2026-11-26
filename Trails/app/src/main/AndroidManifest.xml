@@ -28,7 +28,35 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Campsite QR codes hold trails://campsite/{id} (US 01.12.01, Neaz). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="campsite"
+                    android:scheme="trails" />
+            </intent-filter>
         </activity>
+
+        <!-- QR scanner screen; follows the phone's rotation instead of forcing landscape (US 01.12.01, Neaz). -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="android:screenOrientation" />
+
+        <!-- Lets Share hand a campsite QR image to other apps (US 02.02.01, Neaz). -->
+        <provider
+            android:name="com.example.trails.ui.qr.QrFileProvider"
+            android:authorities="${applicationId}.qrfiles"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/qr_file_paths" />
+        </provider>
     </application>
 
 </manifest>

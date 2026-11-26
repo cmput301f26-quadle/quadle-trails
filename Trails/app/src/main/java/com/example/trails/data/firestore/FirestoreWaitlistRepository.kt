@@ -1,7 +1,7 @@
 // Firestore implementation of WaitlistRepository managing real-time entry streams and subcollections (Repository pattern).
-// implements US 01.01.06, US 01.02.01, US 01.02.02, US 02.09.01
+// implements US 01.01.06, US 01.02.01, US 01.02.02, US 01.04.03, US 02.04.02, US 02.09.01, US 02.11.01
 // Outstanding issues: None
-// OWNER: Chitkarsh (chitkarshrathi) — Waitlist
+// OWNER: Chitkarsh (chitkarshrathi) — Waitlist & Booking
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -212,5 +212,26 @@ class FirestoreWaitlistRepository(
      */
     override suspend fun leaveWaitlist(lotteryId: String, userId: String) {
         deleteEntry(lotteryId, userId)
+    }
+
+    /**
+     * Updates the status of an entrant's waitlist entry in Firestore.
+     *
+     * @param lotteryId the identifier of the lottery.
+     * @param userId the identifier of the user.
+     * @param status the new [WaitlistStatus] to set.
+     * @return the updated [WaitlistEntry], or null if the document does not exist.
+     */
+    override suspend fun updateStatus(
+        lotteryId: String,
+        userId: String,
+        status: WaitlistStatus
+    ): WaitlistEntry? {
+        if (lotteryId.isBlank() || userId.isBlank()) return null
+        val docRef = entriesCollection(lotteryId).document(userId)
+        val snapshot = docRef.get().await()
+        if (!snapshot.exists()) return null
+        docRef.update("status", status.name).await()
+        return docRef.get().await().toObject(WaitlistEntry::class.java)
     }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="testing_role_title">Choose your testing role</string>
+    <string name="testing_role_body">Testing build · Choose a sample profile to get started. You can change your testing role in Settings.</string>
+    <string name="testing_role_camper">Camper · Priya</string>
+    <string name="testing_role_owner">Owner · Daniel</string>
+    <string name="testing_role_admin">Admin · Morgan</string>
+    <string name="testing_role_error">Couldn’t start the sample session. Choose a role to try again.</string>
+    <string name="testing_change_role">Change testing role</string>
+</resources>

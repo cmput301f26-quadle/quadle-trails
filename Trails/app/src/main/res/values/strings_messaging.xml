@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OWNER: Neaz (NeazMZ06) — Messaging (US 02.12.01, 01.14.01) -->
+<resources>
+    <!-- Messages tab -->
+    <string name="messaging_section_conversations">Conversations</string>
+    <string name="messaging_section_guests">Your guests</string>
+    <string name="messaging_section_guests_hint">Campers reserving your campsites. Start a conversation about their stay.</string>
+    <string name="messaging_section_owners">Message a campsite owner</string>
+    <string name="messaging_section_owners_hint">Owners of campsites you\'re reserving.</string>
+    <string name="messaging_guest_fallback">Guest</string>
+    <string name="messaging_owner_fallback">Campsite owner</string>
+    <string name="messaging_status_reserved">Reserved</string>
+    <string name="messaging_status_won">Won the lottery</string>
+    <string name="messaging_status_waitlisted">On the waitlist</string>
+    <string name="messaging_contact_line">%1$s · %2$s</string>
+    <string name="messaging_action_message">Message</string>
+    <string name="messaging_you">You: %1$s</string>
+
+    <!-- Chat -->
+    <string name="messaging_chat_empty_owner">No messages yet. Say hello to your guest.</string>
+    <string name="messaging_chat_empty_camper">No messages yet. Ask the owner anything about your stay.</string>
+    <string name="messaging_input_hint">Write a message</string>
+    <string name="messaging_send">Send</string>
+    <string name="messaging_send_failed">Couldn\'t send. Check your connection and try again.</string>
+    <string name="messaging_not_allowed">Only this campsite\'s owner and the camper can see this conversation.</string>
+    <string name="messaging_not_found">This campsite no longer exists.</string>
+    <string name="messaging_back">Back</string>
+
+    <!-- Admin message log (US 03.12.01) -->
+    <string name="messaging_log_title">Message log</string>
+    <string name="messaging_log_subtitle">Owner-to-camper messages · read only</string>
+    <string name="messaging_log_tile">Message log ›</string>
+    <string name="messaging_log_tile_hint">Read every message owners send to campers.</string>
+    <string name="messaging_log_search">Search messages, campsites or people</string>
+    <string name="messaging_log_sender_line">%1$s → %2$s</string>
+    <string name="messaging_log_empty">No owner messages yet.</string>
+    <string name="messaging_log_no_match">No messages match \"%1$s\".</string>
+    <string name="messaging_log_not_allowed">Only admins can see the message log.</string>
+    <plurals name="messaging_log_count">
+        <item quantity="one">%1$d message</item>
+        <item quantity="other">%1$d messages</item>
+    </plurals>
+</resources>
