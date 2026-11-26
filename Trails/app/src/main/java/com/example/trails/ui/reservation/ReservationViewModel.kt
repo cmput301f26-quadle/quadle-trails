@@ -12,15 +12,25 @@ import com.example.trails.ui.notification.NotificationViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
 
+/**
+ * View model class for reservations.
+ *
+ * When initialized, will check current list of reservations in the repository, and if anything is changed, send the corresponding notification.
+ *
+ * @param repository The reservation repository to use.
+ * @property currentList The current list of reservations that this model is aware of.
+ */
 class ReservationViewModel(
     private val repository: ReservationRepository = AppContainer.reservationRepository
 ) : ViewModel() {
     var currentList : List<Reservation> = listOf()
 
+    /**
+     * To emit a flow of reservations of the current user.
+     */
     fun userReserveListener() : Flow<List<Reservation>> {
         return repository.observeForUser(CurrentUser.id())
     }
@@ -36,8 +46,8 @@ class ReservationViewModel(
                 }
                 .drop(1)
                 .collect { (oldList, newList) ->
-                    val added = newList - oldList.toSet();
-                    val removed = oldList - newList.toSet();
+                    val added = newList - oldList.toSet()
+                    val removed = oldList - newList.toSet()
                     currentList = newList
                     for (item in added) {
                         if (item.status == ReservationStatus.ACTIVE) {
@@ -46,6 +56,14 @@ class ReservationViewModel(
                                     title = "Reservation Confirmed",
                                     content = "",
                                     type = NotificationType.RESERVE_CONFIRM,
+                                    related = item)
+                            }
+                        } else if (item.status == ReservationStatus.CANCELLED) {
+                            if (AppContainer.notificationRepository.checkCancelledNotif(item)) {
+                                NotificationViewModel().sendNotif(userId = CurrentUser.id(),
+                                    title = "Reservation Cancelled",
+                                    content = "",
+                                    type = NotificationType.RESERVE_CANCEL,
                                     related = item)
                             }
                         }

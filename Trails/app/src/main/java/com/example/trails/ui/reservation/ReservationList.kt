@@ -2,11 +2,9 @@ package com.example.trails.ui.reservation
 
 import android.content.ContentValues
 import android.content.Context
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,7 +48,6 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -78,34 +75,40 @@ import com.example.trails.data.model.Campsite
 import com.example.trails.data.model.Reservation
 import com.example.trails.data.model.ReservationStatus
 import com.example.trails.ui.common.TrailsTopBar
+import com.example.trails.ui.notification.NotificationList
 import com.example.trails.ui.shell.ShellEmptyState
 import com.example.trails.ui.theme.TrailsTheme
 import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
 import java.text.SimpleDateFormat
-import java.time.ZoneId
 import java.util.Calendar
 import java.util.Locale
-import kotlin.collections.listOf
-import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ReservationScreen(navController: NavController) {
-    ReservationList().ShowList()
+    ReservationList().ShowList(navController)
 }
 
+/**
+ * Class to render list of reservations.
+ *
+ * @property viewModel A reservation view model.
+ */
 class ReservationList {
     private val viewModel = ReservationViewModel()
+
+    /**
+     * Renders a list of reservations for the current user.
+     *
+     * @param navController Unused for now, kept in case navigation is needed.
+     */
     @Composable
-    fun ShowList() {
+    fun ShowList(navController: NavController) {
         var showingActive by remember { mutableIntStateOf(1) }
         var list by remember {mutableStateOf<List<Reservation>>(listOf())}
         LaunchedEffect(CurrentUser.id()) {
@@ -177,6 +180,12 @@ class ReservationList {
         }
     }
 
+    /**
+     * Helper to render each reservation item.
+     * Uses a LaunchedEffect to fetch information about the related campsite, will timeout after 10 seconds.
+     *
+     * @param target Reservation to render a card about.
+     */
     @Composable
     private fun ReservationItem(target: Reservation) {
         var campsite : Campsite? by remember { mutableStateOf(null) }
@@ -187,7 +196,6 @@ class ReservationList {
                     delay(2_000L.milliseconds)
                 }
             }
-            println(campsite?.name)
         }
         var cancelling : Boolean by remember { mutableStateOf(false) }
         val dateString = timestampToString(target.startDate!!, target.endDate!!)
@@ -251,7 +259,7 @@ class ReservationList {
                         }
                         Row(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = "$dateString · 2 nights",
+                                text = "$dateString · ${NotificationList().daysBetween(target.startDate, target.endDate)} nights",
                                 fontSize = 12.sp,
                             )
                         }
@@ -345,6 +353,14 @@ class ReservationList {
         }
     }
 
+    /**
+     * Helper for when user wants to cancel a reservation.
+     *
+     * @param reservation The related reservation.
+     * @param campsiteName The name of the campsite of this reservation.
+     * @param dateString String of the dates of the reservation, so the related calculations don't need to be called again.
+     * @param exitDialog Lambda for exiting/returning from the dialog without actually cancelling.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun CancelConfirmation(
@@ -427,6 +443,7 @@ class ReservationList {
                                 scope.launch {
                                     AppContainer.reservationRepository.updateStatus(reservation.id, ReservationStatus.CANCELLED)
                                 }
+                                //TODO: (maybe) add pop up/toast/some sort of message informing user of cancellation?
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
@@ -445,6 +462,14 @@ class ReservationList {
     }
 
 
+    /**
+     * Helper to save the .csv of a reservation.
+     * Not private due to NotificationList also using it.
+     *
+     * @param context Local context to operate in.
+     * @param target The reservation to save information about.
+     * @param campsiteName The name of the campsite related to this reservation.
+     */
     fun saveCsv(
         context: Context,
         target: Reservation,
@@ -480,13 +505,31 @@ class ReservationList {
         }
     }
 
+    /**
+     * Helper for timestamp to insert into a .csv file.
+     *
+     * @param target Timestamp to convert/format.
+     *
+     * @return A string version of [target], in YYYY/MM/DD form.
+     */
     private fun csvTimestamp(
         target: Timestamp
     ) : String {
-        return SimpleDateFormat("yyyy/MMM/dd", Locale.getDefault()).format(target.toDate())
+        return SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(target.toDate())
     }
 
-    private fun timestampToString(
+    /**
+     * Helper function to convert a date range into a string representation.
+     * Not private due to NotificationList also using/needing it.
+     *
+     * Will handle any different year or same month scenarios. Such as: (YYYY/DD/DD)
+     * 2026-12-30 to 2027-01-02 -> Dec. 30, 2026 - Jan. 2, 2027.
+     * 2026-07-11 to 2026-07-14 -> July 11 - 14, 2026.
+     *
+     * @param start Start of the date range to convert.
+     * @param end End of the date range to convert.
+     */
+    fun timestampToString(
         start: Timestamp,
         end: Timestamp,
     ) : String {
@@ -517,6 +560,9 @@ class ReservationList {
     }
 }
 
+/**
+ * Tags for testing screens.
+ */
 object ReservationTags {
     const val EMPTY_SCREEN = "empty_reservations"
     const val EMPTY_TEXT = "empty_reservations_text"
@@ -525,5 +571,5 @@ object ReservationTags {
 @Preview(showBackground = true, backgroundColor = 0xFF0B0F0C)
 @Composable
 private fun ReservationListPreview() {
-    TrailsTheme { ReservationList().ShowList() }
+    TrailsTheme { ReservationList().ShowList(navController = NavController(LocalContext.current)) }
 }
