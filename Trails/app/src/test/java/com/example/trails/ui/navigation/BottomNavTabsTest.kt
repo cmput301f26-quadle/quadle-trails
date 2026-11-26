@@ -1,4 +1,5 @@
 // OWNER: Zainab (zsaghir) — App shell
+// USER STORIES: App shell; supports 01.11.01 and 03.11.01 (Aarav's story)
 // PURPOSE: Unit tests for homeRouteFor(), routeFor() and selectedTab(), the bottom-nav logic.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
@@ -90,6 +91,20 @@ class BottomNavTabsTest {
             AdminRoutes.GUIDELINES
         )
         assertEquals(List(routes.size) { BottomNavTab.SETTINGS }, routes.map(::selectedTab))
+    }
+
+    // This checks that the Device profile screen, which is opened from Settings, keeps Settings
+    // highlighted.
+    @Test
+    fun deviceProfileRoute_selectsSettings() {
+        assertEquals(BottomNavTab.SETTINGS, selectedTab(ProfileRoutes.DEVICE_PROFILE))
+    }
+
+    // This checks that the Choose a mode screen, which is opened from Settings, keeps Settings
+    // highlighted.
+    @Test
+    fun chooseModeRoute_selectsSettings() {
+        assertEquals(BottomNavTab.SETTINGS, selectedTab(ProfileRoutes.CHOOSE_MODE))
     }
 
     // This checks that a screen opened from a home screen (the campsite form) keeps Home highlighted.

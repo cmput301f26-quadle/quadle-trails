@@ -1,11 +1,13 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.05.01, 03.02.01
+// USER STORIES: 03.05.01, 03.02.01, 03.07.01
 // PURPOSE: Unit tests for buildAdminProfileState() and the admin Profile page text helpers.
 // Outstanding issues: none.
 // AI assistance: Used AI (Claude Code) to help write this file header (owner, user stories, purpose and outstanding issues).
 package com.example.trails.ui.admin
 
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Report
+import com.example.trails.data.model.ReportStatus
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.model.WaitlistEntry
@@ -17,6 +19,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Calendar
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import java.util.Locale
 
 class AdminProfileStateTest {
@@ -177,5 +181,32 @@ class AdminProfileStateTest {
             "Priya Sharma loses access to Quadle. Their 1 lottery entry is removed. This can't be undone.",
             removeProfileMessage("Priya Sharma", 0, 1)
         )
+    }
+
+    // This checks that the Reports row counts only this user's open reports from the last 30 days.
+    @Test
+    fun openReportCount_onlyOpenRecentForUser() {
+        val now = Timestamp(Date(1_800_000_000_000L))
+        fun report(days: Long, ownerId: String = "device-maya", status: ReportStatus = ReportStatus.OPEN) = Report(
+            ownerId = ownerId, campsiteId = "jasper-pines", reason = "Misleading photos",
+            ruleBroken = "Accurate listings", status = status,
+            createdAt = Timestamp(Date(now.toDate().time - TimeUnit.DAYS.toMillis(days)))
+        )
+        val reports = listOf(
+            report(1),
+            report(20),
+            report(2, ownerId = "device-zainab"),
+            report(3, status = ReportStatus.DISMISSED),
+            report(40)
+        )
+        val state = buildAdminProfileState(maya, campsites, reports = reports, now = now)
+        assertEquals(2, (state as AdminProfileUiState.Loaded).openReportCount)
+    }
+
+    // This checks that a user with no open reports has a report count of 0, so the row says None.
+    @Test
+    fun openReportCount_noReports_zero() {
+        val state = buildAdminProfileState(maya, campsites)
+        assertEquals(0, (state as AdminProfileUiState.Loaded).openReportCount)
     }
 }

@@ -1,7 +1,9 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.03.01
-// PURPOSE: Owner's home screen listing the campsites they host (Figma F01 · My campsites).
-// Outstanding issues: the Owner pill is display-only; mode switching (US 03.11.01) is Aarav's.
+// USER STORIES: 02.03.01, 03.11.01, 02.07.01–03 (Reservations tab)
+// PURPOSE: Owner's home screen listing the campsites they host (Figma F01 · My campsites), with
+//   the mode pill in the header for switching modes (US 03.11.01, Aarav's ModePill), and a
+//   Reservations tab showing My Reservations (Figma · Owner reservations).
+// Outstanding issues: none.
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -60,17 +62,24 @@ import com.example.trails.R
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Campsite
+import com.example.trails.data.model.Role
 import com.example.trails.ui.lottery.MyLotteriesScreen
+import com.example.trails.ui.profile.ModePill
+import com.example.trails.ui.profile.ModePillChip
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
- * The two sections of the Hosting home, as in Figma F01.
+ * The sections of the Hosting home: Campsites and Lotteries (Figma F01), and Reservations
+ * (US 02.07.01–03).
  *
  * Written in assistance with Claude AI by Anthropic.
+ *
+ * @property title the header title while this tab is showing.
  */
-enum class HostingTab(@StringRes val label: Int) {
-    CAMPSITES(R.string.campsite_tab_campsites),
-    LOTTERIES(R.string.campsite_tab_lotteries)
+enum class HostingTab(@StringRes val label: Int, @StringRes val title: Int) {
+    CAMPSITES(R.string.campsite_tab_campsites, R.string.campsite_hosting_title),
+    LOTTERIES(R.string.campsite_tab_lotteries, R.string.campsite_hosting_title),
+    RESERVATIONS(R.string.campsite_tab_reservations, R.string.reservations_title)
 }
 
 /**
@@ -96,7 +105,9 @@ fun HostingScreen(
         modifier = modifier,
         selectedTab = tab,
         onTabChange = { tab = it },
-        lotteriesContent = { MyLotteriesScreen(navController) } // Skanda's screen, US 02.04.x
+        lotteriesContent = { MyLotteriesScreen(navController) }, // Skanda's screen, US 02.04.x
+        reservationsContent = { OwnerReservationsScreen() }, // details screen comes with US 02.08.01
+        modePill = { ModePill(navController) }
     )
 }
 
@@ -112,6 +123,9 @@ fun HostingScreen(
  * @param selectedTab which tab is showing.
  * @param onTabChange called when the user taps a tab.
  * @param lotteriesContent what to show on the Lotteries tab.
+ * @param reservationsContent what to show on the Reservations tab (US 02.07.01–03).
+ * @param modePill the mode pill shown at the right of the header (US 03.11.01); empty by
+ *   default so tests and previews don't need a ViewModel.
  */
 @Composable
 fun HostingContent(
@@ -122,11 +136,13 @@ fun HostingContent(
     modifier: Modifier = Modifier,
     selectedTab: HostingTab = HostingTab.CAMPSITES,
     onTabChange: (HostingTab) -> Unit = {},
-    lotteriesContent: @Composable () -> Unit = {}
+    lotteriesContent: @Composable () -> Unit = {},
+    reservationsContent: @Composable () -> Unit = {},
+    modePill: @Composable () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HostingHeader() },
+        topBar = { HostingHeader(selectedTab.title, modePill) },
         bottomBar = {
             if (selectedTab == HostingTab.CAMPSITES) {
                 Button(
@@ -153,6 +169,9 @@ fun HostingContent(
                 HostingTab.LOTTERIES -> Box(Modifier.fillMaxSize().testTag(HostingTags.LOTTERIES)) {
                     lotteriesContent()
                 }
+                HostingTab.RESERVATIONS -> Box(Modifier.fillMaxSize().testTag(HostingTags.RESERVATIONS)) {
+                    reservationsContent()
+                }
                 HostingTab.CAMPSITES -> CampsitesTab(state, onQueryChange, onOpenCampsite)
             }
         }
@@ -160,12 +179,15 @@ fun HostingContent(
 }
 
 /**
- * Avatar, "Hosting" title and the role pill.
+ * Avatar, title ("Hosting", or "My Reservations" on that tab) and the mode pill.
  *
  * Written in assistance with Claude AI by Anthropic.
+ *
+ * @param title the title for the selected tab.
+ * @param modePill the mode pill shown at the right of the header.
  */
 @Composable
-private fun HostingHeader() {
+private fun HostingHeader(@StringRes title: Int, modePill: @Composable () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -174,8 +196,10 @@ private fun HostingHeader() {
     ) {
         Avatar()
         Spacer(Modifier.width(12.dp))
-        Text(stringResource(R.string.campsite_hosting_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-        RolePill(stringResource(R.string.campsite_role_owner))
+        Text(stringResource(title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        Box(Modifier.testTag(HostingTags.ROLE_PILL)) {
+            modePill()
+        }
     }
 }
 
@@ -206,39 +230,7 @@ private fun Avatar() {
 }
 
 /**
- * Shows the current role. Display only for now.
- * TODO: make this a role switcher (Entrant / Owner / Admin) once the team decides who owns it.
- *
- * Written in assistance with Claude AI by Anthropic.
- */
-@Composable
-private fun RolePill(role: String) {
-    val green = MaterialTheme.colorScheme.primary
-    val shape = RoundedCornerShape(50)
-    Row(
-        Modifier
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .border(1.dp, green, shape)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .testTag(HostingTags.ROLE_PILL),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(green)
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(role, style = MaterialTheme.typography.labelLarge, color = green)
-        Spacer(Modifier.width(4.dp))
-        Text("▾", style = MaterialTheme.typography.labelLarge, color = green)
-    }
-}
-
-/**
- * Two-segment pill toggle between Campsites and Lotteries.
+ * Segmented pill toggle between Campsites, Lotteries and Reservations.
  *
  * Written in assistance with Claude AI by Anthropic.
  */
@@ -440,6 +432,7 @@ object HostingTags {
     const val NO_MATCH = "hosting_no_match"
     const val ROLE_PILL = "hosting_role_pill"
     const val LOTTERIES = "hosting_lotteries"
+    const val RESERVATIONS = "hosting_reservations"
 
     /** Tag for a tab segment. */
     fun tab(tab: HostingTab) = "hosting_tab_${tab.name.lowercase()}"
@@ -466,7 +459,8 @@ private fun HostingContentPreview() {
                 ),
                 query = "", totalCount = 3, inLotteryCount = 2
             ),
-            onQueryChange = {}, onAddCampsite = {}, onOpenCampsite = {}
+            onQueryChange = {}, onAddCampsite = {}, onOpenCampsite = {},
+            modePill = { ModePillChip(Role.OWNER, onClick = {}) }
         )
     }
 }

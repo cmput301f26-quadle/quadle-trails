@@ -1,5 +1,5 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.01.01–02.01.04, 02.03.01
+// USER STORIES: 02.01.01–02.01.04, 02.03.01, 02.06.01 (Booked dates)
 // PURPOSE: Routes and nav graph for the owner's campsite screens.
 // Outstanding issues: none.
 // AI assistance: written in assistance with Claude AI by Anthropic.
@@ -19,6 +19,11 @@ object CampsiteRoutes {
     const val HOSTING = "hosting"
     const val CAMPSITE_FORM = "campsite_form?campsiteId={campsiteId}"
     const val OWNER_CAMPSITE = "owner_campsite/{campsiteId}?published={published}"
+    const val BOOKED_DATES = "booked_dates?campsiteId={campsiteId}"
+
+    // Booked dates (US 02.06.01), opened on [campsiteId], or the owner's first campsite if null.
+    fun bookedDates(campsiteId: String? = null) =
+        if (campsiteId == null) "booked_dates" else "booked_dates?campsiteId=$campsiteId"
 
     // Pass null (or nothing) to create a new campsite instead of editing one.
     fun campsiteForm(campsiteId: String? = null) =
@@ -33,6 +38,9 @@ fun NavGraphBuilder.campsiteGraph(navController: NavController) {
     composable(CampsiteRoutes.HOSTING) { HostingScreen(navController) }
     composable(CampsiteRoutes.CAMPSITE_FORM, arguments = listOf(optionalId("campsiteId"))) { entry ->
         CampsiteFormScreen(navController, campsiteId = entry.optionalArg("campsiteId"))
+    }
+    composable(CampsiteRoutes.BOOKED_DATES, arguments = listOf(optionalId("campsiteId"))) { entry ->
+        BookedDatesScreen(navController, campsiteId = entry.optionalArg("campsiteId"))
     }
     composable(
         CampsiteRoutes.OWNER_CAMPSITE,

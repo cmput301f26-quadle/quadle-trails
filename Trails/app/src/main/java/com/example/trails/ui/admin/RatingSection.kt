@@ -1,6 +1,8 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 01.13.01
+// USER STORIES: 01.13.01, 03.09.01, 03.10.01
 // PURPOSE: Lets a user rate a campsite from its details page, using a bottom sheet (Figma Scenario 4 · Rate campsite / Rating submitted).
+// StarIcon is also used by the admin Campsite page's Ratings & reviews section (US 03.09.01).
+// If an admin removed the user's review, a muted line says so under their stars (US 03.10.01).
 // Outstanding issues: anyone except the owner can rate (no completed-stay check until reservations, Part 4); other users' reviews aren't listed.
 package com.example.trails.ui.admin
 
@@ -159,7 +161,10 @@ private fun ThanksBanner() {
     )
 }
 
-/** Card with "Your rating", the user's stars and, if they wrote one, their review. */
+/**
+ * Card with "Your rating", the user's stars and, if they wrote one, their review. If an admin
+ * removed the review (US 03.10.01), a muted "Your review was removed ..." line shows instead.
+ */
 @Composable
 private fun YourRatingCard(rating: Rating) {
     OutlinedCard(
@@ -178,7 +183,14 @@ private fun YourRatingCard(rating: Rating) {
             Row(Modifier.clearAndSetSemantics { contentDescription = starsDesc }) {
                 for (n in 1..5) StarIcon(filled = n <= rating.score, size = 20.dp)
             }
-            if (rating.review.isNotBlank()) {
+            if (rating.reviewRemoved) {
+                Text(
+                    stringResource(R.string.rating_review_removed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(RatingTags.REVIEW_REMOVED)
+                )
+            } else if (rating.review.isNotBlank()) {
                 Text(
                     rating.review,
                     style = MaterialTheme.typography.bodyMedium,
@@ -322,9 +334,14 @@ fun RatingSheetContent(
     }
 }
 
-/** One star: TrailGreen when filled, a faint grey when not. Decorative; callers describe it. */
+/**
+ * One star: TrailGreen when filled, a faint grey when not. Decorative; callers describe it.
+ *
+ * @param filled true to draw the star in TrailGreen.
+ * @param size width and height of the star.
+ */
 @Composable
-private fun StarIcon(filled: Boolean, size: Dp) {
+internal fun StarIcon(filled: Boolean, size: Dp) {
     Icon(
         Icons.Filled.Star,
         contentDescription = null,
@@ -344,6 +361,7 @@ object RatingTags {
     const val CANCEL = "rating_cancel"
     const val ERROR = "rating_error"
     const val SUMMARY = "rating_summary"
+    const val REVIEW_REMOVED = "rating_review_removed"
 
     /** Tag for the [n]th star (1 to 5) in the sheet. */
     fun star(n: Int) = "rating_star_$n"

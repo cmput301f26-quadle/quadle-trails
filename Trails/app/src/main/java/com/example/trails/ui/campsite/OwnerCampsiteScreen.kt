@@ -1,9 +1,9 @@
 // OWNER: Ibrahim (ibr2309) — Campsite Management
-// USER STORIES: 02.01.04
-// PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner).
-// Outstanding issues: booked days aren't shown on the calendar (no reservations yet); the
-//  "Published" chip is always shown (no published flag in the model); the QR code card is
-//  US 02.02.01, final part.
+// USER STORIES: 02.01.04, 02.06.01 (red days, and "View booked dates" opens Booked dates)
+// PURPOSE: Owner's view of a single campsite they host (Figma · Campsite Details - Owner),
+//  with booked days red on the availability calendar.
+// Outstanding issues: the "Published" chip is always shown (no published flag in the model).
+// The QR code card is Neaz's CampsiteQrCard (ui/qr, US 02.02.01).
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.campsite
 
@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +55,7 @@ import coil3.compose.AsyncImage
 import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.ui.lottery.LotteryRoutes
+import com.example.trails.ui.qr.CampsiteQrCard
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -79,6 +81,7 @@ fun OwnerCampsiteScreen(
         onBack = { navController.popBackStack() },
         onEdit = { navController.navigate(CampsiteRoutes.campsiteForm(campsiteId)) },
         onCreateLottery = { navController.navigate(LotteryRoutes.lotteryForm(campsiteId = campsiteId)) },
+        onViewBookedDates = { navController.navigate(CampsiteRoutes.bookedDates(campsiteId)) },
         modifier = modifier
     )
 }
@@ -94,6 +97,7 @@ fun OwnerCampsiteScreen(
  * @param onBack called when the back arrow is tapped.
  * @param onEdit called when "Edit Campsite" is tapped.
  * @param onCreateLottery called when "Create Lottery" is tapped.
+ * @param onViewBookedDates called from "View booked dates" (US 02.06.01).
  */
 @Composable
 fun OwnerCampsiteContent(
@@ -103,7 +107,8 @@ fun OwnerCampsiteContent(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCreateLottery: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onViewBookedDates: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier,
@@ -120,7 +125,7 @@ fun OwnerCampsiteContent(
                     Text(stringResource(R.string.campsite_form_not_found))
                 }
             is OwnerCampsiteUiState.Loaded -> {
-                CampsiteDetails(state, onEdit, onCreateLottery, inner)
+                CampsiteDetails(state, onEdit, onCreateLottery, onViewBookedDates, inner)
                 if (showPublishedDialog) PublishedDialog(state.campsite.name, onDismissPublished)
             }
         }
@@ -138,6 +143,7 @@ private fun CampsiteDetails(
     state: OwnerCampsiteUiState.Loaded,
     onEdit: () -> Unit,
     onCreateLottery: () -> Unit,
+    onViewBookedDates: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val c = state.campsite
@@ -192,8 +198,11 @@ private fun CampsiteDetails(
 
         Section(stringResource(R.string.campsite_section_availability)) {
             val days = remember(c.availability) { availabilityToDays(c.availability) }
-            if (days.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
-            else AvailabilityCalendar(days)
+            if (days.isEmpty() && state.bookedDays.isEmpty()) Muted(stringResource(R.string.campsite_no_availability))
+            else AvailabilityCalendar(days, bookedDays = state.bookedDays)
+            TextButton(onClick = onViewBookedDates, modifier = Modifier.testTag(OwnerCampsiteTags.BOOKED_DATES)) {
+                Text(stringResource(R.string.booked_open))
+            }
         }
 
         Section(stringResource(R.string.campsite_section_location)) {
@@ -232,6 +241,9 @@ private fun CampsiteDetails(
 
         Section(stringResource(R.string.campsite_section_rules)) { Body(c.rules) }
         Section(stringResource(R.string.campsite_section_cancellation)) { Body(c.cancellationPolicy) }
+
+        Spacer(Modifier.height(20.dp))
+        CampsiteQrCard(campsiteId = c.id, campsiteName = c.name)
 
         Spacer(Modifier.height(24.dp))
         Button(
@@ -402,6 +414,7 @@ object OwnerCampsiteTags {
     const val CREATE_LOTTERY = "owner_campsite_create_lottery"
     const val PUBLISHED_DIALOG = "owner_campsite_published_dialog"
     const val VIEW_BUTTON = "owner_campsite_view_button"
+    const val BOOKED_DATES = "owner_campsite_booked_dates"
 }
 
 /**

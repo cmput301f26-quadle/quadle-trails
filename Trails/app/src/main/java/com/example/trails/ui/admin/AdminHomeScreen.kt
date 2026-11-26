@@ -1,8 +1,10 @@
 // OWNER: Zainab (zsaghir) — Admin, Ratings & Policy
-// USER STORIES: 03.04.01, 03.05.01
+// USER STORIES: 03.04.01, 03.05.01, 03.07.01, 03.11.01
 // PURPOSE: Admin's home screen (Home tab in Admin mode, Figma Scenario 8 · Admin home): greeting
-//   and live Campsites / Profiles counts that open the admin lists.
-// Outstanding issues: Images, Logs and Needs review come in Part 4.
+//   with the mode pill at the top right, a Needs review card for open policy reports, and live
+//   Campsites / Profiles counts that open the admin lists.
+// Outstanding issues: the Images part comes in Part 4. The Message log tile is Neaz's
+//   MessageLogTile (ui/messaging, US 03.12.01).
 package com.example.trails.ui.admin
 
 import androidx.compose.foundation.BorderStroke
@@ -33,16 +35,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.trails.R
 import com.example.trails.data.fake.TestCampsites
+import com.example.trails.data.fake.TestReports
 import com.example.trails.data.fake.TestUsers
-import com.example.trails.ui.theme.TrailsTheme
+import com.example.trails.data.model.Role
+import com.example.trails.ui.messaging.MessageLogTile
+import com.example.trails.ui.messaging.MessagingRoutes
 import com.example.trails.ui.profile.ModePill
+import com.example.trails.ui.profile.ModePillChip
+import com.example.trails.ui.theme.TrailsTheme
 
 /**
  * Connects [AdminHomeViewModel] to navigation and renders [AdminHomeContent].
  *
- * @param navController used to open the admin campsites and profiles screens.
+ * @param navController used to open the admin campsites, profiles and policy reports screens, and
+ *   by the mode pill to go to the new mode's home after a switch (US 03.11.01).
  * @param modifier modifier for the screen.
- * @param viewModel supplies the greeting and the counts.
+ * @param viewModel supplies the greeting, the counts and the open reports.
  */
 @Composable
 fun AdminHomeScreen(
@@ -55,8 +63,10 @@ fun AdminHomeScreen(
         state = state,
         onCampsitesClick = { navController.navigate(AdminRoutes.ADMIN_CAMPSITES) },
         onProfilesClick = { navController.navigate(AdminRoutes.ADMIN_PROFILES) },
+        onNeedsReviewClick = { navController.navigate(AdminRoutes.ADMIN_REPORTS) },
+        onMessageLogClick = { navController.navigate(MessagingRoutes.ADMIN_LOG) },
         modifier = modifier,
-        modeSelector = { ModePill(navController) }
+        modePill = { ModePill(navController) }
     )
 }
 
@@ -66,15 +76,21 @@ fun AdminHomeScreen(
  * @param state what to show, or null while loading.
  * @param onCampsitesClick called when the Campsites tile is tapped (US 03.04.01).
  * @param onProfilesClick called when the Profiles tile is tapped (US 03.05.01).
+ * @param onNeedsReviewClick called when the Needs review card is tapped (US 03.07.01).
+ * @param onMessageLogClick called when the Message log tile is tapped (US 03.12.01).
  * @param modifier modifier for the screen.
+ * @param modePill the mode pill shown at the top right of the header (US 03.11.01); empty by
+ *   default so tests and previews don't need a ViewModel.
  */
 @Composable
 fun AdminHomeContent(
     state: AdminHomeUiState?,
     onCampsitesClick: () -> Unit,
     onProfilesClick: () -> Unit,
+    onNeedsReviewClick: () -> Unit = {},
+    onMessageLogClick: () -> Unit = {},
     modifier: Modifier = Modifier,
-    modeSelector: @Composable () -> Unit = {}
+    modePill: @Composable () -> Unit = {}
 ) {
     Column(
         modifier
@@ -89,7 +105,9 @@ fun AdminHomeContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(stringResource(R.string.profile_mode_admin), style = MaterialTheme.typography.titleLarge)
-            modeSelector()
+            Box(Modifier.testTag(AdminHomeTags.MODE_PILL)) {
+                modePill()
+            }
         }
         if (state == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -110,6 +128,9 @@ fun AdminHomeContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        if (state.openReportCount > 0) {
+            NeedsReviewCard(state, onNeedsReviewClick)
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CountTile(
                 count = state.campsiteCount,
@@ -124,6 +145,49 @@ fun AdminHomeContent(
                 onClick = onProfilesClick,
                 tag = AdminHomeTags.PROFILES,
                 modifier = Modifier.weight(1f)
+            )
+        }
+        MessageLogTile(onClick = onMessageLogClick)
+    }
+}
+
+/**
+ * Amber outlined card with the "Needs review" chip, the open report count, how long the oldest
+ * report has waited and a chevron; the whole card is tappable.
+ */
+@Composable
+private fun NeedsReviewCard(state: AdminHomeUiState, onClick: () -> Unit) {
+    OutlinedCard(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.outlinedCardColors(containerColor = ReportAmber.copy(alpha = 0.08f)),
+        border = BorderStroke(1.dp, ReportAmber),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(AdminHomeTags.NEEDS_REVIEW)
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                AdminChip(stringResource(R.string.admin_home_needs_review), ReportAmber)
+                Text(
+                    state.reportCountLine,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.testTag(AdminHomeTags.NEEDS_REVIEW_COUNT)
+                )
+                state.oldestReportLine?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag(AdminHomeTags.NEEDS_REVIEW_OLDEST)
+                    )
+                }
+            }
+            Text(
+                "›",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -161,9 +225,13 @@ object AdminHomeTags {
     const val CAMPSITES = "admin_home_campsites"
     const val PROFILES = "admin_home_profiles"
     const val LOADING = "admin_home_loading"
+    const val NEEDS_REVIEW = "admin_home_needs_review"
+    const val NEEDS_REVIEW_COUNT = "admin_home_needs_review_count"
+    const val NEEDS_REVIEW_OLDEST = "admin_home_needs_review_oldest"
+    const val MODE_PILL = "admin_home_mode_pill"
 }
 
-/** Design-time preview of the admin home with the sample campsites and users. */
+/** Design-time preview of the admin home with the sample campsites, users and reports, and the Admin pill. */
 @Preview(showBackground = true, heightDp = 800)
 @Composable
 private fun AdminHomeContentPreview() {
@@ -173,10 +241,12 @@ private fun AdminHomeContentPreview() {
                 user = TestUsers.all.firstOrNull { it.deviceId == TestUsers.ADMIN_ID },
                 campsites = TestCampsites.all,
                 users = TestUsers.all,
-                hour = 9
+                hour = 9,
+                reports = TestReports.all
             ),
             onCampsitesClick = {},
-            onProfilesClick = {}
+            onProfilesClick = {},
+            modePill = { ModePillChip(Role.ADMIN, onClick = {}) }
         )
     }
 }
