@@ -7,13 +7,14 @@ import com.example.trails.data.fake.FakeLotteryRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.fake.TestCampsites
 import com.example.trails.data.fake.TestLotteries
+import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Lottery
 import com.example.trails.data.model.WaitlistEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -59,8 +60,17 @@ class LotteryDetailsStateTest {
     // US 02.04.06: a lottery can be edited until the draw, then Edit goes away.
     @Test
     fun afterTheDraw_cantEdit() {
-        val state = buildLotteryDetailsState(mayLongWeekend, TestCampsites.all, 4, now + 20 * day) as LotteryDetailsUiState.Loaded
+        val drawn = mayLongWeekend.copy(drawStatus = "COMPLETED", drawEntrantCount = 4, winnerIds = listOf("a"))
+        val state = buildLotteryDetailsState(drawn, TestCampsites.all, 4, now + 20 * day) as LotteryDetailsUiState.Loaded
         assertEquals(LotteryStatus.DRAWN, state.status)
+        assertFalse(state.canEdit)
+    }
+
+    // Between registration closing and the server draw, the lottery is closed but has no winners yet.
+    @Test
+    fun beforeTheDraw_isAwaitingAndCantEdit() {
+        val state = buildLotteryDetailsState(mayLongWeekend, TestCampsites.all, 4, now + 20 * day) as LotteryDetailsUiState.Loaded
+        assertEquals(LotteryStatus.AWAITING_DRAW, state.status)
         assertFalse(state.canEdit)
     }
 
@@ -72,11 +82,11 @@ class LotteryDetailsStateTest {
             TestLotteries.LOTTERY_ID, FakeLotteryRepository(), FakeCampsiteRepository(), waitlist, clock = { System.currentTimeMillis() }
         )
         backgroundScope.launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+        runCurrent()
         assertEquals(0, (vm.uiState.value as LotteryDetailsUiState.Loaded).entrantCount)
 
         waitlist.save(WaitlistEntry(userId = "u1", lotteryId = TestLotteries.LOTTERY_ID, rulesAccepted = true))
-        advanceUntilIdle()
+        runCurrent()
         assertEquals(1, (vm.uiState.value as LotteryDetailsUiState.Loaded).entrantCount)
     }
 
@@ -85,9 +95,14 @@ class LotteryDetailsStateTest {
     fun viewModel_deletesClosedLotteryNobodyEntered() = runTest(dispatcher) {
         val lotteries = FakeLotteryRepository()
         val campsites = FakeCampsiteRepository()
-        val vm = LotteryDetailsViewModel(TestLotteries.CLOSED_LOTTERY_ID, lotteries, campsites, FakeWaitlistRepository(emptyList()))
+        val vm = LotteryDetailsViewModel(
+            TestLotteries.CLOSED_LOTTERY_ID, lotteries, campsites, FakeWaitlistRepository(emptyList()), viewerId = TestUsers.OWNER_ID
+        )
+        // Only the creator can delete, so the page must have loaded first.
+        backgroundScope.launch { vm.uiState.collect {} }
+        runCurrent()
         vm.onDelete()
-        advanceUntilIdle()
+        runCurrent()
         assertTrue(vm.deleteState.value.deleted)
         assertEquals(null, lotteries.getById(TestLotteries.CLOSED_LOTTERY_ID))
         // Jasper still belongs to the running summer lottery, so it isn't touched.

@@ -60,7 +60,8 @@ object TestLotteries {
             registrationEnd = daysFromNowAt(-40, 9),
             bookingStart = daysFromNowAt(-40, 9),
             bookingEnd = daysFromNowAt(-38, 18),
-            numWinners = 5
+            numWinners = 5,
+            drawStatus = "COMPLETED" // the server draw ran and found nobody
         )
     )
 }
