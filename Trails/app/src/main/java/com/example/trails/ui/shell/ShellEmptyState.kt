@@ -55,7 +55,8 @@ internal fun ShellEmptyState(
         Box(
             Modifier
                 .weight(1f)
-                .padding(horizontal = 32.dp),
+                .padding(horizontal = 32.dp)
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
