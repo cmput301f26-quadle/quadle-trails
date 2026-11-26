@@ -1,6 +1,7 @@
-// Shows the mode pill and its "Use Quadle as" sheet for switching roles (US 03.11.01).
+// Shows the mode pill and its "Use Quadle as" sheet for switching roles and becoming a host (US 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: none.
+// AI assistance: Used AI to help connect the mode sheet to mode switching and becoming a host.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.background
@@ -101,7 +102,8 @@ fun ModePill(
                     user = user,
                     modeSwitch = modeSwitch,
                     onSwitch = viewModel::onModeSelected,
-                    onProfile = openDeviceProfile
+                    onProfile = openDeviceProfile,
+                    onBecomeHost = viewModel::onBecomeHost
                 )
             }
         }

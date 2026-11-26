@@ -1,7 +1,7 @@
 // Unit tests for the in-memory user repository (US 01.07.03, 01.08.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
-// AI assistance: Used AI to help write profile update, deletion, and mode-switching tests.
+// AI assistance: Used AI to help write profile update, deletion, mode-switching and become-a-host tests.
 package com.example.trails.data.fake
 
 import com.example.trails.data.model.Role
@@ -136,5 +136,24 @@ class FakeUserRepositoryTest {
         val repo = FakeUserRepository(listOf(priya))
         repo.delete("device-nobody")
         assertEquals(listOf(priya), repo.observeAll().first())
+    }
+
+    // US 03.11.01: becoming a host
+
+    // Becoming a host twice adds OWNER only once and leaves Owner mode active.
+    @Test
+    fun becomeHost_addsOwnerOnceAndSwitchesMode() = runTest {
+        val repo = FakeUserRepository()
+        repo.becomeHost(TestUsers.ENTRANT_ID)
+        repo.becomeHost(TestUsers.ENTRANT_ID)
+        val priya = repo.getById(TestUsers.ENTRANT_ID)!!
+        assertEquals(listOf(Role.ENTRANT, Role.OWNER), priya.roles)
+        assertEquals(Role.OWNER, priya.activeMode)
+    }
+
+    // Becoming a host without a profile is an error.
+    @Test(expected = NoSuchElementException::class)
+    fun becomeHost_missingProfile_throws() = runTest {
+        FakeUserRepository(emptyList()).becomeHost("device-missing")
     }
 }

@@ -31,6 +31,7 @@ import com.example.trails.BuildConfig
 import com.example.trails.R
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Role
+import com.example.trails.ui.profile.IdentityGate
 
 /** Release launches directly; debug waits for an explicit testing role. */
 @Composable
@@ -47,18 +48,26 @@ fun TestingRoleGate(
     }
     val state by controller.state.collectAsState()
     if (state.ready) {
-        content()
+        // The real device identity goes through Welcome / Welcome back first (US 01.09.01).
+        if (state.usesDevice) IdentityGate { content() } else content()
     } else {
         Surface(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize()) {
-                TestingRoleDialog(state, controller::selectRole)
+                TestingRoleDialog(state, controller::selectRole, controller::selectThisDevice)
             }
         }
     }
 }
 
+/**
+ * The "Choose your testing role" dialog: three sample profiles plus this device's real sign-in.
+ *
+ * @param state loading and error state.
+ * @param onSelect called with the sample role picked.
+ * @param onThisDevice called when "This device · Firebase sign-in" is picked.
+ */
 @Composable
-fun TestingRoleDialog(state: TestingRoleState, onSelect: (Role) -> Unit) {
+fun TestingRoleDialog(state: TestingRoleState, onSelect: (Role) -> Unit, onThisDevice: () -> Unit = {}) {
     AlertDialog(
         onDismissRequest = {},
         title = { Text(stringResource(R.string.testing_role_title)) },
@@ -79,6 +88,11 @@ fun TestingRoleDialog(state: TestingRoleState, onSelect: (Role) -> Unit) {
                         modifier = Modifier.fillMaxWidth().testTag("testing_role_${role.name}")
                     ) { Text(stringResource(label)) }
                 }
+                OutlinedButton(
+                    onClick = onThisDevice,
+                    enabled = !state.loading,
+                    modifier = Modifier.fillMaxWidth().testTag("testing_role_DEVICE")
+                ) { Text(stringResource(R.string.testing_role_this_device)) }
                 if (state.loading) CircularProgressIndicator()
                 if (state.failed) {
                     Text(stringResource(R.string.testing_role_error), color = MaterialTheme.colorScheme.error)

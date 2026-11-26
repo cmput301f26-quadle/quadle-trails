@@ -4,6 +4,7 @@ package com.example.trails.ui.lottery
 
 import com.example.trails.data.fake.FakeCampsiteRepository
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.fake.TestUsers
 import com.example.trails.data.model.Campsite
@@ -63,7 +64,10 @@ class LotteryFormViewModelTest {
     }
 
     private fun TestScope.viewModel(lotteryId: String? = null, campsiteId: String? = null, reuseId: String? = null): LotteryFormViewModel {
-        val vm = LotteryFormViewModel(lotteries, campsites, waitlist, owner, lotteryId, campsiteId, reuseId, clock = { now })
+        val vm = LotteryFormViewModel(
+            lotteries, campsites, waitlist, owner, lotteryId, campsiteId, reuseId,
+            clock = { now }, userRepository = FakeUserRepository()
+        )
         advanceUntilIdle()
         return vm
     }
