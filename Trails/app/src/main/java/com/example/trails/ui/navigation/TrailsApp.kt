@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.trails.data.AppContainer
 import com.example.trails.data.fake.CurrentUser
 import com.example.trails.data.model.Role
+import com.example.trails.ui.profile.ProfileRoutes
 import kotlinx.coroutines.flow.map
 
 /**
@@ -55,6 +57,11 @@ private fun TrailsShell(mode: Role) {
     val startDestination = rememberSaveable { homeRouteFor(mode) }
     val navController = rememberNavController()
     val route = navController.currentBackStackEntryAsState().value?.destination?.route
+
+    // "Manage profile" / "App policy" on the greeting ask for a screen to open first (US 01.09.01).
+    LaunchedEffect(Unit) {
+        ProfileRoutes.consumePendingRoute()?.let { navController.navigate(it) { launchSingleTop = true } }
+    }
 
     Scaffold(
         bottomBar = {

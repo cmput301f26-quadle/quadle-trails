@@ -20,6 +20,25 @@ object ProfileRoutes {
 
     /** Choose a mode as a full screen; the mode pill's sheet is the usual way in. */
     const val CHOOSE_MODE = "choose_mode"
+
+    private var pendingRoute: String? = null
+
+    /**
+     * Asks the app to open [route] as soon as its navigation is ready. Used by the greeting
+     * (Welcome back / Device profile), which is shown before the app's screens exist.
+     *
+     * @param route the screen to open, e.g. [PROFILE].
+     */
+    fun requestRoute(route: String) {
+        pendingRoute = route
+    }
+
+    /**
+     * Takes the screen requested with [requestRoute], so it is opened only once.
+     *
+     * @return the route, or null if nothing was requested.
+     */
+    fun consumePendingRoute(): String? = pendingRoute.also { pendingRoute = null }
 }
 
 /**

@@ -1,7 +1,7 @@
-// Handles loading, editing and deleting the profile, switching modes and becoming a host
-// (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Handles loading, editing and deleting the profile, switching modes, becoming a host and the
+// notification opt-out (US 01.09.01, 01.07.03, 01.08.01, 01.10.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: Profile photos are not supported, and deleting a profile does not remove reservations yet.
+// Outstanding issues: None currently known.
 // AI assistance: Used AI to help implement profile updates, deletion, mode switching and becoming a host.
 package com.example.trails.ui.profile
 
@@ -16,6 +16,7 @@ import com.example.trails.data.model.User
 import com.example.trails.data.repository.ImageFolder
 import com.example.trails.data.repository.ImageRepository
 import com.example.trails.data.repository.LotteryRepository
+import com.example.trails.data.repository.ReservationRepository
 import com.example.trails.data.repository.UserRepository
 import com.example.trails.data.repository.WaitlistRepository
 import kotlinx.coroutines.CancellationException
@@ -47,6 +48,8 @@ import kotlinx.coroutines.launch
  * @param deleteIdentity removes the user's identity after the profile is deleted.
  * @param startNewSession ends the current session, so a new identity is established.
  * @param images where profile photos are uploaded (US 01.08.02).
+ * @param reservations supplies the reservation store, used to remove the user's reservations
+ *  on deletion; only asked for when a profile is deleted.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModel(
@@ -56,7 +59,8 @@ class ProfileViewModel(
     private val waitlistRepository: WaitlistRepository = AppContainer.waitlistRepository,
     private val deleteIdentity: suspend () -> Unit = { CurrentUser.deleteIdentity() },
     private val startNewSession: () -> Unit = { CurrentUser.endSession() },
-    private val images: ImageRepository = AppContainer.imageRepository
+    private val images: ImageRepository = AppContainer.imageRepository,
+    private val reservations: () -> ReservationRepository = { AppContainer.reservationRepository }
 ) : ViewModel() {
 
     private val reloads = MutableStateFlow(0)
@@ -188,8 +192,8 @@ class ProfileViewModel(
     }
 
     /**
-     * Deletes the profile (US 01.08.01): the user's waitlist entries first, then the
-     * profile, then the identity. If any step fails the profile stays available.
+     * Deletes the profile (US 01.08.01): the user's waitlist entries and reservations
+     * first, then the profile, then the identity. If any step fails the profile stays available.
      */
     fun onDeleteConfirmed() {
         if (_deleteState.value == DeleteState.Deleting) return
@@ -198,6 +202,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             _deleteState.value = try {
                 removeWaitlistEntries()
+                removeReservations()
                 repository.delete(deviceId)
                 photo?.let { deletePhotoQuietly(it) }
                 deleteIdentity()
@@ -215,6 +220,11 @@ class ProfileViewModel(
         lotteryRepository.observeAll().first().forEach { lottery ->
             waitlistRepository.deleteEntry(lottery.id, deviceId)
         }
+    }
+
+    private suspend fun removeReservations() {
+        val store = reservations()
+        store.observeForUser(deviceId).first().forEach { store.delete(it.id) }
     }
 
     /**
@@ -336,6 +346,31 @@ class ProfileViewModel(
                 throw e
             } catch (e: Exception) {
                 ModeSwitchState.Failed(e.message)
+            }
+        }
+    }
+
+    private val _notificationUpdateFailed = MutableStateFlow(false)
+
+    /** True after turning notifications on or off failed, until the next attempt. */
+    val notificationUpdateFailed: StateFlow<Boolean> = _notificationUpdateFailed.asStateFlow()
+
+    /**
+     * Turns notifications on or off for this user (US 01.10.01). The switch follows the
+     * stored profile, so it only moves once the change is saved.
+     *
+     * @param enabled true to receive notifications, false to opt out.
+     */
+    fun onNotificationsEnabledChange(enabled: Boolean) {
+        if (uiState.value !is ProfileUiState.Loaded) return
+        _notificationUpdateFailed.value = false
+        viewModelScope.launch {
+            try {
+                repository.updateNotificationsOptOut(deviceId, optOut = !enabled)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _notificationUpdateFailed.value = true
             }
         }
     }

@@ -1,3 +1,8 @@
+// Firestore-backed NotificationRepository for the notifications collection.
+// OWNER: Aarav (aarav-kapoor-cs) — Notifications; first version by Kasey (kcstarlight7)
+// Outstanding issues: Not unit-tested (needs a live Firestore); the logic is tested through the fake.
+//  Notifications are shown in the app only; there are no system push notifications.
+// AI assistance: Used AI to help write the live query, the send-once write and the opt-out check.
 package com.example.trails.data.firestore
 
 import com.example.trails.data.model.Collections
@@ -6,6 +11,9 @@ import com.example.trails.data.model.NotificationType
 import com.example.trails.data.model.Reservation
 import com.example.trails.data.repository.NotificationRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -14,31 +22,46 @@ import kotlinx.coroutines.tasks.await
  * @param db the Firestore instance; defaults to the app's default instance.
  */
 class FirestoreNotificationRepository(
-    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance()}
+    db: Lazy<FirebaseFirestore> = lazy { FirebaseFirestore.getInstance() }
 ) : NotificationRepository {
 
     private val firestore by db
 
-    /**
-     * Gets all notifications for a specific user.
-     *
-     * @param userId ID of user to fetch notifications for.
-     */
-    override fun getNotif(userId: String): List<Notification> {
-        var reserveList: List<Notification> = listOf()
-        firestore
-            .collection(Collections.NOTIFICATIONS)
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnSuccessListener { documents ->
-                reserveList = documents.toObjects(Notification::class.java)
-                return@addOnSuccessListener
+    // The latest list per user, kept by observeForUser so getNotif can answer without waiting.
+    private val latest = mutableMapOf<String, List<Notification>>()
+
+    override fun observeForUser(userId: String): Flow<List<Notification>> = callbackFlow {
+        if (userId.isBlank()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val registration = firestore.collection(Collections.NOTIFICATIONS)
+            .whereEqualTo("recipient", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                // A document that can't be read (e.g. an unknown type) is skipped, not fatal.
+                val list = snapshot?.documents.orEmpty()
+                    .mapNotNull { doc -> runCatching { doc.toObject(Notification::class.java) }.getOrNull() }
+                    .sortedByDescending { it.timestamp }
+                latest[userId] = list
+                trySend(list)
             }
-        return reserveList
+        awaitClose { registration.remove() }
     }
 
     /**
-     * Sends notification/adds notification document.
+     * Gets the notifications last loaded by [observeForUser] for a user; empty before that.
+     *
+     * @param userId ID of user to fetch notifications for.
+     */
+    override fun getNotif(userId: String): List<Notification> = latest[userId].orEmpty()
+
+    /**
+     * Sends notification/adds notification document, unless the recipient opted out (US 01.10.01).
      *
      * @param userId ID of the user who is the recipient of this notification.
      * @param title Title of this notification.
@@ -60,7 +83,22 @@ class FirestoreNotificationRepository(
             type = type,
             related = related
         )
-        firestore.collection(Collections.NOTIFICATIONS).add(notification)
+        val add = { firestore.collection(Collections.NOTIFICATIONS).add(notification) }
+        if (userId.isBlank()) {
+            add()
+            return
+        }
+        // If the opt-out setting can't be read, the notification is still sent.
+        firestore.collection(Collections.USERS).document(userId).get()
+            .addOnSuccessListener { user -> if (user.getBoolean("notificationsOptOut") != true) add() }
+            .addOnFailureListener { add() }
+    }
+
+    override suspend fun sendOnce(key: String, notification: Notification): Boolean {
+        val doc = firestore.collection(Collections.NOTIFICATIONS).document(key)
+        if (doc.get().await().exists()) return false
+        doc.set(notification).await()
+        return true
     }
 
     /**

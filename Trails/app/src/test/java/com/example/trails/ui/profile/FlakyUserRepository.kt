@@ -52,6 +52,14 @@ class FlakyUserRepository(private val inner: FakeUserRepository) : UserRepositor
     override suspend fun updateProfileImage(deviceId: String, url: String?) {
         photoFailure?.let { throw it }
         inner.updateProfileImage(deviceId, url)
+    }
+
+    /** Fails with [updateFailure], like other profile edits. */
+    override suspend fun updateNotificationsOptOut(deviceId: String, optOut: Boolean) {
+        updateFailure?.let { throw it }
+        inner.updateNotificationsOptOut(deviceId, optOut)
+    }
+
     /** Fails with [modeFailure] too, since becoming a host also changes the mode. */
     override suspend fun becomeHost(deviceId: String) {
         modeFailure?.let { throw it }

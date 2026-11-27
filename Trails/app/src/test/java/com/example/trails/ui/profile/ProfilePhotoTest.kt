@@ -4,6 +4,7 @@
 // AI assistance: written in assistance with Claude AI by Anthropic.
 package com.example.trails.ui.profile
 
+import com.example.trails.data.fake.FakeReservationRepository
 import com.example.trails.data.fake.FakeImageRepository
 import com.example.trails.data.fake.FakeLotteryRepository
 import com.example.trails.data.fake.FakeUserRepository
@@ -62,7 +63,8 @@ class ProfilePhotoTest {
             waitlistRepository = FakeWaitlistRepository(emptyList()),
             deleteIdentity = {},
             startNewSession = {},
-            images = images
+            images = images,
+            reservations = { FakeReservationRepository(emptyList()) }
         )
         val job = launch(testDispatcher) { viewModel.uiState.collect {} }
         advanceUntilIdle()

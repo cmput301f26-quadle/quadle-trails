@@ -73,12 +73,13 @@ class NotificationList {
      * Renders a list of notifications of the current user.
      *
      * @param navController An instance of the navigation controller, in order to move to the reservation list screen if needed.
+     * @param items The notifications to render; defaults to the ones already loaded for the current user.
      */
     @Composable
-    fun RenderList(navController: NavController) {
+    fun RenderList(navController: NavController, items: List<Notification> = viewModel.fetchAll(CurrentUser.id())) {
         Column(modifier = Modifier.fillMaxSize())
         {
-            for (item in viewModel.fetchAll(CurrentUser.id())) {
+            for (item in items) {
                 when (item.type) {
                     NotificationType.LOTTERY_LOST -> LotteryLostCard(item) {
                         navController.navigate(

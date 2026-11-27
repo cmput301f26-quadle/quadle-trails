@@ -1,5 +1,6 @@
 // OWNER: Zainab (zsaghir) — App shell
-// PURPOSE: Settings tab: links to the user's profile and the app policy (Scenario 1 storyboard).
+// PURPOSE: Settings tab: links to the user's profile and the app policy, and the notifications
+//  switch (Scenario 1 storyboard).
 // Outstanding issues: none.
 package com.example.trails.ui.shell
 
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.trails.R
 import com.example.trails.ui.admin.AdminRoutes
+import com.example.trails.ui.profile.NotificationSettingRow
 import com.example.trails.ui.profile.ProfileRoutes
 import com.example.trails.ui.theme.TrailsTheme
 import com.example.trails.ui.testing.rememberTestingRoleRestart
@@ -39,7 +41,8 @@ fun SettingsScreen(
         onProfileClick = { navController.navigate(ProfileRoutes.PROFILE) },
         onPolicyClick = { navController.navigate(AdminRoutes.POLICY) },
         modifier = modifier,
-        onTestingRoleClick = rememberTestingRoleRestart()
+        onTestingRoleClick = rememberTestingRoleRestart(),
+        notificationSetting = { NotificationSettingRow() }
     )
 }
 
@@ -49,13 +52,16 @@ fun SettingsScreen(
  * @param onProfileClick called when the "Profile" row is tapped.
  * @param onPolicyClick called when the "App policy & guidelines" row is tapped.
  * @param modifier modifier for the screen.
+ * @param onTestingRoleClick called from "Change testing role"; the row is hidden when null.
+ * @param notificationSetting the notifications on/off row (US 01.10.01); hidden when null.
  */
 @Composable
 fun SettingsContent(
     onProfileClick: () -> Unit,
     onPolicyClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onTestingRoleClick: (() -> Unit)? = null
+    onTestingRoleClick: (() -> Unit)? = null,
+    notificationSetting: (@Composable () -> Unit)? = null
 ) {
     Column(
         modifier
@@ -70,6 +76,10 @@ fun SettingsContent(
         SettingsRow(stringResource(R.string.shell_settings_profile), onProfileClick, SettingsTags.PROFILE_ROW)
         HorizontalDivider()
         SettingsRow(stringResource(R.string.shell_settings_policy), onPolicyClick, SettingsTags.POLICY_ROW)
+        if (notificationSetting != null) {
+            HorizontalDivider()
+            notificationSetting()
+        }
         if (onTestingRoleClick != null) {
             HorizontalDivider()
             SettingsRow(stringResource(R.string.testing_change_role), onTestingRoleClick, SettingsTags.TESTING_ROLE_ROW)

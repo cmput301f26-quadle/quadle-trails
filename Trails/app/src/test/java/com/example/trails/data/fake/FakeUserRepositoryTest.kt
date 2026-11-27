@@ -156,4 +156,19 @@ class FakeUserRepositoryTest {
     fun becomeHost_missingProfile_throws() = runTest {
         FakeUserRepository(emptyList()).becomeHost("device-missing")
     }
+
+    // US 01.10.01: notification opt-out
+
+    @Test
+    fun updateNotificationsOptOut_changesOnlyThatSetting() = runTest {
+        val repo = FakeUserRepository()
+        val before = repo.getById(TestUsers.OWNER_ID)!!
+        repo.updateNotificationsOptOut(TestUsers.OWNER_ID, true)
+        assertEquals(before.copy(notificationsOptOut = true), repo.getById(TestUsers.OWNER_ID))
+    }
+
+    @Test(expected = NoSuchElementException::class)
+    fun updateNotificationsOptOut_missingProfile_throws() = runTest {
+        FakeUserRepository(emptyList()).updateNotificationsOptOut("device-missing", true)
+    }
 }
