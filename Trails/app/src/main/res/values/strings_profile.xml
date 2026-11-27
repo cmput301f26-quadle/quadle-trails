@@ -101,4 +101,11 @@
     <string name="profile_sample_users_body">Pick which sample user the app runs as. Only shown while the app uses sample users instead of real device sign-in.</string>
     <string name="profile_mode_pill_description">Mode: %1$s. Tap to switch mode.</string>
 
+    <!-- Notifications setting (US 01.10.01) and the Notifications tab's error state -->
+    <string name="profile_notifications_title">Notifications</string>
+    <string name="profile_notifications_on">On · lottery results, booking updates and owner messages</string>
+    <string name="profile_notifications_off">Off · you won\'t receive notifications</string>
+    <string name="profile_notifications_failed">Couldn\'t save. Check your connection and try again.</string>
+    <string name="profile_notifications_load_failed">Couldn\'t load your notifications. Check your connection.</string>
+    <string name="profile_notifications_retry">Try again</string>
 </resources>

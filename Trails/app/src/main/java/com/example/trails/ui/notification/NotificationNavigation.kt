@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.trails.ui.reservation.ReservationScreen
-import com.example.trails.ui.shell.NotificationsContent
+import com.example.trails.ui.shell.NotificationsScreen
 
 object NotificationRoutes {
     const val NOTIFICATION_LIST = "notifications"
@@ -16,6 +16,6 @@ object NotificationRoutes {
  * Includes reservation list as notifications can navigate there.
  */
 fun NavGraphBuilder.notificationGraph(navController: NavController) {
-    composable(NotificationRoutes.NOTIFICATION_LIST) { NotificationsContent(navController = navController) }
+    composable(NotificationRoutes.NOTIFICATION_LIST) { NotificationsScreen(navController) }
     composable(NotificationRoutes.RESERVATION_LIST) { ReservationScreen(navController) }
 }

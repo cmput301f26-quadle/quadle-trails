@@ -38,7 +38,7 @@ The older sample-user controls in Device profile are also restricted to debug bu
 
 **Profile stories (US 01.07.03, 01.08.01, 01.09.01):** on **Settings → Profile**, edit name, email or phone and tap **Save Changes**, or tap **Delete Profile** and confirm. Device profile shows the masked device identifier.
 
-**Data:** campsites, lotteries and waitlists are stored in Firestore. Users and ratings use in-memory sample data for this checkpoint, so profile changes reset when the app restarts. Firebase anonymous sign-in and Firestore storage for users are built and will be switched on in Part 4.
+**Data:** users, campsites, lotteries, waitlists, reservations, notifications and messages are stored in Firestore, so profile changes are kept when the app restarts. Ratings and reports still use in-memory sample data. Users are identified by device with Firebase anonymous sign-in (US 01.09.01): release builds always use it, and the testing build offers it as **This device · Firebase sign-in** next to the sample users. Sample users are also signed in to Firebase in the background, so every session has `request.auth`.
 
 ## Debug and release builds
 
@@ -66,9 +66,11 @@ They are not separate installed apps or separate data environments. A differentl
 signed release cannot replace a debug installation without uninstalling it first
 (which removes local app data).
 
-**Release is not yet a complete production identity setup:** `AppContainer` still
-uses sample users and fake ratings in both variants. Disabling testing controls
-does not enable real authentication, provision production roles, or isolate Firestore.
+**Release identity:** a release build signs the device in with Firebase anonymous
+authentication and keeps its profile in Firestore. A new user starts as a camper and can
+become a host in the app; the Admin role is granted by the team in the Firebase console.
+Ratings and reports still use in-memory data in both variants, and Firestore is still in
+test mode: the `users` security rules are written in `doc/firestore-users.rules` but not published.
 
 **Run the tests** (from the `Trails/` folder, with an emulator running for the second command):
 ```

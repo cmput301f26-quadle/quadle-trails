@@ -1,0 +1,66 @@
+// Firestore Security Rules for the users collection (US 01.09.01, 01.07.03, 01.08.01, 01.10.01, 03.11.01).
+// OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
+//
+// NOT PUBLISHED YET. The project still uses test-mode rules (everything open until Dec 31, 2026).
+// To use these, the team pastes the `match /users/{uid}` block inside the existing rules in the
+// Firebase console (Firestore Database -> Rules), next to rules for the other collections, and
+// removes the open `match /{document=**}` rule. That affects every collection, so it is a team decision.
+//
+// What it guarantees:
+//  - A signed-in user can only create, edit or delete their OWN profile.
+//  - A new profile is always a camper only: roles == ['ENTRANT'].
+//  - Editing keeps roles unchanged, except adding OWNER ("Become a host"). ADMIN can never be
+//    added from the app; the team adds it in the Firebase console, which bypasses these rules.
+//  - activeMode must always be one of the profile's roles (US 03.11.01).
+//  - A signed-in admin can remove any profile (US 03.02.01).
+//  - Profiles are readable by any signed-in user, because owner, waitlist and admin screens show names.
+//  - Sample profiles (ids starting with "device-") stay writable by signed-in users so the testing
+//    roles (Priya, Daniel, Morgan) keep working. Remove that part before a real release.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function isSelf() {
+        return signedIn() && request.auth.uid == uid;
+      }
+
+      function isSample() {
+        return signedIn() && uid.matches('device-.*');
+      }
+
+      function isAdmin() {
+        return signedIn()
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && 'ADMIN' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+      }
+
+      function modeIsHeld() {
+        return request.resource.data.activeMode in request.resource.data.roles;
+      }
+
+      function rolesUnchangedOrBecameHost() {
+        return request.resource.data.roles == resource.data.roles
+          || (!('OWNER' in resource.data.roles)
+              && request.resource.data.roles.hasOnly(resource.data.roles.concat(['OWNER']))
+              && request.resource.data.roles.size() == resource.data.roles.size() + 1);
+      }
+
+      allow read: if signedIn();
+
+      allow create: if isSample()
+        || (isSelf() && request.resource.data.roles == ['ENTRANT'] && modeIsHeld());
+
+      allow update: if isSample()
+        || (isSelf() && rolesUnchangedOrBecameHost() && modeIsHeld());
+
+      allow delete: if isSelf() || isSample() || isAdmin();
+    }
+  }
+}

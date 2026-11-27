@@ -99,6 +99,11 @@ class FirestoreUserRepository(
         usersCollection().document(deviceId).update("activeMode", mode.name).await()
     }
 
+    override suspend fun updateNotificationsOptOut(deviceId: String, optOut: Boolean) {
+        require(deviceId.isNotBlank()) { "A device id is required." }
+        usersCollection().document(deviceId).update("notificationsOptOut", optOut).await()
+    }
+
     override suspend fun becomeHost(deviceId: String) {
         require(deviceId.isNotBlank()) { "A device id is required." }
         // One update: arrayUnion adds OWNER only if it is missing, and nothing else is touched.

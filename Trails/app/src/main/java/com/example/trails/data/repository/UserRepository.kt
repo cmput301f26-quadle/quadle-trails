@@ -1,4 +1,5 @@
-// Read and write access to user profiles, including becoming a host (US 01.09.01, 01.07.03, 01.08.01, 03.11.01).
+// Read and write access to user profiles, including becoming a host and the notification
+// opt-out (US 01.09.01, 01.07.03, 01.08.01, 01.10.01, 03.11.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
 // Outstanding issues: None currently known.
 // AI assistance: Used AI to help design profile update, deletion, role-switching and become-a-host operations.
@@ -74,6 +75,23 @@ interface UserRepository {
      * @throws Exception if the profile does not exist or the write fails.
      */
     suspend fun updateActiveMode(deviceId: String, mode: Role)
+
+    /**
+     * Turns notifications off or on for a profile (US 01.10.01). Senders skip users who
+     * opted out.
+     *
+     * The default reads the profile and writes it back; Firestore overrides it with a
+     * single update so other fields are never rewritten.
+     *
+     * @param deviceId the profile to change.
+     * @param optOut true to stop receiving notifications.
+     * @throws NoSuchElementException if the profile does not exist.
+     * @throws Exception if the write fails.
+     */
+    suspend fun updateNotificationsOptOut(deviceId: String, optOut: Boolean) {
+        val user = getById(deviceId) ?: throw NoSuchElementException("No profile for $deviceId.")
+        save(user.copy(notificationsOptOut = optOut))
+    }
 
     /**
      * Lets a camper start hosting (US 03.11.01): adds the OWNER role if the profile

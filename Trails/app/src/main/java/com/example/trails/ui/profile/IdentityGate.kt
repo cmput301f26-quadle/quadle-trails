@@ -1,6 +1,6 @@
 // Recognizes the device before the app opens, then shows Welcome or Welcome back (US 01.09.01).
 // OWNER: Aarav (aarav-kapoor-cs) — Identity, Profile & Roles
-// Outstanding issues: From the greeting, "Manage profile" and "App policy" open the app's home instead of those screens.
+// Outstanding issues: None currently known.
 package com.example.trails.ui.profile
 
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trails.R
 import com.example.trails.BuildConfig
 import com.example.trails.data.fake.CurrentUser
+import com.example.trails.ui.admin.AdminRoutes
 import com.example.trails.ui.theme.TrailsTheme
 
 /**
@@ -90,8 +91,14 @@ private fun GreetingThenApp(id: String, content: @Composable () -> Unit) {
                 user = current.user,
                 deviceIdLabel = profile.deviceIdLabel,
                 onBack = { showingDeviceProfile = false },
-                onManageProfile = { entered = true },
-                onPolicy = { entered = true },
+                onManageProfile = {
+                    ProfileRoutes.requestRoute(ProfileRoutes.PROFILE)
+                    entered = true
+                },
+                onPolicy = {
+                    ProfileRoutes.requestRoute(AdminRoutes.POLICY)
+                    entered = true
+                },
                 onUseSampleUser = useSampleUser
             )
         } else {

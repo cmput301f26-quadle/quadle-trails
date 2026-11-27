@@ -5,9 +5,11 @@
 package com.example.trails.ui.profile
 
 import com.example.trails.data.fake.FakeLotteryRepository
+import com.example.trails.data.fake.FakeReservationRepository
 import com.example.trails.data.fake.FakeUserRepository
 import com.example.trails.data.fake.FakeWaitlistRepository
 import com.example.trails.data.model.Lottery
+import com.example.trails.data.model.Reservation
 import com.example.trails.data.model.Role
 import com.example.trails.data.model.User
 import com.example.trails.data.model.WaitlistEntry
@@ -54,6 +56,7 @@ class ProfileViewModelTest {
 
     private lateinit var repo: FlakyUserRepository
     private lateinit var waitlist: FakeWaitlistRepository
+    private lateinit var reservations: FakeReservationRepository
     private lateinit var viewModel: ProfileViewModel
     private var identityDeletions = 0
     private var newSessions = 0
@@ -87,13 +90,21 @@ class ProfileViewModelTest {
         )
         identityDeletions = 0
         newSessions = 0
+        reservations = FakeReservationRepository(
+            listOf(
+                Reservation(id = "res-mine-1", userId = deviceId, campsiteId = "campsite-banff-tunnel"),
+                Reservation(id = "res-mine-2", userId = deviceId, campsiteId = "campsite-jasper-whistlers"),
+                Reservation(id = "res-other", userId = "device-b", campsiteId = "campsite-banff-tunnel")
+            )
+        )
         viewModel = ProfileViewModel(
             repository = repo,
             deviceId = id,
             lotteryRepository = FakeLotteryRepository(listOf(Lottery(id = "lottery-1"), Lottery(id = "lottery-2"))),
             waitlistRepository = waitlist,
             deleteIdentity = { identityDeletions++ },
-            startNewSession = { newSessions++ }
+            startNewSession = { newSessions++ },
+            reservations = { reservations }
         )
         val job = launch(testDispatcher) { viewModel.uiState.collect {} }
         advanceUntilIdle()
@@ -459,5 +470,79 @@ class ProfileViewModelTest {
         assertEquals(ModeSwitchState.Failed("offline"), viewModel.modeSwitch.value)
         assertEquals(listOf(Role.ENTRANT), repo.getById(deviceId)?.roles)
         job.cancel()
+    }
+
+    // US 01.08.01: deleting also removes the user's reservations
+
+    @Test
+    fun delete_removesOnlyThisUsersReservations() = runTest {
+        val job = start(listOf(priya, otherUser))
+        viewModel.onDeleteConfirmed()
+        advanceUntilIdle()
+
+        assertNull(reservations.getById("res-mine-1"))
+        assertNull(reservations.getById("res-mine-2"))
+        assertNotNull(reservations.getById("res-other"))
+        job.cancel()
+    }
+
+    @Test
+    fun delete_reservationFailure_keepsTheProfile() = runTest {
+        val job = start(listOf(priya))
+        reservations.failure = IOException("offline")
+        viewModel.onDeleteConfirmed()
+        advanceUntilIdle()
+
+        assertNotNull(repo.getById(deviceId))
+        assertTrue(viewModel.deleteState.value is DeleteState.Failed)
+        job.cancel()
+    }
+
+    // US 01.10.01: opting out of notifications
+
+    @Test
+    fun notifications_turnOff_thenOn_isStored() = runTest {
+        val job = start(listOf(priya))
+        viewModel.onNotificationsEnabledChange(false)
+        advanceUntilIdle()
+        assertEquals(true, repo.getById(deviceId)?.notificationsOptOut)
+
+        viewModel.onNotificationsEnabledChange(true)
+        advanceUntilIdle()
+        assertEquals(false, repo.getById(deviceId)?.notificationsOptOut)
+        assertFalse(viewModel.notificationUpdateFailed.value)
+        job.cancel()
+    }
+
+    @Test
+    fun notifications_changeKeepsTheRestOfTheProfile() = runTest {
+        val job = start(listOf(morgan))
+        viewModel.onNotificationsEnabledChange(false)
+        advanceUntilIdle()
+
+        val stored = repo.getById(deviceId)!!
+        assertEquals(morgan.copy(notificationsOptOut = true), stored)
+        job.cancel()
+    }
+
+    @Test
+    fun notifications_saveFailure_isReportedAndSettingUnchanged() = runTest {
+        val job = start(listOf(priya))
+        repo.updateFailure = IOException("offline")
+        viewModel.onNotificationsEnabledChange(false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.notificationUpdateFailed.value)
+        assertEquals(false, repo.getById(deviceId)?.notificationsOptOut)
+        job.cancel()
+    }
+
+    // US 01.09.01: the greeting can ask for a screen to open first
+
+    @Test
+    fun pendingRoute_isHandedOverOnce() {
+        ProfileRoutes.requestRoute(ProfileRoutes.PROFILE)
+        assertEquals(ProfileRoutes.PROFILE, ProfileRoutes.consumePendingRoute())
+        assertNull(ProfileRoutes.consumePendingRoute())
     }
 }
